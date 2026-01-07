@@ -1,5 +1,88 @@
-[757/762] Compiling libraries/Research/examples/APL_Controller/flightController.cpp
-14:31:15 runner ['/opt/gcc-arm-none-eabi-6-2017-q2-update/bin/arm-none-eabi-g++', '-std=gnu++11', '-fdata-sections', '-ffunction-sections', '-fno-exceptions', '-fsigned-char', '-Wall', '-Wextra', '-Wpointer-arith', '-Wno-unused-parameter', '-Wno-missing-field-initializers', '-Wno-reorder', '-Wno-redundant-decls', '-Wno-unknown-pragmas', '-Wno-expansion-to-defined', '-Werror=cast-align', '-Werror=attributes', '-Werror=format-security', '-Werror=format-extra-args', '-Werror=enum-compare', '-Werror=format', '-Werror=array-bounds', '-Werror=uninitialized', '-Werror=init-self', '-Werror=narrowing', '-Werror=return-type', '-Werror=switch', '-Werror=sign-compare', '-Werror=type-limits', '-Werror=undef', '-Werror=unused-result', '-Werror=shadow', '-Werror=unused-value', '-Werror=unused-variable', '-Werror=delete-non-virtual-dtor', '-Wfatal-errors', '-Wno-trigraphs', '-Werror=parentheses', '-DARDUPILOT_BUILD', '-Wno-format-contains-nul', '-Werror=unused-but-set-variable', '-Werror=suggest-override', '-ffunction-sections', '-fdata-sections', '-fsigned-char', '-Wall', '-Wextra', '-Werror=format', '-Wpointer-arith', '-Wcast-align', '-Wno-missing-field-initializers', '-Wno-unused-parameter', '-Wno-redundant-decls', '-Wno-unknown-pragmas', '-Wno-trigraphs', '-Werror=shadow', '-Werror=return-type', '-Werror=unused-result', '-Werror=unused-variable', '-Werror=narrowing', '-Werror=attributes', '-Werror=overflow', '-Werror=parentheses', '-Werror=format-extra-args', '-Werror=ignored-qualifiers', '-Werror=undef', '-DARDUPILOT_BUILD', '-Wno-format-contains-nul', '-mcpu=cortex-m7', '-mfpu=fpv5-d16', '-mfloat-abi=hard', '-DARM_MATH_CM7', '-u_printf_float', '-Wlogical-op', '-Wframe-larger-than=1300', '-fsingle-precision-constant', '-Wno-attributes', '-fno-exceptions', '-Wall', '-Wextra', '-Wno-sign-compare', '-Wfloat-equal', '-Wpointer-arith', '-Wmissing-declarations', '-Wno-unused-parameter', '-Werror=array-bounds', '-Wfatal-errors', '-Werror=uninitialized', '-Werror=init-self', '-Werror=unused-but-set-variable', '-Wno-missing-field-initializers', '-Wno-trigraphs', '-fno-strict-aliasing', '-fomit-frame-pointer', '-falign-functions=16', '-ffunction-sections', '-fdata-sections', '-fno-strength-reduce', '-fno-builtin-printf', '-fno-builtin-fprintf', '-fno-builtin-vprintf', '-fno-builtin-vfprintf', '-fno-builtin-puts', '-mno-thumb-interwork', '-mthumb', '--specs=nano.specs', '--specs=nosys.specs', '-DCHIBIOS_BOARD_NAME="mRoPixracerPro"', '-D__USE_CMSIS', '-Werror=deprecated-declarations', '-DNDEBUG=1', '-Wno-unused-function', '-Wno-error=double-promotion', '-Wno-error=missing-declarations', '-Wno-error=float-equal', '-Wno-error=undef', '-Wno-error=cpp', '-Wno-error=unused-function', '-fno-rtti', '-fno-threadsafe-statics', '-Werror', '-MMD', '-O2', '-include', 'ap_config.h', '-O2', '-Ilibraries', '-Ilibraries/GCS_MAVLink', '-Imodules/uavcan/libuavcan/include/dsdlc_generated', '-I.', '-I../../libraries', '-I../../libraries/AP_Common/missing', '-I../../libraries/AP_GyroFFT/CMSIS_5/include', '-I../../modules/uavcan/libuavcan/include', '-I../../modules/ChibiOS/os/license', '-I../../modules/ChibiOS/os/various/cpp_wrappers', '-I../../modules/ChibiOS/ext/fatfs/source', '-I../../modules/ChibiOS/os/common/portability/GCC', '-I../../modules/ChibiOS/os/common/startup/ARMCMx/compilers/GCC', '-I../../modules/ChibiOS/os/common/startup/ARMCMx/devices/STM32H7xx', '-I../../modules/ChibiOS/os/common/ext/ARM/CMSIS/Core/Include', '-I../../modules/ChibiOS/os/common/ext/ST/STM32H7xx', '-I../../modules/ChibiOS/os/hal/include', '-I../../modules/ChibiOS/os/hal/ports/common/ARMCMx', '-I../../modules/ChibiOS/os/hal/ports/STM32/STM32H7xx', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/ADCv4', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/BDMAv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/CRYPv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/DACv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/DMAv2', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/EXTIv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/FDCANv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/GPIOv2', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/I2Cv3', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/MDMAv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/OTGv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/QUADSPIv2', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/SDMMCv2', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/SPIv3', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/RNGv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/RTCv2', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/TIMv1', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/USARTv2', '-I../../modules/ChibiOS/os/hal/ports/STM32/LLD/xWDGv1', '-I../../modules/ChibiOS/os/hal/osal/rt-nil', '-I../../modules/ChibiOS/os/rt/include', '-I../../modules/ChibiOS/os/oslib/include', '-I../../modules/ChibiOS/os/common/ports/ARMCMx', '-I../../modules/ChibiOS/os/common/ports/ARMCMx/compilers/GCC', '-I../../modules/ChibiOS/os/hal/lib/streams', '-I../../libraries/AP_HAL_ChibiOS/hwdef/common', '-DSKETCHBOOK="/home/kuhnph/Documents/PxRacer/ardupilotReset/ardupilot"', '-DAP_SCRIPTING_CHECKS=1', '-DCONFIG_HAL_BOARD=HAL_BOARD_CHIBIOS', '-DENABLE_HEAP=1', '-DENABLE_ONVIF=0', '-DENABLE_SCRIPTING=1', '-DHAVE_STD_NULLPTR_T=0', '-DLUA_32BITS=1', '-DUSE_LIBC_REALLOC=0', '-DUAVCAN_CPP_VERSION=UAVCAN_CPP03', '-DUAVCAN_NO_ASSERTIONS=1', '-DUAVCAN_NULLPTR=nullptr', '../../libraries/Research/examples/APL_Controller/flightController.cpp', '-c', '-olibraries/Research/examples/APL_Controller/flightController.cpp.1.o']
-../../libraries/Research/examples/APL_Controller/flightController.cpp: In member function 'void flightControllerModelClass::fli_nonlinear_airframe_dynamics(const real_T*, const real_T*, const real_T*, real_T, real_T, real_T, real_T, real_T, const real_T*, real_T, real_T, real_T, const real_T*, real_T, const real32_T*, real32_T, real32_T, const real32_T*, const real32_T*, real32_T, real32_T, real32_T*)':
-../../libraries/Research/examples/APL_Controller/flightController.cpp:1120:11: error: 'Cm_idx_2' may be used uninitialized in this function [-Werror=maybe-uninitialized]
-   Cm[2] = static_cast<real32_T>(Cm_idx_2);
+  real32_T xdot[4])
+{
+  real_T tmp_0[20];
+  real_T tmp_1[20];
+  real_T J[9];
+  real_T b_J[9];
+  real_T x1[6];
+  real_T xp1[6];
+  real_T b_b[3];
+  real_T cr_ft[3];
+  real_T v1[3];
+  real_T vehicle_CR_ft[3];
+  real_T Cf_idx_0;
+  real_T Cf_idx_1;
+  real_T Cf_idx_2;
+  real_T Cm_idx_0;
+  real_T Cm_idx_2;
+
+
+  switch (static_cast<int32_T>(b_mdl_params_apl_ukf_aero)) {
+   case 0:
+    Cf_idx_0 = 0.0;
+    Cm_idx_0 = 0.0;
+    Cf_idx_1 = 0.0;
+    Cf_idx_2 = 0.0;
+    Cm_idx_2 = 0.0;
+    break;
+
+   case 1:
+    x1[2] = 57.2957802F * actuator_states[3];
+    x1[3] = 57.2957802F * actuator_states[0];
+    x1[4] = 57.2957802F * actuator_states[1];
+    x1[5] = 57.2957802F * actuator_states[2];
+    x1[0] = (phi_aero - -180.0) / 360.0;
+    x1[1] = alphat / 17.0;
+    x1[2] = (x1[2] - -17.0) / 34.0;
+    x1[3] = (x1[3] - -17.0) / 34.0;
+    x1[4] = (x1[4] - -17.0) / 34.0;
+    x1[5] = (x1[5] - -17.0) / 34.0;
+    for (k = 0; k < 6; k++) {
+      xp1[k] = x1[k] * 2.0 - 1.0;
+    }
+
+    for (k = 0; k < 20; k++) {
+      m_slug = 0.0;
+      for (i = 0; i < 6; i++) {
+        m_slug += h_a[20 * i + k] * xp1[i];
+      }
+
+      tmp_0[k] = 2.0 / (exp((g[k] + m_slug) * -2.0) + 1.0) - 1.0;
+    }
+
+    for (k = 0; k < 20; k++) {
+      m_slug = 0.0;
+      for (i = 0; i < 20; i++) {
+        m_slug += i_a[20 * i + k] * tmp_0[i];
+      }
+
+      tmp_1[k] = 2.0 / (exp((h[k] + m_slug) * -2.0) + 1.0) - 1.0;
+    }
+
+    for (k = 0; k < 20; k++) {
+      m_slug = 0.0;
+      for (i = 0; i < 20; i++) {
+        m_slug += j_a[20 * i + k] * tmp_1[i];
+      }
+
+      tmp_0[k] = 2.0 / (exp((i_0[k] + m_slug) * -2.0) + 1.0) - 1.0;
+    }
+
+    for (k = 0; k < 6; k++) {
+      m_slug = 0.0;
+      for (i = 0; i < 20; i++) {
+        m_slug += k_a[6 * i + k] * tmp_0[i];
+      }
+
+      x1[k] = (j[k] + m_slug) - -1.0;
+    }
+
+    flightController_bsxfun(x1, l, xp1);
+    flightController_bsxfun_f(xp1, m, x1);
+    Cf_idx_0 = x1[0];
+    Cm_idx_0 = x1[3];
+    Cf_idx_1 = x1[1];
+    Cf_idx_2 = x1[2];
+    Cm_idx_2 = x1[5];
+    break;
+  }
