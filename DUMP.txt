@@ -1,20 +1,6 @@
-../../libraries/Simulink/mdl_gnc_px_Ardupilot.cpp:1814:5: error: floating constant truncated to zero [-Werror=overflow]
-
-1814 |     cfrom1 = mdl_gnc_px_Ardupilot_B.cfromc * 2.0041683600089728E-292;
-
-      |     ^~~~~~
-
-compilation terminated due to -Wfatal-errors.
-
-cc1plus: all warnings being treated as errors
- 
-Waf: Leaving directory `/home/kuhnph/Documents/PxRacer/ardupilot/build/Pixracer'
-
-Build failed
-
--> task in 'objs/Simulink' failed (exit status 1):
-
-        {task 128791137037312: cxx mdl_gnc_px_Ardupilot.cpp -> mdl_gnc_px_Ardupilot.cpp.0.o}
-
-(run with -v to display more information)
- 
+    real_T mul;
+    cfrom1 = cfromc * 2.0041683600089728E-292;
+    cto1 = ctoc / 4.9896007738368E+291;
+    if ((fabs(cfrom1) > fabs(ctoc)) && (ctoc != 0.0)) {
+      mul = 2.0041683600089728E-292;
+      cfromc = cfrom1;
