@@ -1,27 +1,10 @@
-import re
+   Cm[2] = static_cast<real32_T>(Cm_idx_2);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated due to -Wfatal-errors.
+cc1plus: all warnings being treated as errors
 
-def rewrite_float_literals_and_funcs(code: str) -> str:
-    # Replace fabs(...) -> fabsf(...)
-    code = re.sub(r'\bfabs\s*\(', 'fabsf(', code)
-
-    # Add 'F' suffix to float literals like 1.23, .5, 1., 1e-3, 1.2E+10
-    # Avoid literals already suffixed with f/F or l/L.
-    float_lit = re.compile(r"""
-        (?<![\w.])                      # not preceded by word char or dot
-        (
-            (?:\d+\.\d*|\.\d+|\d+\.)    # has a dot
-            (?:[eE][+-]?\d+)?           # optional exponent
-            |
-            \d+(?:[eE][+-]?\d+)         # or integer with exponent
-        )
-        (?![\w.])                       # not followed by word char or dot
-    """, re.VERBOSE)
-
-    def add_F(m):
-        s = m.group(1)
-        # If it already ends with f/F/l/L (rare here), leave it
-        if s[-1] in "fFlL":
-            return s
-        return s + "F"
-
-    return float_lit.sub(add_F, code)
+Waf: Leaving directory `/home/kuhnph/Documents/PxRacer/ardupilotReset/ardupilot/build/mRoPixracerPro'
+Build failed
+ -> task in 'examples/APL_Controller' failed (exit status 1):
+        {task 125428709646944: cxx flightController.cpp -> flightController.cpp.1.o}
+ (run with -v to display more information)
