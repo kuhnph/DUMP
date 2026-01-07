@@ -1,6 +1,27 @@
-    real_T mul;
-    cfrom1 = cfromc * 2.0041683600089728E-292;
-    cto1 = ctoc / 4.9896007738368E+291;
-    if ((fabs(cfrom1) > fabs(ctoc)) && (ctoc != 0.0)) {
-      mul = 2.0041683600089728E-292;
-      cfromc = cfrom1;
+import re
+
+def rewrite_float_literals_and_funcs(code: str) -> str:
+    # Replace fabs(...) -> fabsf(...)
+    code = re.sub(r'\bfabs\s*\(', 'fabsf(', code)
+
+    # Add 'F' suffix to float literals like 1.23, .5, 1., 1e-3, 1.2E+10
+    # Avoid literals already suffixed with f/F or l/L.
+    float_lit = re.compile(r"""
+        (?<![\w.])                      # not preceded by word char or dot
+        (
+            (?:\d+\.\d*|\.\d+|\d+\.)    # has a dot
+            (?:[eE][+-]?\d+)?           # optional exponent
+            |
+            \d+(?:[eE][+-]?\d+)         # or integer with exponent
+        )
+        (?![\w.])                       # not followed by word char or dot
+    """, re.VERBOSE)
+
+    def add_F(m):
+        s = m.group(1)
+        # If it already ends with f/F/l/L (rare here), leave it
+        if s[-1] in "fFlL":
+            return s
+        return s + "F"
+
+    return float_lit.sub(add_F, code)
