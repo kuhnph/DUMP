@@ -1,10 +1,4 @@
- static P_flightController_T paramsdefault;
-        ^~~~~~~~~~~~~~~~~~~~
-compilation terminated due to -Wfatal-errors.
-
-../../libraries/Research/examples/SimulinkController/flightController.cpp: In member function 'void flightControllerModelClass::step()':
-../../libraries/Research/examples/SimulinkController/flightController.cpp:4155:1: error: the frame size of 5968 bytes is larger than 1300 bytes [-Werror=frame-larger-than=]
- }
- ^
-compilation terminated due to -Wfatal-errors.
-cc1plus: all warnings being treated as errors
+def build(bld)
+ bld.ap_example(
+  use='ap',
+ )
