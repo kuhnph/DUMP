@@ -1,8 +1,14 @@
-def build(bld):
-    bld.ap_example(
-        use='ap',
-        cxxflags=[
-            '-Wno-error=frame-larger-than',
-            '-Wframe-larger-than=7000',
-        ],
-    )
+cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
+compilation terminated due to -Wfatal-errors.
+
+cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
+compilation terminated due to -Wfatal-errors.
+
+cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
+compilation terminated due to -Wfatal-errors.
+
+cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
+compilation terminated due to -Wfatal-errors.
+
+cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
+compilation terminated due to -Wfatal-errors.
