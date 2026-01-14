@@ -1,4 +1,12 @@
-cxxflags=[
+#!/usr/bin/env python
+# encoding: utf-8
+
+def build(bld):
+    bld.ap_example(
+        use='ap',
+    
+    cxxflags=[
     '-Wframe-larger-than=7000',
     '-Wno-error=frame-larger-than=',
-]
+    ],
+    )
