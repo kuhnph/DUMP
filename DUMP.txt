@@ -2,41 +2,21 @@
 # encoding: utf-8
 
 def build(bld):
-
-    # 1) Build the generated controller code as its own object group with relaxed flags
-    bld.objects(
-        target='simulink_fc_objs',
-        source=[
-            'flightController.cpp',
-            # add any other generated .cpp in this folder if they exist
-            # 'flightController_data.cpp',
-            # 'rt_nonfinite.cpp',
-            # 'rtGetInf.cpp',
-            # 'rtGetNaN.cpp',
-        ],
-        use='ap',
-        cxxflags=[
-            # stack-frame warning -> don't treat as error for this TU
-            '-Wno-error=frame-larger-than=',
-            # and/or raise threshold just for this TU:
-            '-Wframe-larger-than=8000',
-
-            # if you also see the tiny-literal issue in this TU:
-            '-Wno-error=overflow',
-        ],
-    )
-
-    # 2) Build the example, linking in the object group above
-    bld.ap_example(
-        use='ap simulink_fc_objs',
-    )
-
-
-def build(bld):
     bld.ap_example(
         use='ap',
         cxxflags=[
             '-Wno-error=frame-larger-than=',
-            '-Wno-frame-larger-than=',
+            '-Wframe-larger-than=',
         ],
     )
+
+[760/765] Compiling libraries/Research/examples/SimulinkController/Messages.cpp
+arm-none-eabi-g++: error: missing argument to '-Wframe-larger-than='
+
+arm-none-eabi-g++: error: missing argument to '-Wframe-larger-than='
+
+arm-none-eabi-g++: error: missing argument to '-Wframe-larger-than='
+
+arm-none-eabi-g++: error: missing argument to '-Wframe-larger-than='
+
+arm-none-eabi-g++: error: missing argument to '-Wframe-larger-than='
