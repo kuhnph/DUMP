@@ -1,12 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 
 def build(bld):
+    # Add flags for just this example build
+    bld.env.append_value('CXXFLAGS', [
+        '-Wframe-larger-than=7000',
+        '-Wno-error=frame-larger-than',
+        '-Wno-frame-larger-than',
+    ])
+
     bld.ap_example(
         use='ap',
-    
-    cxxflags=[
-    '-Wframe-larger-than=7000',
-    '-Wno-error=frame-larger-than=',
-    ],
     )
