@@ -30,3 +30,13 @@ def build(bld):
     bld.ap_example(
         use='ap simulink_fc_objs',
     )
+
+
+def build(bld):
+    bld.ap_example(
+        use='ap',
+        cxxflags=[
+            '-Wno-error=frame-larger-than=',
+            '-Wno-frame-larger-than=',
+        ],
+    )
