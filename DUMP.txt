@@ -1,6 +1,10 @@
-Padded 20 bytes for bootloader.bin to 17312
-Embedding file bootloader.bin:/home/kuhnph/Documents/PxRacer/ardupilotReset/ardupilot/Tools/bootloaders/mRoPixracerPro_bl.bin
-Embedding file hwdef.dat:/home/kuhnph/Documents/PxRacer/ardupilotReset/ardupilot/build/mRoPixracerPro/hw.dat
-[757/762] Compiling libraries/Research/examples/APL_Controller/flightController.cpp
-../../libraries/Research/examples/APL_Controller/flightController.cpp: In member function 'void flightControllerModelClass::step()':
-../../libraries/Research/examples/APL_Controller/flightController.cpp:3332:1: error: the frame size of 2248 bytes is larger than 1300 bytes [-Werror=frame-larger-than=]
+ static P_flightController_T paramsdefault;
+        ^~~~~~~~~~~~~~~~~~~~
+compilation terminated due to -Wfatal-errors.
+
+../../libraries/Research/examples/SimulinkController/flightController.cpp: In member function 'void flightControllerModelClass::step()':
+../../libraries/Research/examples/SimulinkController/flightController.cpp:4155:1: error: the frame size of 5968 bytes is larger than 1300 bytes [-Werror=frame-larger-than=]
+ }
+ ^
+compilation terminated due to -Wfatal-errors.
+cc1plus: all warnings being treated as errors
