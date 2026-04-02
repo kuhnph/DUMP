@@ -1,14 +1,86 @@
-cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
-compilation terminated due to -Wfatal-errors.
 
-cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
-compilation terminated due to -Wfatal-errors.
+% Quick plotting template
+clear; clc; close all;
 
-cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
-compilation terminated due to -Wfatal-errors.
+%% Filler data
+x1 = linspace(0,10,200);
+y1a = sin(x1);
+y1b = cos(x1);
 
-cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
-compilation terminated due to -Wfatal-errors.
+x2 = linspace(0,20,300);
+y2a = 0.5*x2;
+y2b = 10*exp(-0.1*x2);
 
-cc1plus: error: -Werror=frame-larger-than: no option -Wframe-larger-than
-compilation terminated due to -Wfatal-errors.
+%% Common formatting values
+figWidth  = 800;
+figHeight = 600;
+
+lineWidth = 2;
+fontSize  = 14;
+axisWidth = 1.5;
+
+xLabel1 = 'Filler X Label 1';
+yLabel1 = 'Filler Y Label 1';
+title1  = 'Filler Figure Title 1';
+legend1a = 'Filler Line 1A';
+legend1b = 'Filler Line 1B';
+
+xLabel2 = 'Filler X Label 2';
+yLabel2 = 'Filler Y Label 2';
+title2  = 'Filler Figure Title 2';
+legend2a = 'Filler Line 2A';
+legend2b = 'Filler Line 2B';
+
+xLim1 = [0 10];
+yLim1 = [-1.5 1.5];
+
+xLim2 = [0 20];
+yLim2 = [0 12];
+
+%% Figure 1
+figure('Position',[100 100 figWidth figHeight]);
+plot(x1,y1a,'LineWidth',lineWidth);
+hold on;
+plot(x1,y1b,'LineWidth',lineWidth);
+hold off;
+
+xlabel(xLabel1,'FontSize',fontSize);
+ylabel(yLabel1,'FontSize',fontSize);
+title(title1,'FontSize',fontSize+2);
+legend(legend1a,legend1b,'Location','best','FontSize',fontSize);
+
+xlim(xLim1);
+ylim(yLim1);
+
+set(gca,...
+    'FontSize',fontSize,...
+    'LineWidth',axisWidth,...
+    'Box','on',...
+    'TickDir','out',...
+    'TickLength',[0.015 0.015]);
+
+grid on;
+
+%% Figure 2
+figure('Position',[950 100 figWidth figHeight]);
+plot(x2,y2a,'LineWidth',lineWidth);
+hold on;
+plot(x2,y2b,'LineWidth',lineWidth);
+hold off;
+
+xlabel(xLabel2,'FontSize',fontSize);
+ylabel(yLabel2,'FontSize',fontSize);
+title(title2,'FontSize',fontSize+2);
+legend(legend2a,legend2b,'Location','best','FontSize',fontSize);
+
+xlim(xLim2);
+ylim(yLim2);
+
+set(gca,...
+    'FontSize',fontSize,...
+    'LineWidth',axisWidth,...
+    'Box','on',...
+    'TickDir','out',...
+    'TickLength',[0.015 0.015]);
+
+grid on;
