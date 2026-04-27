@@ -1,40 +1,40 @@
->> cs = getActiveConfigSet('spirentComponentTest');
-get_param(cs, 'Name')
-get_param(cs, 'SystemTargetFile')
-class(cs)
+top = 'spirentComponentTest';
+ref = 'AirframeWithCaptiveCarry';
 
-cs_ref = getActiveConfigSet('AirframeWithCaptiveCarry');
-get_param(cs_ref, 'Name')
-get_param(cs_ref, 'SystemTargetFile')
-class(cs_ref)
+% Check direct model-level values
+get_param(top,'SystemTargetFile')
+get_param(ref,'SystemTargetFile')
 
-ans =
+% Check active config names again
+get_param(getActiveConfigSet(top),'Name')
+get_param(getActiveConfigSet(ref),'Name')
 
-    'Configuration_RSIM'
+% Force RSIM explicitly on the active configs
+set_param(getActiveConfigSet(top), 'SystemTargetFile', 'rsim.tlc');
+set_param(getActiveConfigSet(ref), 'SystemTargetFile', 'rsim.tlc');
 
+% Save both models
+save_system(top);
+save_system(ref);
 
-ans =
+bdclose('all');
+clear classes;
+rehash toolboxcache;
 
-    'rsim.tlc'
+open_system(top);
+open_system(ref);
 
+get_param(top,'SystemTargetFile')
+get_param(ref,'SystemTargetFile')
+get_param(getActiveConfigSet(top),'SystemTargetFile')
+get_param(getActiveConfigSet(ref),'SystemTargetFile')
 
-ans =
+which(top)
+which(ref)
+get_param(top,'FileName')
+get_param(ref,'FileName')
 
-    'Simulink.ConfigSet'
-
-
-ans =
-
-    'ConfigurationReference'
-
-
-ans =
-
-    'rsim.tlc'
-
-
-ans =
-
-    'Simulink.ConfigSetRef'
-
->> 
+get_param('spirentComponentTest','SystemTargetFile')
+get_param('AirframeWithCaptiveCarry','SystemTargetFile')
+get_param('spirentComponentTest','FileName')
+get_param('AirframeWithCaptiveCarry','FileName')
