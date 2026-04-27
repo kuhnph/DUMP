@@ -1,8 +1,43 @@
-[root@ihawk __project.pjkuhn_ihawk-dev]# git fetch origin
-fatal: '/media/nomachine/C/Projects/pjkuhn_iHawkDev/pjkuhn_ihawk-dev.git/' does not appear to be a git repository
-fatal: Could not read from remote repository.
+Top model targets:
 
-Please make sure you have the correct access rights
-and the repository exists.
-[root@ihawk __project.pjkuhn_ihawk-dev]# ls /media/nomachine/C/Projects/pjkuhn_iHawkDev
-minatr_hwil.git  pjkuhn_ihawk-dev.git
+Model                 Build Reason                                         Status                                                 Build Duration
+================================================================================================================================================
+spirentComponentTest  Information cache folder or artifacts were missing.  Failed to build. For more information, see build log.  0d            
+
+0 of 1 models built (0 models already up to date)
+Build duration: 0h 0m 2.8127s
+Error using simwb.rtobj/rtwBuild
+The 'System target file' setting for 'spirentComponentTest' is 'grt' and 'AirframeWithCaptiveCarry' is 'rsim'. The setting for
+this parameter must be the same for all models in the model reference hierarchy.
+
+Error in simwbTarget
+Suggested Actions:
+    • Change 'System target file' for 'spirentComponentTest' from 'grt' to 'rsim' - Open
+    • Change 'System target file' for 'AirframeWithCaptiveCarry' from 'rsim' to 'grt' - Open
+ - Show complete stack trace
+ 
+Error while evaluating UIControl Callback.
+
+>> rsimCheck
+
+Config set 1
+SystemTargetFile error: Invalid Simulink object name: 'ReferenceConfiguration'.
+Class: cell
+
+Config set 2
+SystemTargetFile error: Invalid Simulink object name: 'Configuration_RSIM'.
+Class: cell
+
+Active top target: rsim.tlc
+Top model target: rsim.tlc
+Ref model target: rsim.tlc
+Active ref target: rsim.tlc
+>> rsimCheck
+
+Config set name: ReferenceConfiguration
+  Target: rsim.tlc
+  Class : Simulink.ConfigSetRef
+
+Config set name: Configuration_RSIM
+  Target: rsim.tlc
+  Class : Simulink.ConfigSet
