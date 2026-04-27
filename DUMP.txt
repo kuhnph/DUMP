@@ -1,4 +1,4 @@
-cs = getActiveConfigSet('spirentComponentTest');
+>> cs = getActiveConfigSet('spirentComponentTest');
 get_param(cs, 'Name')
 get_param(cs, 'SystemTargetFile')
 class(cs)
@@ -7,3 +7,34 @@ cs_ref = getActiveConfigSet('AirframeWithCaptiveCarry');
 get_param(cs_ref, 'Name')
 get_param(cs_ref, 'SystemTargetFile')
 class(cs_ref)
+
+ans =
+
+    'Configuration_RSIM'
+
+
+ans =
+
+    'rsim.tlc'
+
+
+ans =
+
+    'Simulink.ConfigSet'
+
+
+ans =
+
+    'ConfigurationReference'
+
+
+ans =
+
+    'rsim.tlc'
+
+
+ans =
+
+    'Simulink.ConfigSetRef'
+
+>> 
