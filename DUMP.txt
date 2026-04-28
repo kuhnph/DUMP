@@ -1,147 +1,501 @@
->> makeTest
-Assigned breakpoint variable: Talo_HighRate_bp
-Assigned table variable: TALO_HighRate_col1_table
-Assigned table variable: Vehicle0_X_ECEF_HighRate_col1_table
-Assigned table variable: Vehicle0_X_ECEF_HighRate_col2_table
-Assigned table variable: Vehicle0_X_ECEF_HighRate_col3_table
-Assigned table variable: Vehicle0_V_ECEF_HighRate_col1_table
-Assigned table variable: Vehicle0_V_ECEF_HighRate_col2_table
-Assigned table variable: Vehicle0_V_ECEF_HighRate_col3_table
-Assigned table variable: Vehicle0_A_ECEF_HighRate_col1_table
-Assigned table variable: Vehicle0_A_ECEF_HighRate_col2_table
-Assigned table variable: Vehicle0_A_ECEF_HighRate_col3_table
-Assigned table variable: Vehicle0_wbf_HighRate_col1_table
-Assigned table variable: Vehicle0_wbf_HighRate_col2_table
-Assigned table variable: Vehicle0_wbf_HighRate_col3_table
-Assigned table variable: Vehicle0_Euler321_YawPitRoll_HighRate_col1_table
-Assigned table variable: Vehicle0_Euler321_YawPitRoll_HighRate_col2_table
-Assigned table variable: Vehicle0_Euler321_YawPitRoll_HighRate_col3_table
-Model "Talo_HighRate_Lookup_Model" is already loaded. Reusing it.
-Block already exists: Talo_HighRate_Lookup_Model/TALO_HighRate
-Block already exists: Talo_HighRate_Lookup_Model/TALO_HighRate
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_TALO_HighRate_col1
-Configured lookup table: LUT_TALO_HighRate_col1
-Connected TALO_HighRate -> LUT_TALO_HighRate_col1
-Warning: Could not connect "LUT_TALO_HighRate_col1" to "TALO_HighRate". Message: Invalid Simulink object name: 'TALO_HighRate/1'. 
-> In makeTest (line 307) 
-Added Mux block: Talo_HighRate_Lookup_Model/Mux_Vehicle0_X_ECEF_HighRate
-Block already exists: Talo_HighRate_Lookup_Model/Vehicle0_X_ECEF_HighRate
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_X_ECEF_HighRate_col1
-Configured lookup table: LUT_Vehicle0_X_ECEF_HighRate_col1
-Connected TALO_HighRate -> LUT_Vehicle0_X_ECEF_HighRate_col1
-Connected LUT_Vehicle0_X_ECEF_HighRate_col1 -> Mux_Vehicle0_X_ECEF_HighRate input 1
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_X_ECEF_HighRate_col2
-Configured lookup table: LUT_Vehicle0_X_ECEF_HighRate_col2
-Connected TALO_HighRate -> LUT_Vehicle0_X_ECEF_HighRate_col2
-Connected LUT_Vehicle0_X_ECEF_HighRate_col2 -> Mux_Vehicle0_X_ECEF_HighRate input 2
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_X_ECEF_HighRate_col3
-Configured lookup table: LUT_Vehicle0_X_ECEF_HighRate_col3
-Connected TALO_HighRate -> LUT_Vehicle0_X_ECEF_HighRate_col3
-Connected LUT_Vehicle0_X_ECEF_HighRate_col3 -> Mux_Vehicle0_X_ECEF_HighRate input 3
-Warning: Could not connect "Mux_Vehicle0_X_ECEF_HighRate" to "Vehicle0_X_ECEF_HighRate". Message: The destination port already has a
-line connection 
-> In makeTest (line 323) 
-Added Mux block: Talo_HighRate_Lookup_Model/Mux_Vehicle0_V_ECEF_HighRate
-Block already exists: Talo_HighRate_Lookup_Model/Vehicle0_V_ECEF_HighRate
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_V_ECEF_HighRate_col1
-Configured lookup table: LUT_Vehicle0_V_ECEF_HighRate_col1
-Connected TALO_HighRate -> LUT_Vehicle0_V_ECEF_HighRate_col1
-Connected LUT_Vehicle0_V_ECEF_HighRate_col1 -> Mux_Vehicle0_V_ECEF_HighRate input 1
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_V_ECEF_HighRate_col2
-Configured lookup table: LUT_Vehicle0_V_ECEF_HighRate_col2
-Connected TALO_HighRate -> LUT_Vehicle0_V_ECEF_HighRate_col2
-Connected LUT_Vehicle0_V_ECEF_HighRate_col2 -> Mux_Vehicle0_V_ECEF_HighRate input 2
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_V_ECEF_HighRate_col3
-Configured lookup table: LUT_Vehicle0_V_ECEF_HighRate_col3
-Connected TALO_HighRate -> LUT_Vehicle0_V_ECEF_HighRate_col3
-Connected LUT_Vehicle0_V_ECEF_HighRate_col3 -> Mux_Vehicle0_V_ECEF_HighRate input 3
-Warning: Could not connect "Mux_Vehicle0_V_ECEF_HighRate" to "Vehicle0_V_ECEF_HighRate". Message: The destination port already has a
-line connection 
-> In makeTest (line 323) 
-Added Mux block: Talo_HighRate_Lookup_Model/Mux_Vehicle0_A_ECEF_HighRate
-Block already exists: Talo_HighRate_Lookup_Model/Vehicle0_A_ECEF_HighRate
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_A_ECEF_HighRate_col1
-Configured lookup table: LUT_Vehicle0_A_ECEF_HighRate_col1
-Connected TALO_HighRate -> LUT_Vehicle0_A_ECEF_HighRate_col1
-Connected LUT_Vehicle0_A_ECEF_HighRate_col1 -> Mux_Vehicle0_A_ECEF_HighRate input 1
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_A_ECEF_HighRate_col2
-Configured lookup table: LUT_Vehicle0_A_ECEF_HighRate_col2
-Connected TALO_HighRate -> LUT_Vehicle0_A_ECEF_HighRate_col2
-Connected LUT_Vehicle0_A_ECEF_HighRate_col2 -> Mux_Vehicle0_A_ECEF_HighRate input 2
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_A_ECEF_HighRate_col3
-Configured lookup table: LUT_Vehicle0_A_ECEF_HighRate_col3
-Connected TALO_HighRate -> LUT_Vehicle0_A_ECEF_HighRate_col3
-Connected LUT_Vehicle0_A_ECEF_HighRate_col3 -> Mux_Vehicle0_A_ECEF_HighRate input 3
-Warning: Could not connect "Mux_Vehicle0_A_ECEF_HighRate" to "Vehicle0_A_ECEF_HighRate". Message: The destination port already has a
-line connection 
-> In makeTest (line 323) 
-Added Mux block: Talo_HighRate_Lookup_Model/Mux_Vehicle0_wbf_HighRate
-Block already exists: Talo_HighRate_Lookup_Model/Vehicle0_wbf_HighRate
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_wbf_HighRate_col1
-Configured lookup table: LUT_Vehicle0_wbf_HighRate_col1
-Connected TALO_HighRate -> LUT_Vehicle0_wbf_HighRate_col1
-Connected LUT_Vehicle0_wbf_HighRate_col1 -> Mux_Vehicle0_wbf_HighRate input 1
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_wbf_HighRate_col2
-Configured lookup table: LUT_Vehicle0_wbf_HighRate_col2
-Connected TALO_HighRate -> LUT_Vehicle0_wbf_HighRate_col2
-Connected LUT_Vehicle0_wbf_HighRate_col2 -> Mux_Vehicle0_wbf_HighRate input 2
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_wbf_HighRate_col3
-Configured lookup table: LUT_Vehicle0_wbf_HighRate_col3
-Connected TALO_HighRate -> LUT_Vehicle0_wbf_HighRate_col3
-Connected LUT_Vehicle0_wbf_HighRate_col3 -> Mux_Vehicle0_wbf_HighRate input 3
-Warning: Could not connect "Mux_Vehicle0_wbf_HighRate" to "Vehicle0_wbf_HighRate". Message: The destination port already has a line
-connection 
-> In makeTest (line 323) 
-Added Mux block: Talo_HighRate_Lookup_Model/Mux_Vehicle0_Euler321_YawPitRoll_HighRate
-Block already exists: Talo_HighRate_Lookup_Model/Vehicle0_Euler321_YawPitRoll_HighRate
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col1
-Configured lookup table: LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col1
-Connected TALO_HighRate -> LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col1
-Connected LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col1 -> Mux_Vehicle0_Euler321_YawPitRoll_HighRate input 1
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col2
-Configured lookup table: LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col2
-Connected TALO_HighRate -> LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col2
-Connected LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col2 -> Mux_Vehicle0_Euler321_YawPitRoll_HighRate input 2
-Added lookup block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col3
-Configured lookup table: LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col3
-Connected TALO_HighRate -> LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col3
-Connected LUT_Vehicle0_Euler321_YawPitRoll_HighRate_col3 -> Mux_Vehicle0_Euler321_YawPitRoll_HighRate input 3
-Warning: Could not connect "Mux_Vehicle0_Euler321_YawPitRoll_HighRate" to "Vehicle0_Euler321_YawPitRoll_HighRate". Message: The
-destination port already has a line connection 
-> In makeTest (line 323) 
-Model parameters updated.
-Created/updated and saved model: Talo_HighRate_Lookup_Model.slx
-Added block: Talo_HighRate_Lookup_Model/LUT_TALO_HighRate
-Configured lookup table: LUT_TALO_HighRate
-Block already exists: Talo_HighRate_Lookup_Model/TALO_HighRate
-Connected TALO -> LUT_TALO_HighRate
-Warning: Could not connect "LUT_TALO_HighRate" to "TALO_HighRate". It may already be connected. Message: Invalid Simulink object
-name: 'TALO_HighRate/1'. 
-> In makeTest (line 514) 
-Added block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_X_ECEF_HighRate
-Configured lookup table: LUT_Vehicle0_X_ECEF_HighRate
-Added block: Talo_HighRate_Lookup_Model/Vehicle0_X_ECEF_HighRate
-Connected TALO -> LUT_Vehicle0_X_ECEF_HighRate
-Connected LUT_Vehicle0_X_ECEF_HighRate -> Vehicle0_X_ECEF_HighRate
-Added block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_V_ECEF_HighRate
-Configured lookup table: LUT_Vehicle0_V_ECEF_HighRate
-Added block: Talo_HighRate_Lookup_Model/Vehicle0_V_ECEF_HighRate
-Connected TALO -> LUT_Vehicle0_V_ECEF_HighRate
-Connected LUT_Vehicle0_V_ECEF_HighRate -> Vehicle0_V_ECEF_HighRate
-Added block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_A_ECEF_HighRate
-Configured lookup table: LUT_Vehicle0_A_ECEF_HighRate
-Added block: Talo_HighRate_Lookup_Model/Vehicle0_A_ECEF_HighRate
-Connected TALO -> LUT_Vehicle0_A_ECEF_HighRate
-Connected LUT_Vehicle0_A_ECEF_HighRate -> Vehicle0_A_ECEF_HighRate
-Added block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_wbf_HighRate
-Configured lookup table: LUT_Vehicle0_wbf_HighRate
-Added block: Talo_HighRate_Lookup_Model/Vehicle0_wbf_HighRate
-Connected TALO -> LUT_Vehicle0_wbf_HighRate
-Connected LUT_Vehicle0_wbf_HighRate -> Vehicle0_wbf_HighRate
-Added block: Talo_HighRate_Lookup_Model/LUT_Vehicle0_Euler321_YawPitRoll_HighRate
-Configured lookup table: LUT_Vehicle0_Euler321_YawPitRoll_HighRate
-Added block: Talo_HighRate_Lookup_Model/Vehicle0_Euler321_YawPitRoll_HighRate
-Connected TALO -> LUT_Vehicle0_Euler321_YawPitRoll_HighRate
-Connected LUT_Vehicle0_Euler321_YawPitRoll_HighRate -> Vehicle0_Euler321_YawPitRoll_HighRate
-Model parameters updated.
-Created/updated and saved model: Talo_HighRate_Lookup_Model.slx
+%% make_TALO_HighRate_lookup_model.m
+% Creates/updates a Simulink model:
+%
+%   TALO_HighRate Inport
+%       |
+%       +--> 1-D LUT col 1 --\
+%       +--> 1-D LUT col 2 ----> Mux --> Outport
+%       +--> 1-D LUT col 3 --/
+%
+% Assumes your data struct is already loaded in the MATLAB base workspace.
+%
+% Each lookup field can be:
+%   n x 1
+%   n x 3
+%   n x m
+%
+% For n x m data, this script creates m lookup tables and muxes them
+% into a vector outport.
+
+clearvars -except myData
+
+%% =========================
+%  USER SETTINGS
+%  =========================
+
+modelName = 'Talo_HighRate_Lookup_Model';
+
+% Name of the struct already loaded in the base workspace
+structName = 'myData';
+
+% Breakpoint/input field inside the struct
+breakpointField = 'TALO_HighRate';
+
+% Fields to output from the lookup model.
+% IMPORTANT:
+% Do NOT include TALO_HighRate here.
+lookupFields = {
+    'Vehicle0_X_ECEF_HighRate'
+    'Vehicle0_V_ECEF_HighRate'
+    'Vehicle0_A_ECEF_HighRate'
+    'Vehicle0_wbf_HighRate'
+    'Vehicle0_Euler321_YawPitRoll_HighRate'
+};
+
+% Name of breakpoint variable to create in the base workspace
+breakpointVarName = 'TALO_HighRate_bp';
+
+% Set this true to delete old lines/LUTs/Muxes before rebuilding
+cleanGeneratedBlocks = true;
+
+% Set this true if you want the script to delete old outports too.
+% Usually false is safer.
+cleanOutports = false;
+
+%% =========================
+%  VALIDATE WORKSPACE DATA
+%  =========================
+
+try
+    structExists = evalin('base', sprintf('exist(''%s'', ''var'')', structName));
+
+    if ~structExists
+        error('Struct "%s" does not exist in the base workspace.', structName);
+    end
+
+    S = evalin('base', structName);
+
+    if ~isstruct(S)
+        error('"%s" exists, but it is not a struct.', structName);
+    end
+
+    if ~isfield(S, breakpointField)
+        error('Struct "%s" does not contain breakpoint field "%s".', ...
+            structName, breakpointField);
+    end
+
+    TALO_HighRate = S.(breakpointField);
+
+    if ~isvector(TALO_HighRate)
+        error('Breakpoint field "%s" must be a vector.', breakpointField);
+    end
+
+    TALO_HighRate = TALO_HighRate(:);
+
+    for k = 1:numel(lookupFields)
+        fieldName = lookupFields{k};
+
+        if strcmp(fieldName, breakpointField)
+            error(['lookupFields contains "%s", but this is the breakpoint/input. ', ...
+                   'Remove it from lookupFields.'], breakpointField);
+        end
+
+        if ~isfield(S, fieldName)
+            error('Struct "%s" does not contain lookup field "%s".', ...
+                structName, fieldName);
+        end
+
+        tableData = S.(fieldName);
+
+        if isvector(tableData)
+            tableData = tableData(:);
+        end
+
+        if size(tableData, 1) ~= numel(TALO_HighRate)
+            error('Field "%s" has %d rows, but %s has %d elements.', ...
+                fieldName, size(tableData, 1), breakpointField, numel(TALO_HighRate));
+        end
+    end
+
+    fprintf('Workspace data validation passed.\n');
+
+catch ME
+    error('Workspace validation failed: %s', ME.message);
+end
+
+%% =========================
+%  ASSIGN VARIABLES FOR LOOKUP TABLES
+%  =========================
+
+try
+    assignin('base', breakpointVarName, TALO_HighRate);
+    fprintf('Assigned breakpoint variable: %s\n', breakpointVarName);
+catch ME
+    warning('Could not assign breakpoint variable "%s": %s', ...
+        breakpointVarName, ME.message);
+end
+
+for k = 1:numel(lookupFields)
+
+    fieldName = lookupFields{k};
+
+    try
+        tableData = S.(fieldName);
+
+        if isvector(tableData)
+            tableData = tableData(:);
+        end
+
+        nCols = size(tableData, 2);
+
+        for c = 1:nCols
+            tableVarName = sprintf('%s_col%d_table', fieldName, c);
+            assignin('base', tableVarName, tableData(:, c));
+
+            fprintf('Assigned table variable: %s\n', tableVarName);
+        end
+
+    catch ME
+        warning('Could not assign table variables for "%s": %s', ...
+            fieldName, ME.message);
+    end
+end
+
+%% =========================
+%  CREATE OR OPEN MODEL
+%  =========================
+
+try
+    if bdIsLoaded(modelName)
+        fprintf('Model "%s" is already loaded. Reusing it.\n', modelName);
+    elseif exist([modelName '.slx'], 'file')
+        fprintf('Model file "%s.slx" exists. Loading it.\n', modelName);
+        load_system(modelName);
+    else
+        fprintf('Creating new model "%s".\n', modelName);
+        new_system(modelName);
+    end
+
+    open_system(modelName);
+
+catch ME
+    error('Could not create/open model "%s": %s', modelName, ME.message);
+end
+
+%% =========================
+%  OPTIONAL CLEANUP
+%  =========================
+
+if cleanGeneratedBlocks
+
+    % Delete all existing lines.
+    try
+        lines = find_system(modelName, ...
+            'FindAll', 'on', ...
+            'Type', 'line');
+
+        for i = 1:numel(lines)
+            try
+                delete_line(lines(i));
+            catch
+            end
+        end
+
+        fprintf('Deleted existing lines.\n');
+
+    catch ME
+        warning('Could not delete existing lines: %s', ME.message);
+    end
+
+    % Delete old generated lookup/mux blocks.
+    try
+        topBlocks = find_system(modelName, ...
+            'SearchDepth', 1, ...
+            'Type', 'Block');
+
+        for i = 1:numel(topBlocks)
+            blk = topBlocks{i};
+            [~, blkName] = fileparts(blk);
+
+            isLUT = startsWith(blkName, 'LUT_');
+            isMux = startsWith(blkName, 'Mux_');
+
+            isOutportToClean = false;
+            if cleanOutports
+                isOutportToClean = any(strcmp(blkName, lookupFields));
+            end
+
+            if isLUT || isMux || isOutportToClean
+                try
+                    delete_block(blk);
+                    fprintf('Deleted generated block: %s\n', blk);
+                catch ME_inner
+                    warning('Could not delete block "%s": %s', blk, ME_inner.message);
+                end
+            end
+        end
+
+    catch ME
+        warning('Could not clean generated blocks: %s', ME.message);
+    end
+end
+
+%% =========================
+%  LAYOUT SETTINGS
+%  =========================
+
+x0 = 100;
+y0 = 100;
+
+inputWidth = 110;
+inputHeight = 20;
+
+lutX = x0 + 240;
+lutWidth = 210;
+lutHeight = 35;
+
+muxX = x0 + 540;
+muxWidth = 35;
+
+outX = x0 + 680;
+outportWidth = 220;
+outportHeight = 20;
+
+rowSpacing = 150;
+colSpacing = 45;
+
+%% =========================
+%  ADD INPUT BLOCK
+%  =========================
+
+inportName = breakpointField;
+inportPath = [modelName '/' inportName];
+
+try
+    if blockExists(inportPath)
+        fprintf('Input block already exists: %s\n', inportPath);
+        set_param(inportPath, ...
+            'Position', [x0 y0 x0+inputWidth y0+inputHeight]);
+    else
+        add_block('simulink/Sources/In1', inportPath, ...
+            'Position', [x0 y0 x0+inputWidth y0+inputHeight]);
+
+        fprintf('Added input block: %s\n', inportPath);
+    end
+
+catch ME
+    warning('Could not add/reuse input block "%s": %s', ...
+        inportName, ME.message);
+end
+
+%% =========================
+%  ADD LOOKUPS, MUXES, AND OUTPORTS
+%  =========================
+
+for k = 1:numel(lookupFields)
+
+    fieldName = lookupFields{k};
+
+    try
+        tableData = S.(fieldName);
+
+        if isvector(tableData)
+            tableData = tableData(:);
+        end
+
+        nCols = size(tableData, 2);
+
+    catch ME
+        warning('Could not inspect field "%s": %s', fieldName, ME.message);
+        continue;
+    end
+
+    baseY = y0 + (k-1)*rowSpacing;
+
+    muxName = ['Mux_' fieldName];
+    muxPath = [modelName '/' muxName];
+
+    outName = fieldName;
+    outPath = [modelName '/' outName];
+
+    %% Add/configure outport
+
+    try
+        if blockExists(outPath)
+            fprintf('Outport already exists: %s\n', outPath);
+            set_param(outPath, ...
+                'Position', [outX baseY outX+outportWidth baseY+outportHeight]);
+        else
+            add_block('simulink/Sinks/Out1', outPath, ...
+                'Position', [outX baseY outX+outportWidth baseY+outportHeight]);
+
+            fprintf('Added outport: %s\n', outPath);
+        end
+
+    catch ME
+        warning('Could not add/reuse outport "%s": %s', outName, ME.message);
+    end
+
+    %% Add Mux if more than one column
+
+    if nCols > 1
+        muxHeight = max(60, 20*nCols);
+
+        try
+            if blockExists(muxPath)
+                fprintf('Mux already exists: %s\n', muxPath);
+                set_param(muxPath, ...
+                    'Inputs', num2str(nCols), ...
+                    'Position', [muxX baseY-20 muxX+muxWidth baseY-20+muxHeight]);
+            else
+                add_block('simulink/Signal Routing/Mux', muxPath, ...
+                    'Inputs', num2str(nCols), ...
+                    'Position', [muxX baseY-20 muxX+muxWidth baseY-20+muxHeight]);
+
+                fprintf('Added Mux block: %s\n', muxPath);
+            end
+
+        catch ME
+            warning('Could not add/configure Mux "%s": %s', muxName, ME.message);
+        end
+    end
+
+    %% Add one lookup table per column
+
+    for c = 1:nCols
+
+        lutName = sprintf('LUT_%s_col%d', fieldName, c);
+        lutPath = [modelName '/' lutName];
+
+        y = baseY + (c-1)*colSpacing;
+
+        try
+            if blockExists(lutPath)
+                fprintf('Lookup block already exists: %s\n', lutPath);
+                set_param(lutPath, ...
+                    'Position', [lutX y-10 lutX+lutWidth y-10+lutHeight]);
+            else
+                add_block('simulink/Lookup Tables/1-D Lookup Table', lutPath, ...
+                    'Position', [lutX y-10 lutX+lutWidth y-10+lutHeight]);
+
+                fprintf('Added lookup block: %s\n', lutPath);
+            end
+
+        catch ME
+            warning('Could not add/reuse lookup table "%s": %s', ...
+                lutName, ME.message);
+            continue;
+        end
+
+        %% Configure lookup table
+
+        try
+            tableVarName = sprintf('%s_col%d_table', fieldName, c);
+
+            set_param(lutPath, ...
+                'BreakpointsForDimension1', breakpointVarName, ...
+                'Table', tableVarName, ...
+                'InterpMethod', 'Linear point-slope', ...
+                'ExtrapMethod', 'Linear');
+
+            fprintf('Configured lookup table: %s\n', lutName);
+
+        catch ME
+            warning('Could not configure lookup table "%s": %s', ...
+                lutName, ME.message);
+        end
+
+        %% Connect input to lookup
+
+        try
+            add_line(modelName, [inportName '/1'], [lutName '/1'], ...
+                'autorouting', 'on');
+
+            fprintf('Connected %s -> %s\n', inportName, lutName);
+
+        catch ME
+            warning('Could not connect "%s" to "%s". Message: %s', ...
+                inportName, lutName, ME.message);
+        end
+
+        %% Connect lookup output to Mux or directly to Outport
+
+        if nCols > 1
+            try
+                add_line(modelName, [lutName '/1'], sprintf('%s/%d', muxName, c), ...
+                    'autorouting', 'on');
+
+                fprintf('Connected %s -> %s input %d\n', lutName, muxName, c);
+
+            catch ME
+                warning('Could not connect "%s" to "%s" input %d. Message: %s', ...
+                    lutName, muxName, c, ME.message);
+            end
+        else
+            try
+                add_line(modelName, [lutName '/1'], [outName '/1'], ...
+                    'autorouting', 'on');
+
+                fprintf('Connected %s -> %s\n', lutName, outName);
+
+            catch ME
+                warning('Could not connect "%s" to "%s". Message: %s', ...
+                    lutName, outName, ME.message);
+            end
+        end
+
+    end
+
+    %% Connect Mux to Outport if needed
+
+    if nCols > 1
+        try
+            add_line(modelName, [muxName '/1'], [outName '/1'], ...
+                'autorouting', 'on');
+
+            fprintf('Connected %s -> %s\n', muxName, outName);
+
+        catch ME
+            warning('Could not connect "%s" to "%s". Message: %s', ...
+                muxName, outName, ME.message);
+        end
+    end
+
+end
+
+%% =========================
+%  MODEL PARAMETERS
+%  =========================
+
+try
+    set_param(modelName, ...
+        'StopTime', '10', ...
+        'Solver', 'FixedStepAuto');
+
+    fprintf('Model parameters updated.\n');
+
+catch ME
+    warning('Could not set model parameters: %s', ME.message);
+end
+
+%% =========================
+%  ARRANGE AND SAVE
+%  =========================
+
+try
+    Simulink.BlockDiagram.arrangeSystem(modelName);
+    fprintf('Arranged model layout.\n');
+catch ME
+    warning('Could not auto-arrange model: %s', ME.message);
+end
+
+try
+    save_system(modelName);
+    fprintf('Created/updated and saved model: %s.slx\n', modelName);
+
+catch ME
+    warning('Could not save model "%s": %s', modelName, ME.message);
+end
+
+%% =========================
+%  HELPER FUNCTION
+%  =========================
+
+function tf = blockExists(blockPath)
+    try
+        get_param(blockPath, 'Handle');
+        tf = true;
+    catch
+        tf = false;
+    end
+end
