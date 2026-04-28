@@ -1,1 +1,5 @@
-rm -rf /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/RTW.Sources/spirentComponentTest_ccurrt
+sudo mkdir -p /workspaces/simulation/Modules/NGCCommon/Utilities
+
+find /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev -name "writev73MatFile.c"
+
+sudo cp /path/from/find/writev73MatFile.c /workspaces/simulation/Modules/NGCCommon/Utilities/
