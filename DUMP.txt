@@ -1,3 +1,1 @@
-if exist('slprj', 'dir'); rmdir('slprj', 's'); end
-if exist('spirentComponentTest_ccurrt', 'dir'); rmdir('spirentComponentTest_ccurrt', 's'); end
-if exist('spirentComponentTest_grt_rtw', 'dir'); rmdir('spirentComponentTest_grt_rtw', 's'); end
+rm -rf /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/RTW.Sources/spirentComponentTest_ccurrt
