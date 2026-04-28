@@ -1,105 +1,3 @@
-%% create_TALO_lookup_model.m
-% Creates a Simulink model:
-%
-%   TALO Inport
-%       |
-%       +--> 1-D Lookup Table --> Outport 1
-%       +--> 1-D Lookup Table --> Outport 2
-%       +--> ...
-%       +--> 1-D Lookup Table --> Outport 7
-%
-% Assumes the lookup data struct is already loaded in the MATLAB workspace.
-
-clearvars -except myData
-
-%% User settings
-
-modelName = 'TALO_Lookup_Model';
-
-% Name of the struct already loaded in the base workspace
-structName = 'myData';
-
-% Name of the breakpoint variable inside the struct
-breakpointField = 'TALO';
-
-% Names of the 7 variables inside the struct
-lookupFields = {
-    'var1'
-    'var2'
-    'var3'
-    'var4'
-    'var5'
-    'var6'
-    'var7'
-};
-
-%% Check that the struct exists
-
-if ~evalin('base', sprintf('exist(''%s'', ''var'')', structName))
-    error('Struct "%s" does not exist in the base workspace.', structName);
-end
-
-S = evalin('base', structName);
-
-if ~isfield(S, breakpointField)
-    error('Struct "%s" does not contain breakpoint field "%s".', ...
-        structName, breakpointField);
-end
-
-for k = 1:numel(lookupFields)
-    if ~isfield(S, lookupFields{k})
-        error('Struct "%s" does not contain lookup field "%s".', ...
-            structName, lookupFields{k});
-    end
-end
-
-%% Create variables in base workspace for Simulink lookup tables
-
-% Breakpoint vector
-assignin('base', 'TALO_bp', S.(breakpointField));
-
-% Table data vectors
-for k = 1:numel(lookupFields)
-    tableVarName = sprintf('%s_table', lookupFields{k});
-    assignin('base', tableVarName, S.(lookupFields{k}));
-end
-
-%% Start clean
-
-if bdIsLoaded(modelName)
-    close_system(modelName, 0);
-end
-
-if exist([modelName '.slx'], 'file')
-    delete([modelName '.slx']);
-end
-
-new_system(modelName);
-open_system(modelName);
-
-%% Model layout settings
-
-x0 = 100;
-y0 = 100;
-
-inportWidth = 40;
-inportHeight = 20;
-
-lutWidth = 160;
-lutHeight = 45;
-
-outportWidth = 40;
-outportHeight = 20;
-
-rowSpacing = 80;
-
-%% Add TALO input
-
-inportPath = [modelName '/TALO'];
-
-add_block('simulink/Sources/In1', inportPath, ...
-    'Position', [x0 y0 x0+inportWidth y0+inportHeight]);
-
 %% Add lookup tables and outports
 
 for k = 1:numel(lookupFields)
@@ -114,39 +12,116 @@ for k = 1:numel(lookupFields)
     lutPath = [modelName '/' lutName];
     outPath = [modelName '/' outName];
 
-    % Add lookup table
-    add_block('simulink/Lookup Tables/1-D Lookup Table', lutPath, ...
-        'Position', [x0+200 y-12 x0+200+lutWidth y-12+lutHeight]);
+    %% Add lookup table
 
-    % Configure lookup table
-    set_param(lutPath, ...
-        'BreakpointsForDimension1', 'TALO_bp', ...
-        'Table', sprintf('%s_table', fieldName), ...
-        'InterpMethod', 'Linear point-slope', ...
-        'ExtrapMethod', 'Linear');
+    try
+        if blockExists(lutPath)
+            fprintf('Block already exists: %s\n', lutPath);
+        else
+            add_block('simulink/Lookup Tables/1-D Lookup Table', lutPath, ...
+                'Position', [x0+200 y-12 x0+200+lutWidth y-12+lutHeight]);
 
-    % Add outport
-    add_block('simulink/Sinks/Out1', outPath, ...
-        'Position', [x0+450 y x0+450+outportWidth y+outportHeight]);
+            fprintf('Added block: %s\n', lutPath);
+        end
 
-    % Connect TALO to lookup table
-    add_line(modelName, 'TALO/1', [lutName '/1'], ...
-        'autorouting', 'on');
+    catch ME
+        warning('Could not add lookup table "%s": %s', lutName, ME.message);
+        continue;
+    end
 
-    % Connect lookup table to outport
-    add_line(modelName, [lutName '/1'], [outName '/1'], ...
-        'autorouting', 'on');
+    %% Configure lookup table
+
+    try
+        set_param(lutPath, ...
+            'BreakpointsForDimension1', 'TALO_bp', ...
+            'Table', sprintf('%s_table', fieldName), ...
+            'InterpMethod', 'Linear point-slope', ...
+            'ExtrapMethod', 'Linear');
+
+        fprintf('Configured lookup table: %s\n', lutName);
+
+    catch ME
+        warning('Could not configure lookup table "%s": %s', ...
+            lutName, ME.message);
+    end
+
+    %% Add outport
+
+    try
+        if blockExists(outPath)
+            fprintf('Block already exists: %s\n', outPath);
+        else
+            add_block('simulink/Sinks/Out1', outPath, ...
+                'Position', [x0+460 y x0+460+outportWidth y+outportHeight]);
+
+            fprintf('Added block: %s\n', outPath);
+        end
+
+    catch ME
+        warning('Could not add outport "%s": %s', outName, ME.message);
+    end
+
+    %% Connect TALO to lookup table
+
+    try
+        add_line(modelName, 'TALO/1', [lutName '/1'], ...
+            'autorouting', 'on');
+
+        fprintf('Connected TALO -> %s\n', lutName);
+
+    catch ME
+        warning('Could not connect TALO to "%s". It may already be connected. Message: %s', ...
+            lutName, ME.message);
+    end
+
+    %% Connect lookup table to outport
+
+    try
+        add_line(modelName, [lutName '/1'], [outName '/1'], ...
+            'autorouting', 'on');
+
+        fprintf('Connected %s -> %s\n', lutName, outName);
+
+    catch ME
+        warning('Could not connect "%s" to "%s". It may already be connected. Message: %s', ...
+            lutName, outName, ME.message);
+    end
 
 end
 
 %% Set model parameters
 
-set_param(modelName, ...
-    'StopTime', '10', ...
-    'Solver', 'FixedStepAuto');
+try
+    set_param(modelName, ...
+        'StopTime', '10', ...
+        'Solver', 'FixedStepAuto');
+
+    fprintf('Model parameters updated.\n');
+
+catch ME
+    warning('Could not set model parameters: %s', ME.message);
+end
 
 %% Save model
 
-save_system(modelName);
+try
+    save_system(modelName);
+    fprintf('Created/updated and saved model: %s.slx\n', modelName);
 
-fprintf('Created and saved model: %s.slx\n', modelName);
+catch ME
+    warning('Could not save model "%s": %s', modelName, ME.message);
+end
+
+%% Helper function
+
+function tf = blockExists(blockPath)
+% Returns true if a Simulink block exists.
+
+    try
+        get_param(blockPath, 'Handle');
+        tf = true;
+    catch
+        tf = false;
+    end
+
+end
