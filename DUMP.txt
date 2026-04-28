@@ -1,127 +1,19 @@
-%% Add lookup tables and outports
-
-for k = 1:numel(lookupFields)
-
-    fieldName = lookupFields{k};
-
-    y = y0 + (k-1)*rowSpacing;
-
-    lutName = ['LUT_' fieldName];
-    outName = fieldName;
-
-    lutPath = [modelName '/' lutName];
-    outPath = [modelName '/' outName];
-
-    %% Add lookup table
-
-    try
-        if blockExists(lutPath)
-            fprintf('Block already exists: %s\n', lutPath);
-        else
-            add_block('simulink/Lookup Tables/1-D Lookup Table', lutPath, ...
-                'Position', [x0+200 y-12 x0+200+lutWidth y-12+lutHeight]);
-
-            fprintf('Added block: %s\n', lutPath);
-        end
-
-    catch ME
-        warning('Could not add lookup table "%s": %s', lutName, ME.message);
-        continue;
-    end
-
-    %% Configure lookup table
-
-    try
-        set_param(lutPath, ...
-            'BreakpointsForDimension1', 'TALO_bp', ...
-            'Table', sprintf('%s_table', fieldName), ...
-            'InterpMethod', 'Linear point-slope', ...
-            'ExtrapMethod', 'Linear');
-
-        fprintf('Configured lookup table: %s\n', lutName);
-
-    catch ME
-        warning('Could not configure lookup table "%s": %s', ...
-            lutName, ME.message);
-    end
-
-    %% Add outport
-
-    try
-        if blockExists(outPath)
-            fprintf('Block already exists: %s\n', outPath);
-        else
-            add_block('simulink/Sinks/Out1', outPath, ...
-                'Position', [x0+460 y x0+460+outportWidth y+outportHeight]);
-
-            fprintf('Added block: %s\n', outPath);
-        end
-
-    catch ME
-        warning('Could not add outport "%s": %s', outName, ME.message);
-    end
-
-    %% Connect TALO to lookup table
-
-    try
-        add_line(modelName, 'TALO/1', [lutName '/1'], ...
-            'autorouting', 'on');
-
-        fprintf('Connected TALO -> %s\n', lutName);
-
-    catch ME
-        warning('Could not connect TALO to "%s". It may already be connected. Message: %s', ...
-            lutName, ME.message);
-    end
-
-    %% Connect lookup table to outport
-
-    try
-        add_line(modelName, [lutName '/1'], [outName '/1'], ...
-            'autorouting', 'on');
-
-        fprintf('Connected %s -> %s\n', lutName, outName);
-
-    catch ME
-        warning('Could not connect "%s" to "%s". It may already be connected. Message: %s', ...
-            lutName, outName, ME.message);
-    end
-
-end
-
-%% Set model parameters
-
-try
-    set_param(modelName, ...
-        'StopTime', '10', ...
-        'Solver', 'FixedStepAuto');
-
-    fprintf('Model parameters updated.\n');
-
-catch ME
-    warning('Could not set model parameters: %s', ME.message);
-end
-
-%% Save model
-
-try
-    save_system(modelName);
-    fprintf('Created/updated and saved model: %s.slx\n', modelName);
-
-catch ME
-    warning('Could not save model "%s": %s', modelName, ME.message);
-end
-
-%% Helper function
-
-function tf = blockExists(blockPath)
-% Returns true if a Simulink block exists.
-
-    try
-        get_param(blockPath, 'Handle');
-        tf = true;
-    catch
-        tf = false;
-    end
-
-end
+Invalid setting in 'simulinkComponentTest/Subsystem/LUT_TALO_HighRate' for parameter 'BreakpointsForDimension1'.
+Caused by:
+Error evaluating parameter 'BreakpointsForDimension1' in 'simulinkComponentTest/Subsystem/LUT_TALO_HighRate'
+Unrecognized function or variable 'TALO_bp'.
+Variable 'TALO_bp' does not exist.
+Suggested Actions
+Get the variable defined in external sources using Simulink.data.getVariableFromGlobal.
+Load a file into base workspace.
+Fix
+Create a new variable.
+Fix
+Component:Simulink | Category:Model error
+Invalid setting in 'simulinkComponentTest/Subsystem/LUT_TALO_HighRate' for parameter 'Table'.
+Caused by:
+Error evaluating parameter 'Table' in 'simulinkComponentTest/Subsystem/LUT_TALO_HighRate'
+Unrecognized function or variable 'TALO_HighRate_table'.
+Variable 'TALO_HighRate_table' does not exist.
+Suggested Actions
+Get the variable defined in external sources using Simulink.data.getVariableFromGlobal.
