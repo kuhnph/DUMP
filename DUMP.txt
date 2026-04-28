@@ -1,40 +1,152 @@
-top = 'spirentComponentTest';
-ref = 'AirframeWithCaptiveCarry';
+%% create_TALO_lookup_model.m
+% Creates a Simulink model:
+%
+%   TALO Inport
+%       |
+%       +--> 1-D Lookup Table --> Outport 1
+%       +--> 1-D Lookup Table --> Outport 2
+%       +--> ...
+%       +--> 1-D Lookup Table --> Outport 7
+%
+% Assumes the lookup data struct is already loaded in the MATLAB workspace.
 
-% Check direct model-level values
-get_param(top,'SystemTargetFile')
-get_param(ref,'SystemTargetFile')
+clearvars -except myData
 
-% Check active config names again
-get_param(getActiveConfigSet(top),'Name')
-get_param(getActiveConfigSet(ref),'Name')
+%% User settings
 
-% Force RSIM explicitly on the active configs
-set_param(getActiveConfigSet(top), 'SystemTargetFile', 'rsim.tlc');
-set_param(getActiveConfigSet(ref), 'SystemTargetFile', 'rsim.tlc');
+modelName = 'TALO_Lookup_Model';
 
-% Save both models
-save_system(top);
-save_system(ref);
+% Name of the struct already loaded in the base workspace
+structName = 'myData';
 
-bdclose('all');
-clear classes;
-rehash toolboxcache;
+% Name of the breakpoint variable inside the struct
+breakpointField = 'TALO';
 
-open_system(top);
-open_system(ref);
+% Names of the 7 variables inside the struct
+lookupFields = {
+    'var1'
+    'var2'
+    'var3'
+    'var4'
+    'var5'
+    'var6'
+    'var7'
+};
 
-get_param(top,'SystemTargetFile')
-get_param(ref,'SystemTargetFile')
-get_param(getActiveConfigSet(top),'SystemTargetFile')
-get_param(getActiveConfigSet(ref),'SystemTargetFile')
+%% Check that the struct exists
 
-which(top)
-which(ref)
-get_param(top,'FileName')
-get_param(ref,'FileName')
+if ~evalin('base', sprintf('exist(''%s'', ''var'')', structName))
+    error('Struct "%s" does not exist in the base workspace.', structName);
+end
 
-get_param('spirentComponentTest','SystemTargetFile')
-get_param('AirframeWithCaptiveCarry','SystemTargetFile')
-get_param('spirentComponentTest','FileName')
-get_param('AirframeWithCaptiveCarry','FileName')
+S = evalin('base', structName);
+
+if ~isfield(S, breakpointField)
+    error('Struct "%s" does not contain breakpoint field "%s".', ...
+        structName, breakpointField);
+end
+
+for k = 1:numel(lookupFields)
+    if ~isfield(S, lookupFields{k})
+        error('Struct "%s" does not contain lookup field "%s".', ...
+            structName, lookupFields{k});
+    end
+end
+
+%% Create variables in base workspace for Simulink lookup tables
+
+% Breakpoint vector
+assignin('base', 'TALO_bp', S.(breakpointField));
+
+% Table data vectors
+for k = 1:numel(lookupFields)
+    tableVarName = sprintf('%s_table', lookupFields{k});
+    assignin('base', tableVarName, S.(lookupFields{k}));
+end
+
+%% Start clean
+
+if bdIsLoaded(modelName)
+    close_system(modelName, 0);
+end
+
+if exist([modelName '.slx'], 'file')
+    delete([modelName '.slx']);
+end
+
+new_system(modelName);
+open_system(modelName);
+
+%% Model layout settings
+
+x0 = 100;
+y0 = 100;
+
+inportWidth = 40;
+inportHeight = 20;
+
+lutWidth = 160;
+lutHeight = 45;
+
+outportWidth = 40;
+outportHeight = 20;
+
+rowSpacing = 80;
+
+%% Add TALO input
+
+inportPath = [modelName '/TALO'];
+
+add_block('simulink/Sources/In1', inportPath, ...
+    'Position', [x0 y0 x0+inportWidth y0+inportHeight]);
+
+%% Add lookup tables and outports
+
+for k = 1:numel(lookupFields)
+
+    fieldName = lookupFields{k};
+
+    y = y0 + (k-1)*rowSpacing;
+
+    lutName = ['LUT_' fieldName];
+    outName = fieldName;
+
+    lutPath = [modelName '/' lutName];
+    outPath = [modelName '/' outName];
+
+    % Add lookup table
+    add_block('simulink/Lookup Tables/1-D Lookup Table', lutPath, ...
+        'Position', [x0+200 y-12 x0+200+lutWidth y-12+lutHeight]);
+
+    % Configure lookup table
+    set_param(lutPath, ...
+        'BreakpointsForDimension1', 'TALO_bp', ...
+        'Table', sprintf('%s_table', fieldName), ...
+        'InterpMethod', 'Linear point-slope', ...
+        'ExtrapMethod', 'Linear');
+
+    % Add outport
+    add_block('simulink/Sinks/Out1', outPath, ...
+        'Position', [x0+450 y x0+450+outportWidth y+outportHeight]);
+
+    % Connect TALO to lookup table
+    add_line(modelName, 'TALO/1', [lutName '/1'], ...
+        'autorouting', 'on');
+
+    % Connect lookup table to outport
+    add_line(modelName, [lutName '/1'], [outName '/1'], ...
+        'autorouting', 'on');
+
+end
+
+%% Set model parameters
+
+set_param(modelName, ...
+    'StopTime', '10', ...
+    'Solver', 'FixedStepAuto');
+
+%% Save model
+
+save_system(modelName);
+
+fprintf('Created and saved model: %s.slx\n', modelName);
