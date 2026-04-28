@@ -1,19 +1,171 @@
-Invalid setting in 'simulinkComponentTest/Subsystem/LUT_Vehicle0_A_ECEF_HighRate_col1' for parameter 'BreakpointsForDimension1'.
-Caused by:
-Error evaluating parameter 'BreakpointsForDimension1' in 'simulinkComponentTest/Subsystem/LUT_Vehicle0_A_ECEF_HighRate_col1'
-Unrecognized function or variable 'TALO_HighRate_bp'.
-Variable 'TALO_HighRate_bp' does not exist.
-Suggested Actions
-Get the variable defined in external sources using Simulink.data.getVariableFromGlobal.
-Load a file into base workspace.
-Fix
-Create a new variable.
-Fix
-Component:Simulink | Category:Model error
-Invalid setting in 'simulinkComponentTest/Subsystem/LUT_Vehicle0_A_ECEF_HighRate_col1' for parameter 'Table'.
-Caused by:
-Error evaluating parameter 'Table' in 'simulinkComponentTest/Subsystem/LUT_Vehicle0_A_ECEF_HighRate_col1'
-Unrecognized function or variable 'Vehicle0_A_ECEF_HighRate_col1_table'.
-Variable 'Vehicle0_A_ECEF_HighRate_col1_table' does not exist.
-Suggested Actions
-Get the variable defined in external sources using Simulink.data.getVariableFromGlobal.
+%% init_TALO_lookup_workspace.m
+% Initializes base-workspace variables needed by the generated lookup-table model.
+%
+% Run this BEFORE simulating/building:
+%
+%   init_TALO_lookup_workspace
+%   sim('simulinkComponentTest')
+%
+% Assumes your source data struct is already loaded in the MATLAB workspace.
+
+%% =========================
+%  USER SETTINGS
+%  =========================
+
+% Name of the struct already loaded in the workspace.
+% Change this to match your actual struct name.
+structName = 'myData';
+
+% Field used as lookup breakpoint/input.
+breakpointField = 'TALO_HighRate';
+
+% Name of breakpoint variable expected by the Simulink lookup blocks.
+breakpointVarName = 'TALO_HighRate_bp';
+
+% Fields used as lookup table data.
+% Do NOT include TALO_HighRate here.
+lookupFields = {
+    'Vehicle0_X_ECEF_HighRate'
+    'Vehicle0_V_ECEF_HighRate'
+    'Vehicle0_A_ECEF_HighRate'
+    'Vehicle0_wbf_HighRate'
+    'Vehicle0_Euler321_YawPitRoll_HighRate'
+};
+
+%% =========================
+%  GET SOURCE STRUCT
+%  =========================
+
+try
+    % First check current function/script workspace
+    if exist(structName, 'var')
+        S = eval(structName);
+    else
+        % Then check base workspace
+        existsInBase = evalin('base', sprintf('exist(''%s'', ''var'')', structName));
+
+        if existsInBase
+            S = evalin('base', structName);
+        else
+            error('Struct "%s" was not found in the current or base workspace.', structName);
+        end
+    end
+
+    if ~isstruct(S)
+        error('"%s" exists, but it is not a struct.', structName);
+    end
+
+    fprintf('Found source struct: %s\n', structName);
+
+catch ME
+    error('Could not get source struct: %s', ME.message);
+end
+
+%% =========================
+%  VALIDATE BREAKPOINT
+%  =========================
+
+try
+    if ~isfield(S, breakpointField)
+        error('Struct "%s" does not contain field "%s".', structName, breakpointField);
+    end
+
+    TALO_bp = S.(breakpointField);
+
+    if ~isvector(TALO_bp)
+        error('Breakpoint field "%s" must be a vector.', breakpointField);
+    end
+
+    TALO_bp = TALO_bp(:);
+
+    if any(diff(TALO_bp) <= 0)
+        warning(['Breakpoint "%s" is not strictly increasing. ', ...
+                 'Simulink lookup tables usually expect strictly increasing breakpoints.'], ...
+                 breakpointField);
+    end
+
+    assignin('base', breakpointVarName, TALO_bp);
+
+    fprintf('Created base variable: %s [%d x 1]\n', ...
+        breakpointVarName, numel(TALO_bp));
+
+catch ME
+    error('Could not initialize breakpoint variable: %s', ME.message);
+end
+
+%% =========================
+%  CREATE TABLE VARIABLES
+%  =========================
+
+for k = 1:numel(lookupFields)
+
+    fieldName = lookupFields{k};
+
+    try
+        if ~isfield(S, fieldName)
+            warning('Skipping missing field: %s', fieldName);
+            continue;
+        end
+
+        tableData = S.(fieldName);
+
+        if isvector(tableData)
+            tableData = tableData(:);
+        end
+
+        nRows = size(tableData, 1);
+        nCols = size(tableData, 2);
+
+        if nRows ~= numel(TALO_bp)
+            warning(['Skipping field "%s": row count does not match breakpoint length. ', ...
+                     'Rows = %d, breakpoint length = %d.'], ...
+                     fieldName, nRows, numel(TALO_bp));
+            continue;
+        end
+
+        for c = 1:nCols
+            tableVarName = sprintf('%s_col%d_table', fieldName, c);
+            tableColumn = tableData(:, c);
+
+            assignin('base', tableVarName, tableColumn);
+
+            fprintf('Created base variable: %s [%d x 1]\n', ...
+                tableVarName, numel(tableColumn));
+        end
+
+    catch ME
+        warning('Could not initialize table variables for "%s": %s', ...
+            fieldName, ME.message);
+    end
+end
+
+%% =========================
+%  OPTIONAL: DISPLAY CREATED VARIABLES
+%  =========================
+
+fprintf('\nLookup workspace initialization complete.\n\n');
+
+fprintf('Breakpoint variable:\n');
+evalin('base', sprintf('whos %s', breakpointVarName));
+
+fprintf('\nTable variables:\n');
+for k = 1:numel(lookupFields)
+    fieldName = lookupFields{k};
+
+    try
+        tableData = S.(fieldName);
+
+        if isvector(tableData)
+            tableData = tableData(:);
+        end
+
+        nCols = size(tableData, 2);
+
+        for c = 1:nCols
+            tableVarName = sprintf('%s_col%d_table', fieldName, c);
+            evalin('base', sprintf('whos %s', tableVarName));
+        end
+
+    catch
+    end
+end
