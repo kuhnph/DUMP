@@ -1,19 +1,361 @@
-Invalid setting in 'simulinkComponentTest/Subsystem/LUT_TALO_HighRate' for parameter 'BreakpointsForDimension1'.
-Caused by:
-Error evaluating parameter 'BreakpointsForDimension1' in 'simulinkComponentTest/Subsystem/LUT_TALO_HighRate'
-Unrecognized function or variable 'TALO_bp'.
-Variable 'TALO_bp' does not exist.
-Suggested Actions
-Get the variable defined in external sources using Simulink.data.getVariableFromGlobal.
-Load a file into base workspace.
-Fix
-Create a new variable.
-Fix
-Component:Simulink | Category:Model error
-Invalid setting in 'simulinkComponentTest/Subsystem/LUT_TALO_HighRate' for parameter 'Table'.
-Caused by:
-Error evaluating parameter 'Table' in 'simulinkComponentTest/Subsystem/LUT_TALO_HighRate'
-Unrecognized function or variable 'TALO_HighRate_table'.
-Variable 'TALO_HighRate_table' does not exist.
-Suggested Actions
-Get the variable defined in external sources using Simulink.data.getVariableFromGlobal.
+%% create_Talo_HighRate_lookup_model_safe_vector_outputs.m
+% Creates/updates a Simulink model:
+%
+% Talo_HighRate input
+%   -> one 1-D lookup table per column of each variable
+%   -> Mux columns back together
+%   -> one Outport per variable
+%
+% This handles variables that are n x 1 or n x 3.
+
+%% User settings
+
+modelName = 'Talo_HighRate_Lookup_Model';
+
+structName = 'myData';
+
+breakpointField = 'Talo_HighRate';
+
+lookupFields = {
+    'var1'
+    'var2'
+    'var3'
+    'var4'
+    'var5'
+    'var6'
+    'var7'
+};
+
+%% Validate workspace struct
+
+try
+    structExists = evalin('base', sprintf('exist(''%s'', ''var'')', structName));
+
+    if ~structExists
+        error('Struct "%s" does not exist in the base workspace.', structName);
+    end
+
+    S = evalin('base', structName);
+
+    if ~isstruct(S)
+        error('"%s" exists, but it is not a struct.', structName);
+    end
+
+    if ~isfield(S, breakpointField)
+        error('Struct "%s" does not contain breakpoint field "%s".', ...
+            structName, breakpointField);
+    end
+
+    Talo_HighRate = S.(breakpointField);
+
+    if ~isvector(Talo_HighRate)
+        error('Breakpoint field "%s" must be a vector.', breakpointField);
+    end
+
+    Talo_HighRate = Talo_HighRate(:);   % Force column vector
+
+    for k = 1:numel(lookupFields)
+        fieldName = lookupFields{k};
+
+        if ~isfield(S, fieldName)
+            error('Struct "%s" does not contain lookup field "%s".', ...
+                structName, fieldName);
+        end
+
+        tableData = S.(fieldName);
+
+        if size(tableData, 1) ~= numel(Talo_HighRate)
+            error('Field "%s" has %d rows, but Talo_HighRate has %d elements.', ...
+                fieldName, size(tableData, 1), numel(Talo_HighRate));
+        end
+    end
+
+catch ME
+    error('Workspace validation failed: %s', ME.message);
+end
+
+%% Assign lookup variables into base workspace
+
+try
+    assignin('base', 'Talo_HighRate_bp', Talo_HighRate);
+    fprintf('Assigned breakpoint variable: Talo_HighRate_bp\n');
+catch ME
+    warning('Could not assign Talo_HighRate_bp: %s', ME.message);
+end
+
+for k = 1:numel(lookupFields)
+
+    fieldName = lookupFields{k};
+
+    try
+        tableData = S.(fieldName);
+
+        % Force 1-D vectors to column vectors
+        if isvector(tableData)
+            tableData = tableData(:);
+        end
+
+        nCols = size(tableData, 2);
+
+        for c = 1:nCols
+            tableVarName = sprintf('%s_col%d_table', fieldName, c);
+            assignin('base', tableVarName, tableData(:, c));
+
+            fprintf('Assigned table variable: %s\n', tableVarName);
+        end
+
+    catch ME
+        warning('Could not assign table variables for "%s": %s', ...
+            fieldName, ME.message);
+    end
+end
+
+%% Create or open model
+
+try
+    if bdIsLoaded(modelName)
+        fprintf('Model "%s" is already loaded. Reusing it.\n', modelName);
+    elseif exist([modelName '.slx'], 'file')
+        fprintf('Model file "%s.slx" already exists. Loading it.\n', modelName);
+        load_system(modelName);
+    else
+        fprintf('Creating new model "%s".\n', modelName);
+        new_system(modelName);
+    end
+
+    open_system(modelName);
+
+catch ME
+    error('Could not create or open model "%s": %s', modelName, ME.message);
+end
+
+%% Layout settings
+
+x0 = 100;
+y0 = 100;
+
+rowSpacing = 130;
+colSpacing = 45;
+
+lutWidth = 170;
+lutHeight = 35;
+
+muxWidth = 35;
+muxHeight = 70;
+
+outportWidth = 55;
+outportHeight = 20;
+
+inputName = 'Talo_HighRate';
+inputBlockPath = [modelName '/' inputName];
+
+%% Add or reuse Talo_HighRate input block
+
+try
+    if blockExists(inputBlockPath)
+        fprintf('Block already exists: %s\n', inputBlockPath);
+    else
+        add_block('simulink/Sources/In1', inputBlockPath, ...
+            'Position', [x0 y0 x0+80 y0+20]);
+
+        fprintf('Added block: %s\n', inputBlockPath);
+    end
+catch ME
+    warning('Could not add or reuse Talo_HighRate Inport: %s', ME.message);
+end
+
+%% Add lookup tables, muxes, and outports
+
+for k = 1:numel(lookupFields)
+
+    fieldName = lookupFields{k};
+
+    try
+        tableData = S.(fieldName);
+
+        if isvector(tableData)
+            tableData = tableData(:);
+        end
+
+        nCols = size(tableData, 2);
+
+    catch ME
+        warning('Could not inspect field "%s": %s', fieldName, ME.message);
+        continue;
+    end
+
+    baseY = y0 + (k-1)*rowSpacing;
+
+    muxName = ['Mux_' fieldName];
+    muxPath = [modelName '/' muxName];
+
+    outName = fieldName;
+    outPath = [modelName '/' outName];
+
+    %% Add Mux if multiple columns
+
+    if nCols > 1
+        try
+            if blockExists(muxPath)
+                fprintf('Block already exists: %s\n', muxPath);
+            else
+                add_block('simulink/Signal Routing/Mux', muxPath, ...
+                    'Inputs', num2str(nCols), ...
+                    'Position', [x0+460 baseY-20 x0+460+muxWidth baseY-20+muxHeight]);
+
+                fprintf('Added Mux block: %s\n', muxPath);
+            end
+
+            set_param(muxPath, 'Inputs', num2str(nCols));
+
+        catch ME
+            warning('Could not add/configure Mux "%s": %s', muxName, ME.message);
+        end
+    end
+
+    %% Add Outport
+
+    try
+        if blockExists(outPath)
+            fprintf('Block already exists: %s\n', outPath);
+        else
+            add_block('simulink/Sinks/Out1', outPath, ...
+                'Position', [x0+590 baseY x0+590+outportWidth baseY+outportHeight]);
+
+            fprintf('Added Outport block: %s\n', outPath);
+        end
+    catch ME
+        warning('Could not add outport "%s": %s', outName, ME.message);
+    end
+
+    %% Add one lookup table per column
+
+    for c = 1:nCols
+
+        lutName = sprintf('LUT_%s_col%d', fieldName, c);
+        lutPath = [modelName '/' lutName];
+
+        y = baseY + (c-1)*colSpacing;
+
+        try
+            if blockExists(lutPath)
+                fprintf('Block already exists: %s\n', lutPath);
+            else
+                add_block('simulink/Lookup Tables/1-D Lookup Table', lutPath, ...
+                    'Position', [x0+200 y-10 x0+200+lutWidth y-10+lutHeight]);
+
+                fprintf('Added lookup block: %s\n', lutPath);
+            end
+        catch ME
+            warning('Could not add lookup table "%s": %s', lutName, ME.message);
+            continue;
+        end
+
+        %% Configure lookup table
+
+        try
+            tableVarName = sprintf('%s_col%d_table', fieldName, c);
+
+            set_param(lutPath, ...
+                'BreakpointsForDimension1', 'Talo_HighRate_bp', ...
+                'Table', tableVarName, ...
+                'InterpMethod', 'Linear point-slope', ...
+                'ExtrapMethod', 'Linear');
+
+            fprintf('Configured lookup table: %s\n', lutName);
+
+        catch ME
+            warning('Could not configure lookup table "%s": %s', ...
+                lutName, ME.message);
+        end
+
+        %% Connect Talo_HighRate to lookup table
+
+        try
+            add_line(modelName, [inputName '/1'], [lutName '/1'], ...
+                'autorouting', 'on');
+
+            fprintf('Connected %s -> %s\n', inputName, lutName);
+
+        catch ME
+            warning('Could not connect %s to "%s". It may already be connected. Message: %s', ...
+                inputName, lutName, ME.message);
+        end
+
+        %% Connect lookup output
+
+        if nCols > 1
+            try
+                add_line(modelName, [lutName '/1'], sprintf('%s/%d', muxName, c), ...
+                    'autorouting', 'on');
+
+                fprintf('Connected %s -> %s input %d\n', lutName, muxName, c);
+
+            catch ME
+                warning('Could not connect "%s" to "%s" input %d. Message: %s', ...
+                    lutName, muxName, c, ME.message);
+            end
+        else
+            try
+                add_line(modelName, [lutName '/1'], [outName '/1'], ...
+                    'autorouting', 'on');
+
+                fprintf('Connected %s -> %s\n', lutName, outName);
+
+            catch ME
+                warning('Could not connect "%s" to "%s". Message: %s', ...
+                    lutName, outName, ME.message);
+            end
+        end
+    end
+
+    %% Connect Mux to Outport if needed
+
+    if nCols > 1
+        try
+            add_line(modelName, [muxName '/1'], [outName '/1'], ...
+                'autorouting', 'on');
+
+            fprintf('Connected %s -> %s\n', muxName, outName);
+
+        catch ME
+            warning('Could not connect "%s" to "%s". Message: %s', ...
+                muxName, outName, ME.message);
+        end
+    end
+
+end
+
+%% Set model parameters
+
+try
+    set_param(modelName, ...
+        'StopTime', '10', ...
+        'Solver', 'FixedStepAuto');
+
+    fprintf('Model parameters updated.\n');
+
+catch ME
+    warning('Could not set model parameters: %s', ME.message);
+end
+
+%% Save model
+
+try
+    save_system(modelName);
+    fprintf('Created/updated and saved model: %s.slx\n', modelName);
+
+catch ME
+    warning('Could not save model "%s": %s', modelName, ME.message);
+end
+
+%% Helper function
+
+function tf = blockExists(blockPath)
+    try
+        get_param(blockPath, 'Handle');
+        tf = true;
+    catch
+        tf = false;
+    end
+end
