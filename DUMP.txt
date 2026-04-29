@@ -1,11 +1,49 @@
+%% run_with_outputs_check.m
+
 model = 'spirentComponentTest';
 load_system(model);
 
+%% Force output saving settings
+
 set_param(model, ...
-    'SolverType', 'Fixed-step', ...
-    'FixedStep', '1e-3', ...
+    'ReturnWorkspaceOutputs', 'on', ...
+    'SaveTime', 'on', ...
+    'TimeSaveName', 'tout', ...
     'SaveOutput', 'on', ...
     'OutputSaveName', 'yout', ...
     'SaveFormat', 'Dataset');
 
+%% Optional, but useful for your 1000 Hz sim
+set_param(model, ...
+    'SolverType', 'Fixed-step', ...
+    'FixedStep', '1e-3');
+
 save_system(model);
+
+%% Run sim
+
+simOut = sim(model);
+
+%% Show what Simulink returned
+
+disp(simOut)
+
+fprintf('\nVariables inside simOut:\n');
+disp(simOut.who)
+
+%% Try to read yout
+
+if isprop(simOut, 'yout') || any(strcmp(simOut.who, 'yout'))
+    yout = simOut.get('yout');
+
+    fprintf('\nyout exists.\n');
+    disp(yout)
+
+    fprintf('\nNumber of yout elements: %d\n', yout.numElements);
+
+    for k = 1:yout.numElements
+        fprintf('%d: %s\n', k, yout{k}.Name);
+    end
+else
+    warning('No yout was returned. Outport saving is still not active.');
+end
