@@ -1,42 +1,11 @@
-======================================================================================
-spirentComponentTest  Generated code was out of date.  Code generated.  0h 0m 8.3239s 
+model = 'spirentComponentTest';
+load_system(model);
 
-1 of 1 models built (0 models already up to date)
-Build duration: 0h 0m 10.651s
+set_param(model, ...
+    'SolverType', 'Fixed-step', ...
+    'FixedStep', '1e-3', ...
+    'SaveOutput', 'on', ...
+    'OutputSaveName', 'yout', ...
+    'SaveFormat', 'Dataset');
 
-*****END SimWB Compliant Code Generation **********
-
-## Preparing to send the files to the real-time host!
-Warning!!! References to Windows file path(s) detected in model makefile. This may cause build errors.
-Check the following line(s) of spirentComponentTest.mk
-
-	spirentComponentTest.mk:118 S_FUNCTIONS_LIB             =
-
-Attempting to replace all references to absolute path in S_FUNCTIONS_LIB ...
-Done updating all of the rules!
-
-Possible solutions for any build errors resulting from this issue:
-(1) Place the relevant file(s)/folder(s) in the same directory as the Simulink model before using MLToolkit to generate code for the model.
-(2) Ensure that the relevant file(s)/folder(s) are available in the /usr/local/ccursim/project/RTW.Sources folder for the model. Then, 
-    try commenting out the offending lines from the makefile and rebuilding the code.
-.
-## Transferring spirentComponentTest.zip file to real-time host...
-## All source files successfully transferred to real-time host. Ready for Make!
-## Running MAKE ........
-
-Error opening property file '.#spirentComponentTest.mdl' No such file or directory
-|MAKE|
-make[1]: Entering directory '/usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/RTW.Sources/spirentComponentTest_ccurrt/spirentComponentTest_ccurrt'
-|STDERR|make[1]: Warning: File 'Make.useroptions' has modification time 994 s in the future
-g++ -c -DGENSIMWBCODE=1  -O3    -DUSE_RTMODEL -g -fwrapv -fPIC -DMODEL=spirentComponentTest -DRT -DNUMST=2 -DTID01EQ=1 -DNCSTATES=0 -DUNIX -DMT=0 -DHAVESTDIO -DMAT_FILE=0 -I. -I.. -I../R2024b/simulink/include -I../R2024b/extern/include -I../R2024b/rtw/c/src -I../R2024b/rtw/c/src/ext_mode/common -I.. -I../spirentComponentTest_ccurrt -I/workspaces/simulation/ComponentTests/componentTestSpirent -I../R2024b/extern/include -I../R2024b/simulink/include -I../R2024b/rtw/c/src -I../R2024b/rtw/c/src/ext_mode/common  -I/usr/local/ccursim/include     -DNO_CVTSTRUCT  rt_nonfinite.cpp
-g++ -c -DGENSIMWBCODE=1  -O3    -DUSE_RTMODEL -g -fwrapv -fPIC -DMODEL=spirentComponentTest -DRT -DNUMST=2 -DTID01EQ=1 -DNCSTATES=0 -DUNIX -DMT=0 -DHAVESTDIO -DMAT_FILE=0 -I. -I.. -I../R2024b/simulink/include -I../R2024b/extern/include -I../R2024b/rtw/c/src -I../R2024b/rtw/c/src/ext_mode/common -I.. -I../spirentComponentTest_ccurrt -I/workspaces/simulation/ComponentTests/componentTestSpirent -I../R2024b/extern/include -I../R2024b/simulink/include -I../R2024b/rtw/c/src -I../R2024b/rtw/c/src/ext_mode/common  -I/usr/local/ccursim/include     -DNO_CVTSTRUCT  spirentComponentTest_capi.cpp
-g++ -c -DGENSIMWBCODE=1  -O3    -DUSE_RTMODEL -g -fwrapv -fPIC -DMODEL=spirentComponentTest -DRT -DNUMST=2 -DTID01EQ=1 -DNCSTATES=0 -DUNIX -DMT=0 -DHAVESTDIO -DMAT_FILE=0 -I. -I.. -I../R2024b/simulink/include -I../R2024b/extern/include -I../R2024b/rtw/c/src -I../R2024b/rtw/c/src/ext_mode/common -I.. -I../spirentComponentTest_ccurrt -I/workspaces/simulation/ComponentTests/componentTestSpirent -I../R2024b/extern/include -I../R2024b/simulink/include -I../R2024b/rtw/c/src -I../R2024b/rtw/c/src/ext_mode/common  -I/usr/local/ccursim/include     -DNO_CVTSTRUCT  spirentComponentTest_data.cpp
-|STDERR|make[1]: *** No rule to make target '/workspaces/simulation/ComponentTests/componentTestSpirent/writev73MatFile.c', needed by 'writev73MatFile.o'.  Stop.
-make[1]: Leaving directory '/usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/RTW.Sources/spirentComponentTest_ccurrt/spirentComponentTest_ccurrt'
-|STDERR|make: *** [Makefile:5: all] Error 1
-|MAKE|
-ccurCheckTestIC.pl::parseICFile : ERROR; can't open input file /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/RTW//spirentComponentTest/parametersIC.txt : No such file or directoryError using simwb.rtobj/rtwBuild
-
-Error: Unable to Make on real-time host!
-
-Error in simwbTarget
+save_system(model);
