@@ -1,49 +1,37 @@
-%% run_with_outputs_check.m
+> modelOut
+  Simulink.SimulationOutput:
 
-model = 'spirentComponentTest';
-load_system(model);
+                   tout: [200001x1 double] 
+                   yout: [1x1 Simulink.SimulationData.Dataset] 
 
-%% Force output saving settings
+     SimulationMetadata: [1x1 Simulink.SimulationMetadata] 
+           ErrorMessage: [0x0 char] 
 
-set_param(model, ...
-    'ReturnWorkspaceOutputs', 'on', ...
-    'SaveTime', 'on', ...
-    'TimeSaveName', 'tout', ...
-    'SaveOutput', 'on', ...
-    'OutputSaveName', 'yout', ...
-    'SaveFormat', 'Dataset');
 
-%% Optional, but useful for your 1000 Hz sim
-set_param(model, ...
-    'SolverType', 'Fixed-step', ...
-    'FixedStep', '1e-3');
+Variables inside simOut:
+    {'tout'}
+    {'yout'}
 
-save_system(model);
 
-%% Run sim
+yout exists.
+Simulink.SimulationData.Dataset 'yout' with 6 elements
 
-simOut = sim(model);
+                         Name  BlockPath                                
+                         ____  ________________________________________ 
+    1  [1x1 Signal]      ''    spirentComponentTest/SW_A_ECEF          
+    2  [1x1 Signal]      ''    spirentComponentTest/SW_V_ECEF          
+    3  [1x1 Signal]      ''    spirentComponentTest/X_ECEF             
+    4  [1x1 Signal]      ''    spirentComponentTest/SW_w_bf            
+    5  [1x1 Signal]      ''    ...tComponentTest/SW_Euler321_YawPitRoll
+    6  [1x1 Signal]      ''    spirentComponentTest/SW_T_TALO          
 
-%% Show what Simulink returned
+  - Use braces { } to access, modify, or add elements using index.
 
-disp(simOut)
 
-fprintf('\nVariables inside simOut:\n');
-disp(simOut.who)
-
-%% Try to read yout
-
-if isprop(simOut, 'yout') || any(strcmp(simOut.who, 'yout'))
-    yout = simOut.get('yout');
-
-    fprintf('\nyout exists.\n');
-    disp(yout)
-
-    fprintf('\nNumber of yout elements: %d\n', yout.numElements);
-
-    for k = 1:yout.numElements
-        fprintf('%d: %s\n', k, yout{k}.Name);
-    end
-else
-    warning('No yout was returned. Outport saving is still not active.');
-end
+Number of yout elements: 6
+1: 
+2: 
+3: 
+4: 
+5: 
+6: 
