@@ -29,6 +29,22 @@ classdef SimModelBuilder < handle
     end
 
     methods
+
+        function obj = SimModelBuilder(cfg)
+            arguments
+                cfg struct
+            end
+
+            obj.cfg = cfg;
+            obj.modelName = cfg.modelName;
+
+            if isfield(cfg, 'verbose')
+                obj.verbose = cfg.verbose;
+            end
+
+            obj.layout = obj.defaultLayout();
+        end
+
         function buildSubsystemWrapper(obj, sourceModelName, wrapperModelName, subsystemName, busOutportName)
             % buildSubsystemWrapper
             %
@@ -243,21 +259,6 @@ classdef SimModelBuilder < handle
         
             obj.log('Created wrapper model "%s.slx" around source model "%s".', ...
                 wrapperModelName, sourceModelName);
-        end
-
-        function obj = SimModelBuilder(cfg)
-            arguments
-                cfg struct
-            end
-
-            obj.cfg = cfg;
-            obj.modelName = cfg.modelName;
-
-            if isfield(cfg, 'verbose')
-                obj.verbose = cfg.verbose;
-            end
-
-            obj.layout = obj.defaultLayout();
         end
 
         function validateWorkspaceStruct(obj)
