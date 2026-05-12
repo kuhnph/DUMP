@@ -365,24 +365,54 @@ classdef SimModelBuilder < handle
 
         function openOrCreateModel(obj)
             % Create or open model.
-
+            %
+            % Notes:
+            %   - On Linux, file names are case-sensitive.
+            %   - Simulink model names should match the .slx file name exactly.
+            %   - This method handles:
+            %       1. model already loaded
+            %       2. exact .slx file exists
+            %       3. no file exists, so create new model
+            %       4. similar model name exists with different capitalization
+        
             modelName = obj.modelName;
-
+            modelFile = [modelName '.slx'];
+        
             try
                 if bdIsLoaded(modelName)
                     obj.log('Model "%s" is already loaded. Reusing it.', modelName);
-
-                elseif exist([modelName '.slx'], 'file')
-                    obj.log('Model file "%s.slx" exists. Loading it.', modelName);
-                    load_system(modelName);
-
-                else
-                    obj.log('Creating new model "%s".', modelName);
-                    new_system(modelName);
+                    open_system(modelName);
+                    return;
                 end
-
+        
+                % Exact file match
+                if exist(modelFile, 'file') == 2
+                    obj.log('Model file "%s" exists. Loading it.', modelFile);
+                    load_system(modelFile);
+                    open_system(modelName);
+                    return;
+                end
+        
+                % Check for case-insensitive near match in current folder
+                slxFiles = dir('*.slx');
+                slxNames = {slxFiles.name};
+        
+                caseInsensitiveMatch = strcmpi(slxNames, modelFile);
+        
+                if any(caseInsensitiveMatch)
+                    matchedFile = slxNames{find(caseInsensitiveMatch, 1)};
+        
+                    error(['Requested model "%s", but found existing file "%s".\n', ...
+                           'This is probably a capitalization mismatch.\n', ...
+                           'Set cfg.modelName to "%s" or rename the .slx file.'], ...
+                           modelName, matchedFile, erase(matchedFile, '.slx'));
+                end
+        
+                % No existing model file, create a new one
+                obj.log('Creating new model "%s".', modelName);
+                new_system(modelName);
                 open_system(modelName);
-
+        
             catch ME
                 error('Could not create/open model "%s": %s', modelName, ME.message);
             end
