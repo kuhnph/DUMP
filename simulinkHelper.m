@@ -503,6 +503,61 @@ classdef SimModelBuilder < handle
 
     methods (Access = private)
 
+        function sortedBlocks = sortPortsByPortNumber(~, blockPaths)
+            % Sort Inport or Outport blocks by their Port parameter.
+        
+            portNums = zeros(numel(blockPaths), 1);
+        
+            for i = 1:numel(blockPaths)
+                portNums(i) = str2double(get_param(blockPaths{i}, 'Port'));
+            end
+        
+            [~, idx] = sort(portNums);
+            sortedBlocks = blockPaths(idx);
+        end
+
+        function names = getBlockNames(~, blockPaths)
+            % Return final block names from full block paths.
+        
+            names = cell(numel(blockPaths), 1);
+        
+            for i = 1:numel(blockPaths)
+                names{i} = get_param(blockPaths{i}, 'Name');
+            end
+        end
+
+        function clearSubsystemContents(~, subsystemPath)
+            % Delete default In1/Out1/lines inside a newly created subsystem.
+        
+            lines = find_system(subsystemPath, ...
+                'FindAll', 'on', ...
+                'Type', 'line');
+        
+            for i = 1:numel(lines)
+                try
+                    delete_line(lines(i));
+                catch
+                end
+            end
+        
+            blocks = find_system(subsystemPath, ...
+                'SearchDepth', 1, ...
+                'Type', 'Block');
+        
+            for i = 1:numel(blocks)
+                blk = blocks{i};
+        
+                if strcmp(blk, subsystemPath)
+                    continue;
+                end
+        
+                try
+                    delete_block(blk);
+                catch
+                end
+            end
+        end
+
         function createLookupVectorOutput(obj, fieldName, nCols, rowIndex)
             % Create:
             %
