@@ -50,25 +50,20 @@ classdef SimModelBuilder < handle
             %
             % Creates a new wrapper model around an existing Simulink model.
             %
-            % The source model should have top-level Inport and Outport blocks.
+            % This version copies the contents of sourceModelName directly into
+            % one subsystem. It does NOT use a Model Reference block.
             %
             % Result:
             %
-            %   wrapper inports
-            %          |
-            %          v
-            %   subsystem containing a Model block that references sourceModelName
-            %          |
-            %          +--> individual wrapper outports
-            %          |
-            %          +--> Bus Creator --> bus outport
-            %
-            % Example:
-            %   builder.buildSubsystemWrapper( ...
-            %       'TALO_Lookup_Model', ...
-            %       'TALO_Wrapper_Model', ...
-            %       'TALO_Lookup_Subsystem', ...
-            %       'TALO_Bus');
+            %   wrapper model
+            %       |
+            %       +--> top-level inports
+            %       |
+            %       +--> subsystem containing copied source model contents
+            %       |
+            %       +--> individual top-level outports
+            %       |
+            %       +--> Bus Creator --> bus outport
         
             if nargin < 5
                 busOutportName = 'OutputBus';
@@ -127,17 +122,17 @@ classdef SimModelBuilder < handle
         
             xIn = 80;
             xSub = 300;
-            xOut = 700;
-            xBus = 700;
-            xBusOut = 900;
+            xOut = 750;
+            xBus = 750;
+            xBusOut = 950;
         
             y0 = 100;
             dy = 70;
         
-            subWidth = 250;
-            subHeight = max(120, max(nIn, nOut) * dy);
+            subWidth = 300;
+            subHeight = max(160, max(nIn, nOut) * dy);
         
-            %% Add subsystem
+            %% Add one subsystem to wrapper model
         
             subsystemPath = [wrapperModelName '/' subsystemName];
         
@@ -146,46 +141,22 @@ classdef SimModelBuilder < handle
         
             obj.clearSubsystemContents(subsystemPath);
         
-            %% Add Model block inside subsystem
+            %% Copy source model contents directly into subsystem
+            %
+            % This is the key change.
+            % Instead of:
+            %   subsystem -> Model Reference -> source model
+            %
+            % We now do:
+            %   subsystem -> copied blocks/lines from source model
         
-            modelBlockName = [sourceModelName '_Model'];
-            modelBlockPath = [subsystemPath '/' modelBlockName];
-        
-            add_block('simulink/Ports & Subsystems/Model', modelBlockPath, ...
-                'Position', [250 80 500 80 + max(100, nOut * 40)]);
-        
-            set_param(modelBlockPath, 'ModelName', sourceModelName);
-        
-            %% Add subsystem internal inports and connect to Model block
-        
-            for i = 1:nIn
-                inName = inputNames{i};
-        
-                internalInPath = [subsystemPath '/' inName];
-        
-                add_block('simulink/Sources/In1', internalInPath, ...
-                    'Position', [60 80 + (i-1)*dy 120 100 + (i-1)*dy]);
-        
-                add_line(subsystemPath, ...
-                    sprintf('%s/1', inName), ...
-                    sprintf('%s/%d', modelBlockName, i), ...
-                    'autorouting', 'on');
-            end
-        
-            %% Add subsystem internal outports and connect from Model block
-        
-            for i = 1:nOut
-                outName = outputNames{i};
-        
-                internalOutPath = [subsystemPath '/' outName];
-        
-                add_block('simulink/Sinks/Out1', internalOutPath, ...
-                    'Position', [650 80 + (i-1)*dy 710 100 + (i-1)*dy]);
-        
-                add_line(subsystemPath, ...
-                    sprintf('%s/%d', modelBlockName, i), ...
-                    sprintf('%s/1', outName), ...
-                    'autorouting', 'on');
+            try
+                Simulink.BlockDiagram.copyContentsToSubSystem(sourceModelName, subsystemPath);
+                obj.log('Copied contents of "%s" into subsystem "%s".', ...
+                    sourceModelName, subsystemPath);
+            catch ME
+                error('Could not copy contents of "%s" into subsystem "%s": %s', ...
+                    sourceModelName, subsystemPath, ME.message);
             end
         
             %% Add wrapper top-level inports and connect to subsystem
@@ -198,10 +169,9 @@ classdef SimModelBuilder < handle
                 add_block('simulink/Sources/In1', wrapperInPath, ...
                     'Position', [xIn y0 + (i-1)*dy xIn + 80 y0 + 20 + (i-1)*dy]);
         
-                add_line(wrapperModelName, ...
+                obj.safeAddLine(wrapperModelName, ...
                     sprintf('%s/1', inName), ...
-                    sprintf('%s/%d', subsystemName, i), ...
-                    'autorouting', 'on');
+                    sprintf('%s/%d', subsystemName, i));
             end
         
             %% Add individual wrapper outports
@@ -214,15 +184,15 @@ classdef SimModelBuilder < handle
                 add_block('simulink/Sinks/Out1', wrapperOutPath, ...
                     'Position', [xOut y0 + (i-1)*dy xOut + 180 y0 + 20 + (i-1)*dy]);
         
-                add_line(wrapperModelName, ...
+                obj.safeAddLine(wrapperModelName, ...
                     sprintf('%s/%d', subsystemName, i), ...
-                    sprintf('%s/1', outName), ...
-                    'autorouting', 'on');
+                    sprintf('%s/1', outName));
             end
         
             %% Add Bus Creator and bus outport
         
-            busCreatorPath = [wrapperModelName '/BusCreator'];
+            busCreatorName = 'BusCreator';
+            busCreatorPath = [wrapperModelName '/' busCreatorName];
             busOutPath = [wrapperModelName '/' busOutportName];
         
             busTop = y0 + nOut*dy + 80;
@@ -233,19 +203,18 @@ classdef SimModelBuilder < handle
                 'Position', [xBus busTop xBus + 80 busTop + busHeight]);
         
             add_block('simulink/Sinks/Out1', busOutPath, ...
-                'Position', [xBusOut busTop + busHeight/2 - 10 xBusOut + 120 busTop + busHeight/2 + 10]);
+                'Position', [xBusOut busTop + busHeight/2 - 10 ...
+                             xBusOut + 120 busTop + busHeight/2 + 10]);
         
             for i = 1:nOut
-                add_line(wrapperModelName, ...
+                obj.safeAddLine(wrapperModelName, ...
                     sprintf('%s/%d', subsystemName, i), ...
-                    sprintf('BusCreator/%d', i), ...
-                    'autorouting', 'on');
+                    sprintf('%s/%d', busCreatorName, i));
             end
         
-            add_line(wrapperModelName, ...
-                'BusCreator/1', ...
-                sprintf('%s/1', busOutportName), ...
-                'autorouting', 'on');
+            obj.safeAddLine(wrapperModelName, ...
+                sprintf('%s/1', busCreatorName), ...
+                sprintf('%s/1', busOutportName));
         
             %% Finalize
         
@@ -257,8 +226,8 @@ classdef SimModelBuilder < handle
         
             save_system(wrapperModelName);
         
-            obj.log('Created wrapper model "%s.slx" around source model "%s".', ...
-                wrapperModelName, sourceModelName);
+            obj.log('Created wrapper model "%s.slx" with source contents copied into subsystem "%s".', ...
+                wrapperModelName, subsystemName);
         end
 
         function validateWorkspaceStruct(obj)
