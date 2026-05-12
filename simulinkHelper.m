@@ -29,6 +29,222 @@ classdef SimModelBuilder < handle
     end
 
     methods
+        function buildSubsystemWrapper(obj, sourceModelName, wrapperModelName, subsystemName, busOutportName)
+            % buildSubsystemWrapper
+            %
+            % Creates a new wrapper model around an existing Simulink model.
+            %
+            % The source model should have top-level Inport and Outport blocks.
+            %
+            % Result:
+            %
+            %   wrapper inports
+            %          |
+            %          v
+            %   subsystem containing a Model block that references sourceModelName
+            %          |
+            %          +--> individual wrapper outports
+            %          |
+            %          +--> Bus Creator --> bus outport
+            %
+            % Example:
+            %   builder.buildSubsystemWrapper( ...
+            %       'TALO_Lookup_Model', ...
+            %       'TALO_Wrapper_Model', ...
+            %       'TALO_Lookup_Subsystem', ...
+            %       'TALO_Bus');
+        
+            if nargin < 5
+                busOutportName = 'OutputBus';
+            end
+        
+            %% Load source model
+        
+            if ~bdIsLoaded(sourceModelName)
+                load_system(sourceModelName);
+            end
+        
+            %% Read top-level inports/outports from source model
+        
+            srcInports = find_system(sourceModelName, ...
+                'SearchDepth', 1, ...
+                'BlockType', 'Inport');
+        
+            srcOutports = find_system(sourceModelName, ...
+                'SearchDepth', 1, ...
+                'BlockType', 'Outport');
+        
+            if isempty(srcInports)
+                error('Source model "%s" has no top-level Inport blocks.', sourceModelName);
+            end
+        
+            if isempty(srcOutports)
+                error('Source model "%s" has no top-level Outport blocks.', sourceModelName);
+            end
+        
+            srcInports = obj.sortPortsByPortNumber(srcInports);
+            srcOutports = obj.sortPortsByPortNumber(srcOutports);
+        
+            inputNames = obj.getBlockNames(srcInports);
+            outputNames = obj.getBlockNames(srcOutports);
+        
+            nIn = numel(inputNames);
+            nOut = numel(outputNames);
+        
+            obj.log('Source model "%s" has %d inport(s) and %d outport(s).', ...
+                sourceModelName, nIn, nOut);
+        
+            %% Create or reset wrapper model
+        
+            if bdIsLoaded(wrapperModelName)
+                close_system(wrapperModelName, 0);
+            end
+        
+            if exist([wrapperModelName '.slx'], 'file') == 2
+                delete([wrapperModelName '.slx']);
+            end
+        
+            new_system(wrapperModelName);
+            open_system(wrapperModelName);
+        
+            %% Layout settings
+        
+            xIn = 80;
+            xSub = 300;
+            xOut = 700;
+            xBus = 700;
+            xBusOut = 900;
+        
+            y0 = 100;
+            dy = 70;
+        
+            subWidth = 250;
+            subHeight = max(120, max(nIn, nOut) * dy);
+        
+            %% Add subsystem
+        
+            subsystemPath = [wrapperModelName '/' subsystemName];
+        
+            add_block('simulink/Ports & Subsystems/Subsystem', subsystemPath, ...
+                'Position', [xSub y0 xSub + subWidth y0 + subHeight]);
+        
+            obj.clearSubsystemContents(subsystemPath);
+        
+            %% Add Model block inside subsystem
+        
+            modelBlockName = [sourceModelName '_Model'];
+            modelBlockPath = [subsystemPath '/' modelBlockName];
+        
+            add_block('simulink/Ports & Subsystems/Model', modelBlockPath, ...
+                'Position', [250 80 500 80 + max(100, nOut * 40)]);
+        
+            set_param(modelBlockPath, 'ModelName', sourceModelName);
+        
+            %% Add subsystem internal inports and connect to Model block
+        
+            for i = 1:nIn
+                inName = inputNames{i};
+        
+                internalInPath = [subsystemPath '/' inName];
+        
+                add_block('simulink/Sources/In1', internalInPath, ...
+                    'Position', [60 80 + (i-1)*dy 120 100 + (i-1)*dy]);
+        
+                add_line(subsystemPath, ...
+                    sprintf('%s/1', inName), ...
+                    sprintf('%s/%d', modelBlockName, i), ...
+                    'autorouting', 'on');
+            end
+        
+            %% Add subsystem internal outports and connect from Model block
+        
+            for i = 1:nOut
+                outName = outputNames{i};
+        
+                internalOutPath = [subsystemPath '/' outName];
+        
+                add_block('simulink/Sinks/Out1', internalOutPath, ...
+                    'Position', [650 80 + (i-1)*dy 710 100 + (i-1)*dy]);
+        
+                add_line(subsystemPath, ...
+                    sprintf('%s/%d', modelBlockName, i), ...
+                    sprintf('%s/1', outName), ...
+                    'autorouting', 'on');
+            end
+        
+            %% Add wrapper top-level inports and connect to subsystem
+        
+            for i = 1:nIn
+                inName = inputNames{i};
+        
+                wrapperInPath = [wrapperModelName '/' inName];
+        
+                add_block('simulink/Sources/In1', wrapperInPath, ...
+                    'Position', [xIn y0 + (i-1)*dy xIn + 80 y0 + 20 + (i-1)*dy]);
+        
+                add_line(wrapperModelName, ...
+                    sprintf('%s/1', inName), ...
+                    sprintf('%s/%d', subsystemName, i), ...
+                    'autorouting', 'on');
+            end
+        
+            %% Add individual wrapper outports
+        
+            for i = 1:nOut
+                outName = outputNames{i};
+        
+                wrapperOutPath = [wrapperModelName '/' outName];
+        
+                add_block('simulink/Sinks/Out1', wrapperOutPath, ...
+                    'Position', [xOut y0 + (i-1)*dy xOut + 180 y0 + 20 + (i-1)*dy]);
+        
+                add_line(wrapperModelName, ...
+                    sprintf('%s/%d', subsystemName, i), ...
+                    sprintf('%s/1', outName), ...
+                    'autorouting', 'on');
+            end
+        
+            %% Add Bus Creator and bus outport
+        
+            busCreatorPath = [wrapperModelName '/BusCreator'];
+            busOutPath = [wrapperModelName '/' busOutportName];
+        
+            busTop = y0 + nOut*dy + 80;
+            busHeight = max(80, nOut * 20);
+        
+            add_block('simulink/Signal Routing/Bus Creator', busCreatorPath, ...
+                'Inputs', num2str(nOut), ...
+                'Position', [xBus busTop xBus + 80 busTop + busHeight]);
+        
+            add_block('simulink/Sinks/Out1', busOutPath, ...
+                'Position', [xBusOut busTop + busHeight/2 - 10 xBusOut + 120 busTop + busHeight/2 + 10]);
+        
+            for i = 1:nOut
+                add_line(wrapperModelName, ...
+                    sprintf('%s/%d', subsystemName, i), ...
+                    sprintf('BusCreator/%d', i), ...
+                    'autorouting', 'on');
+            end
+        
+            add_line(wrapperModelName, ...
+                'BusCreator/1', ...
+                sprintf('%s/1', busOutportName), ...
+                'autorouting', 'on');
+        
+            %% Finalize
+        
+            try
+                Simulink.BlockDiagram.arrangeSystem(wrapperModelName);
+            catch ME
+                warning('Could not auto-arrange wrapper model: %s', ME.message);
+            end
+        
+            save_system(wrapperModelName);
+        
+            obj.log('Created wrapper model "%s.slx" around source model "%s".', ...
+                wrapperModelName, sourceModelName);
+        end
+
         function obj = SimModelBuilder(cfg)
             arguments
                 cfg struct
