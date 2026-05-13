@@ -1,3 +1,16 @@
-Error using SimModelBuilder/openOrCreateModel (line 171)
-Could not create/open model "Talo_Lookup_Model": Unable to find system or file 'Talo_Lookup_Model'. The closest match is
-'TALO_Lookup_Model' in '/workspaces/simulation/TALO_Lookup_Model.slx'.
+for i = 1:nOut
+    signalName = outputNames{i};
+
+    try
+        lineHandle = add_line(wrapperModelName, ...
+            sprintf('%s/%d', subsystemName, i), ...
+            sprintf('%s/%d', busCreatorName, i), ...
+            'autorouting', 'on');
+
+        set_param(lineHandle, 'Name', signalName);
+
+    catch ME
+        warning('Could not connect named signal "%s" to Bus Creator input %d: %s', ...
+            signalName, i, ME.message);
+    end
+end
