@@ -1,16 +1,15 @@
-for i = 1:nOut
-    signalName = outputNames{i};
+varBus.A_ECEF  = zeros(3,1);
+varBus.V_ECEF  = zeros(3,1);
+varBus.X_ECEF  = zeros(3,1);
 
-    try
-        lineHandle = add_line(wrapperModelName, ...
-            sprintf('%s/%d', subsystemName, i), ...
-            sprintf('%s/%d', busCreatorName, i), ...
-            'autorouting', 'on');
+varBus.q_be    = zeros(3,1);
+varBus.q_bf    = zeros(3,1);
+varBus.q_bi    = zeros(3,1);
 
-        set_param(lineHandle, 'Name', signalName);
+varBus.Euler321 = zeros(3,1);
 
-    catch ME
-        warning('Could not connect named signal "%s" to Bus Creator input %d: %s', ...
-            signalName, i, ME.message);
-    end
-end
+varBus.w_be    = zeros(3,1);
+varBus.w_bf    = zeros(3,1);
+varBus.w_bi    = zeros(3,1);
+
+varBus.wDot_bi = zeros(3,1);
