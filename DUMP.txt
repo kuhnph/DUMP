@@ -1,9 +1,20 @@
-The file containing block diagram 'Talo_Lookup_Model' is shadowed by a file of the same name higher on the MATLAB path. This can cause unexpected behavior. For more information see "Avoiding Problems with Shadowed Files" in the Simulink documentation.
+% setup_StateBus.m
+names = {'A_ECEF','V_ECEF','X_ECEF', ...
+         'q_be','q_bf','q_bi', ...
+         'Euler321', ...
+         'w_be','w_bf','w_bi', ...
+         'wDot_bi'};
 
-The file containing the block diagram is: /workspaces/Talo_Lookup_Model.slx.
-The file higher on the MATLAB path is: /workspaces/__dump/Talo_Lookup_Model.slx
-Component:Simulink | Category:Block diagram warning
-Derived output was of type struct. 'Inherited type' is unsupported for this type and a defined bus object must be used instead.
- Click on 'varBus' and set data type for 'varBus' to be 'Bus: <object name>', where '<object name>' is the name of a bus object from the MATLAB workspace.
-Component:MATLAB Function | Category:Coder error
-Simulink unable to determine sizes and/or types of the outputs for block 'untitled1/MATLAB Function' due to errors in the block body, or limitations of the underlying analysis. The errors might be inaccurate. Fix the indicated errors, or explicitly specify sizes and/or types for all block outputs.
+elems = Simulink.BusElement.empty;
+
+for i = 1:numel(names)
+    elems(i) = Simulink.BusElement;
+    elems(i).Name = names{i};
+    elems(i).Dimensions = [3 1];
+    elems(i).DataType = 'double';
+end
+
+StateBus = Simulink.Bus;
+StateBus.Elements = elems;
+
+assignin('base','StateBus',StateBus);
