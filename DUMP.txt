@@ -1,1 +1,26 @@
-X(n+dt) = X(n) + V(n)*dt + A(n)/2*dt^2+J(n)/6*dt^3 + dJ(n)/24*dt^4
+case 3
+
+    % Body angular velocity
+    w_bf = [0.1;
+            0.2;
+            0.3];
+
+    varBus.w_bf = w_bf;
+
+    omega = norm(w_bf);
+
+    if omega > 0
+
+        theta = omega*t;
+
+        u = w_bf / omega;
+
+        varBus.q_bf = [cos(theta/2);
+                       u*sin(theta/2)];
+
+    else
+
+        % no rotation
+        varBus.q_bf = [1;0;0;0];
+
+    end
