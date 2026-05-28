@@ -1,97 +1,13 @@
-function [varBus] = testCases(t,k)
-    X0_ECEF = [-8766956.82787788;-14810913.4476751;11862335.4911620];
-    varBus.A_ECEF  = zeros(3,1);
-    varBus.V_ECEF  = zeros(3,1);
-    varBus.X_ECEF  = X0_ECEF;
+0 of 1 models built (0 models already up to date)
+Build duration: 0h 0m 7.5403s
+Error using simwb.rtobj/rtwBuild
+Error encountered while executing PostCodeGenCommand for model 'Spirent': File "C:/cps_simulation/Spirent_version.cpp" does not
+exist..
 
-    varBus.q_be    = zeros(4,1);
-    varBus.q_bf    = zeros(4,1);
-    varBus.q_bi    = zeros(4,1);
+Error in simwbTarget
 
-    varBus.Euler321 = zeros(3,1);
-
-    varBus.w_be    = zeros(3,1);
-    varBus.w_bf    = zeros(3,1);
-    varBus.w_bi    = zeros(3,1);
-
-    varBus.wDot_bi = zeros(3,1);
-    switch k
-        case 1
-            %Maintain bus of 0s
-        
-        case 2
-            %Linear Motion
-            varBus.V_ECEF = [-8634.21920996787; -12.7701137038839; 1280.68497382080];
-            varBus.X_ECEF = X0_ECEF + varBus.V_ECEF * t;
-
-    case 3
-        % Body angular velocity
-        w_bf = [0.1;
-                0.2;
-                0.3];
-
-        varBus.w_bf = w_bf;
-        omega = norm(w_bf);
-        
-        if omega > 0
-            theta = omega*t;
-            u = w_bf / omega;
-            varBus.q_bf = [cos(theta/2);    %Scalar first quaternion?
-                        u*sin(theta/2)];
-        else
-            % no rotation
-            varBus.q_bf = [1;0;0;0];
-
-        end
-
-    end
-
-
-end
-
-% setup_StateBus.m
-names = {'A_ECEF','V_ECEF','X_ECEF', ...
-         'q_be','q_bf','q_bi', ...
-         'Euler321', ...
-         'w_be','w_bf','w_bi', ...
-         'wDot_bi'};
-
-elems = Simulink.BusElement.empty;
-
-for i = 1:numel(names)
-    if ~ismember(1,[4,5,6])
-        elems(i) = Simulink.BusElement;
-        elems(i).Name = names{i};
-        elems(i).Dimensions = [3 1];
-        elems(i).DataType = 'double';
-    else
-        elems(i) = Simulink.BusElement;
-        elems(i).Name = names{i};
-        elems(i).Dimensions = [4 1];
-        elems(i).DataType = 'double';
-    end
-
-end
-
-StateBus = Simulink.Bus;
-StateBus.Elements = elems;
-
-assignin('base','StateBus',StateBus);
-
-
-Simulink does not have enough information to determine output sizes for this block. If you think the errors below are inaccurate, try specifying types for the block inputs and/or sizes for the block outputs.
-Component:MATLAB Function | Category:Coder error
-Size mismatch (size [3 x 1] ~= size [4 x 1]) in field 'q_be'.
-The size to the left is the size of the left-hand side of the assignment.
-
-Function 'MATLAB Function' (#837.29.35), line 3, column 1:
-"varBus"
-Launch diagnostic report.
-Component:MATLAB Function | Category:Coder error
-Errors occurred during parsing of 'untitled1/MATLAB Function'.
-Component:MATLAB Function | Category:Coder error
-Simulink unable to determine sizes and/or types of the outputs for block 'untitled1/MATLAB Function' due to errors in the block body, or limitations of the underlying analysis. The errors might be inaccurate. Fix the indicated errors, or explicitly specify sizes and/or types for all block outputs.
-Component:MATLAB Function | Category:Coder error
-Simulink unable to determine sizes and/or types of the outputs for block 'untitled1/MATLAB Function' due to errors in the block body, or limitations of the underlying analysis. The errors might be inaccurate. Fix the indicated errors, or explicitly specify sizes and/or types for all block outputs.
-Component:Simulink | Category:Model error
-Error in port widths or dimensions. 'Output Port 1' of 'untitled1/MATLAB Function/k' is a one dimensional vector with 1 elements. 
+Caused by:
+    Error using zip (line 72)
+    File "C:/cps_simulation/Spirent_version.cpp" does not exist.
+ 
+Error while evaluating UIControl Callback.
