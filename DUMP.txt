@@ -1,13 +1,17 @@
-0 of 1 models built (0 models already up to date)
-Build duration: 0h 0m 7.5403s
-Error using simwb.rtobj/rtwBuild
-Error encountered while executing PostCodeGenCommand for model 'Spirent': File "C:/cps_simulation/Spirent_version.cpp" does not
-exist..
+Possible solutions for any build errors resulting from this issue:
+(1) Place the relevant file(s)/folder(s) in the same directory as the Simulink model before using MLToolkit to generate code for the model.
+(2) Ensure that the relevant file(s)/folder(s) are available in the /usr/local/ccursim/project/RTW.Sources folder for the model. Then, 
+    try commenting out the offending lines from the makefile and rebuilding the code.
+.
+## Transferring MinAtrSWIL.zip file to real-time host...
+## All source files successfully transferred to real-time host. Ready for Make!
+## Running MAKE ........
+
+Error opening property file '.#MinAtrSWIL.mdl' No such file or directory
+Can't open /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/__project.minatr_HWIL/RTW.Sources//MinAtrSWIL_ccurrt/ccur_rtdb.h to extract RTDB name No such file or directoryError using simwb.rtobj/rtwBuild
+
+Error: Unable to Make on real-time host!
 
 Error in simwbTarget
-
-Caused by:
-    Error using zip (line 72)
-    File "C:/cps_simulation/Spirent_version.cpp" does not exist.
  
 Error while evaluating UIControl Callback.
