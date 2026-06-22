@@ -1,1 +1,1 @@
-find . -maxdepth 2 -type f -perm -111 -print
+ccurCheckTestIC.pl::parseICFile : ERROR; can't open input file /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/__project.XX/RTW//XX/parametersIC.txt 
