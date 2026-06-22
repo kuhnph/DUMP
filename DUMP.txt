@@ -1,1 +1,11 @@
-ccurCheckTestIC.pl::parseICFile : ERROR; can't open input file /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/__project.XX/RTW//XX/parametersIC.txt 
+cc -Wl,-rpath=/usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/__project.XX_HWIL/RTW.Sources/XXSWIL_ccurrt -o ../../../RTW/XXSWIL/ccur_initCond   XXSWIL_capi.o XXSWIL_data.o XXSWIL.o rt_sim.o ccur_initCond.o  /usr/local/ccursim/lib/initcondutils-R2024b.o ../slprj/grt/AirframeWithCaptiveCarry/AirframeWithCaptiveCarry_rtwlib.a ../slprj/grt/XX_Sensors/XX_Sensors_rtwlib.a ../slprj/grt/_sharedutils/rtwshared.a   ../slprj/grt/_sharedutils/rtwshared.a  /usr/local/ccursim/lib/ccurfastmath.o -L/usr/local/ccursim/lib/  -lccur_Scheduler -Wl,--start-group -lccur_RTDBClient -lccur_RTDB -Wl,--end-group -lccur_LogUtil -lccur_SockUtil -lccur_IOUtil -lrt -lccur_rt -ldl   -lm -lpthread 
+|STDERR|/bin/ld: cannot
+|STDERR| open output file ../../../RTW/XXSWIL/ccur_initCond: No such file or directory
+|STDERR|collect2: error: ld returned 1 exit status
+|STDERR|make[1]: *** [Makefile:379: ../../../RTW/XXSWIL/ccur_initCond] Error 1
+make[1]: Leaving directory '/usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/__project.XX_HWIL/RTW.Sources/XXSWIL_ccurrt/XXSWIL_ccurrt'
+|STDERR|make: *** [Makefile:7: all] Error 1
+|MAKE|
+ccurCheckTestIC.pl::parseICFile : ERROR; can't open input file /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/__project.XX_HWIL/RTW//XXSWIL/parametersIC.txt : No such file or directoryError using simwb.rtobj/rtwBuild
+
+Error: Unable to Make on real-time host!
