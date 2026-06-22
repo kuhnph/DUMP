@@ -1,1 +1,1 @@
-/usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/RTW//XXX/parametersIC.txt
+/usr/local/CCRT/drivers/ccurpmfc/test/lib
