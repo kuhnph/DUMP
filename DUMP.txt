@@ -1,1 +1,1 @@
-/usr/local/CCRT/drivers/ccurpmfc/test/lib
+find . -maxdepth 2 -type f -perm -111 -print
