@@ -1,1 +1,4 @@
-mkdir -p /usr/local/ccursim/projects/__project.pjkuhn_ihawk-dev/__project.XX_HWIL/RTW/XXSWIL
+>> XX.Tavs.convertTapToHdf5('C:\Users\pjkuhn\gitStuff\dump\2026-06-23 (174) 16_15_58_Truth_Data.tap')
+Unable to resolve the name 'XX.Tavs.convertTapToHdf5'.
+
+C:\Users\pjkuhn\gitStuff\tm_analysis_tools\XX\+Tavs\convertTapToHdf5.m
