@@ -1,4 +1,20 @@
->> XX.Tavs.convertTapToHdf5('C:\Users\pjkuhn\gitStuff\dump\2026-06-23 (174) 16_15_58_Truth_Data.tap')
-Unable to resolve the name 'XX.Tavs.convertTapToHdf5'.
+---------------------------------------------------------------------------
+ValueError                                Traceback (most recent call last)
+Cell In[6], line 3
+      1 import pandas as pd
+----> 3 df = pd.read_hdf("XX.h5")
 
-C:\Users\pjkuhn\gitStuff\tm_analysis_tools\XX\+Tavs\convertTapToHdf5.m
+File c:\Users\pjkuhn\AppData\Local\anaconda3\Lib\site-packages\pandas\io\pytables.py:435, in read_hdf(path_or_buf, key, mode, errors, where, start, stop, columns, iterator, chunksize, **kwargs)
+    433 groups = store.groups()
+    434 if len(groups) == 0:
+--> 435     raise ValueError(
+    436         "Dataset(s) incompatible with Pandas data types, "
+    437         "not table, or no datasets found in HDF5 file."
+    438     )
+    439 candidate_only_group = groups[0]
+    441 # For the HDF file to have only one dataset, all other groups
+    442 # should then be metadata groups for that candidate group. (This
+    443 # assumes that the groups() method enumerates parent groups
+    444 # before their children.)
+
+ValueError: Dataset(s) incompatible with Pandas data types, not table, or no datasets found in HDF5 file.
