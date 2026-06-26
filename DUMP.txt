@@ -1,5 +1,12 @@
 import h5py
 
+def print_item(name, obj):
+    if isinstance(obj, h5py.Dataset):
+        print(f"Dataset: {name}")
+        print(f"    shape = {obj.shape}")
+        print(f"    dtype = {obj.dtype}")
+    elif isinstance(obj, h5py.Group):
+        print(f"Group: {name}")
+
 with h5py.File("XX.h5", "r") as f:
-    print("Top-level keys:")
-    print(list(f.keys()))
+    f.visititems(print_item)
