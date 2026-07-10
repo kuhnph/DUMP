@@ -1,12 +1,52 @@
-import h5py
+[root@ihawk /]# ps -ef | grep cfgsrv
+root     1521731 1511149  0 13:38 pts/2    00:00:00 grep --color=auto cfgsrv
+[root@ihawk /]# ls -l /usr/local/ccursim/bin/cfgsrv
+-rwxr-xr-x 1 root ccursim 29599048 Nov 25  2025 /usr/local/ccursim/bin/cfgsrv
+[root@ihawk /]# sedd -n '30,60p' /etc/rc.d/init.d/simwb
+bash: sedd: command not found...
+Similar command is: 'sed'
+[root@ihawk /]# sed -n '30,60p' /etc/rc.d/init.d/simwb
+        success_cmd="echo"
+        failure_cmd="echo"
+fi
+# define simwb environment
+. /etc/profile.d/simwb.sh
 
-def print_item(name, obj):
-    if isinstance(obj, h5py.Dataset):
-        print(f"Dataset: {name}")
-        print(f"    shape = {obj.shape}")
-        print(f"    dtype = {obj.dtype}")
-    elif isinstance(obj, h5py.Group):
-        print(f"Group: {name}")
+# Look for licensce management files.
+for F in lm.sh mlm.sh; do
+    [ -r /etc/profile.d/$F ] && . /etc/profile.d/$F
+done
 
-with h5py.File("XX.h5", "r") as f:
-    f.visititems(print_item)
+killSimWB() {
+    # usage: killSimWB signal
+    #        Examples: killSimWB INT
+    #                  killSimWB KILL
+    sig="${1:-TERM}"
+    # kill these first so servers aren't respawned
+    pkill -$sig -f cfgsrv.sh
+    pkill -$sig -f logsrv.sh
+    pkill -$sig -f olic.sh
+    sleep 1
+    # kill the core servers
+    pkill -$sig -f logsrv
+    pkill -$sig -f cfgsrv
+    pkill -$sig -f dlfsrv
+    pkill -$sig -f guirpcsrv
+    pkill -$sig -f dlreader
+    sleep 1
+    pkill -$sig -f $SIMWB_ROOT/bin/logger # leave this after the sleep!
+    # kill anything belonging to user root and group ccursim
+    ps h -G ccursim -o user,pid,cmd 2>/dev/null | \
+[root@ihawk /]# /usr/local/ccursim/bin/cfgsrv
+Sorry, you do not have a license to run SimWB Core or your license has expired !
+The license server is expecting a valid SimWB 2025.2-X license. Please verify you have the right license imported.
+To view your current license, please enter "/usr/local/ccursim/bin/ccursimwb_license -l" in the terminal.
+Go to https://license.simwb.com to obtain your Simulation Workbench license file.
+You will need your system Site ID and the machine ID to generate the license file.
+Your Machine ID is: 640f2c9f4432be5e333b2b1254ce2421
+and can be displayed by running the /usr/local/ccursim/bin/machineID command.
+
+[root@ihawk /]# /usr/local/ccursim/bin/ccursimwb_license -l
+List of requested SimWB licenses:
+=============================================================================================
+No license found for SimWB 2025.2-X
