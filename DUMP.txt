@@ -3,24 +3,40 @@ import pandas as pd
 from scipy.io import loadmat
 
 mat = loadmat("rocketLab_trajectory.mat", simplify_cells=True)
-
-# "dat" is the MATLAB structure variable saved with:
-# save("rocketLab_trajectory.mat", "dat")
 dat = mat["dat"]
 
+# Your trajectory contains 23,984 samples
+n_rows = 23984
 columns = {}
 
 for name, values in dat.items():
-    values = np.asarray(values)
+    values = np.asarray(values).squeeze()
 
-    # MATLAB N×1 vector
-    if values.ndim == 1:
-        columns[name] = values
+    # Scalar: repeat it for every trajectory sample
+    if values.ndim == 0:
+        columns[name] = np.full(n_rows, values.item())
 
-    # MATLAB N×M matrix
+    # Vector
+    elif values.ndim == 1:
+        if len(values) == n_rows:
+            columns[name] = values
+        else:
+            print(f"Skipping {name}: unexpected shape {values.shape}")
+
+    # Matrix
     elif values.ndim == 2:
-        for j in range(values.shape[1]):
-            columns[f"{name}_{j + 1}"] = values[:, j]
+        # Ensure samples are rows
+        if values.shape[0] != n_rows and values.shape[1] == n_rows:
+            values = values.T
+
+        if values.shape[0] == n_rows:
+            for j in range(values.shape[1]):
+                columns[f"{name}_{j + 1}"] = values[:, j]
+        else:
+            print(f"Skipping {name}: unexpected shape {values.shape}")
+
+    else:
+        print(f"Skipping {name}: unsupported shape {values.shape}")
 
 df = pd.DataFrame(columns)
 
