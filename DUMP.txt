@@ -1,113 +1,38 @@
 import numpy as np
 from scipy.io import savemat
 
+trajectory_rate = 20.0
+trajectory_duration = 60.0
 
-def create_gps_test_trajectory(
-    duration: float = 120.0,
-    sample_rate: float = 20.0,
-) -> None:
-    """
-    Create smooth NED position, velocity, and acceleration test data.
+dt = 1.0 / trajectory_rate
+trajectory_time = np.arange(
+    0.0,
+    trajectory_duration + dt,
+    dt,
+)
 
-    Coordinate convention:
-        x_north: positive north
-        y_east:  positive east
-        z_down:  positive downward
-    """
-    dt = 1.0 / sample_rate
-    time = np.arange(0.0, duration + dt, dt)
+north_velocity = 10.0
 
-    # Trajectory parameters
-    forward_speed = 25.0       # m/s
-    lateral_amplitude = 100.0  # m
-    altitude_amplitude = 20.0  # m
+position_north = north_velocity * trajectory_time
+position_east = 50.0 * np.sin(0.1 * trajectory_time)
+position_down = np.zeros_like(trajectory_time)
 
-    lateral_period = 40.0      # s
-    altitude_period = 60.0     # s
+velocity_north = np.full_like(
+    trajectory_time,
+    north_velocity,
+)
+velocity_east = 5.0 * np.cos(0.1 * trajectory_time)
+velocity_down = np.zeros_like(trajectory_time)
 
-    lateral_rate = 2.0 * np.pi / lateral_period
-    altitude_rate = 2.0 * np.pi / altitude_period
-
-    # NED position
-    position_north = forward_speed * time
-    position_east = lateral_amplitude * np.sin(lateral_rate * time)
-    position_down = altitude_amplitude * np.sin(altitude_rate * time)
-
-    # NED velocity
-    velocity_north = np.full_like(time, forward_speed)
-    velocity_east = (
-        lateral_amplitude
-        * lateral_rate
-        * np.cos(lateral_rate * time)
-    )
-    velocity_down = (
-        altitude_amplitude
-        * altitude_rate
-        * np.cos(altitude_rate * time)
-    )
-
-    # NED acceleration
-    acceleration_north = np.zeros_like(time)
-    acceleration_east = (
-        -lateral_amplitude
-        * lateral_rate**2
-        * np.sin(lateral_rate * time)
-    )
-    acceleration_down = (
-        -altitude_amplitude
-        * altitude_rate**2
-        * np.sin(altitude_rate * time)
-    )
-
-    position_ned = np.column_stack(
-        (position_north, position_east, position_down)
-    )
-    velocity_ned = np.column_stack(
-        (velocity_north, velocity_east, velocity_down)
-    )
-    acceleration_ned = np.column_stack(
-        (
-            acceleration_north,
-            acceleration_east,
-            acceleration_down,
-        )
-    )
-
-    # Simulink-compatible structures for From Workspace blocks
-    position_signal = {
-        "time": time,
-        "signals": {
-            "values": position_ned,
-            "dimensions": 3,
-        },
-    }
-
-    velocity_signal = {
-        "time": time,
-        "signals": {
-            "values": velocity_ned,
-            "dimensions": 3,
-        },
-    }
-
-    acceleration_signal = {
-        "time": time,
-        "signals": {
-            "values": acceleration_ned,
-            "dimensions": 3,
-        },
-    }
-
-    savemat(
-        "gps_component_test.mat",
-        {
-            "gps_position_ned": position_signal,
-            "gps_velocity_ned": velocity_signal,
-            "truth_acceleration_ned": acceleration_signal,
-            "trajectory_time": time,
-        },
-    )
-
-
-if __name__ == "__main__":
-    create_gps_test_trajectory()
+savemat(
+    "gps_trajectory.mat",
+    {
+        "trajectory_time": trajectory_time,
+        "position_north": position_north,
+        "position_east": position_east,
+        "position_down": position_down,
+        "velocity_north": velocity_north,
+        "velocity_east": velocity_east,
+        "velocity_down": velocity_down,
+    },
+)
