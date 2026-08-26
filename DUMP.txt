@@ -1,3 +1,34 @@
-python3 -c "import sys; sys.path.insert(0,'/usr/local/ccursim/python/PYToolkit'); import simwbClient; print('simwbClient OK')"
+import simwbPath
+import simwbClient as swb
 
-python3 -c "import sys; sys.path.insert(0,'/usr/local/ccursim/python/PYToolkit'); import simwbRT; print('simwbRT OK')"
+
+swb.connect("localhost")
+
+code, tests = swb.testGetList()
+
+if code <= 0:
+    raise RuntimeError(swb.strerror(code))
+
+
+print("=== TESTS ===")
+
+for test_id, test_info in tests.items():
+
+    print(f"\nTest ID: {test_id}")
+    print(f"Description: {test_info.get('description', '')}")
+    print(f"RTDB: {test_info.get('dbname', '')}")
+    print(f"Fixed Step: {test_info.get('fixedstep', '')} us")
+
+    code, sessions = swb.testGetSessions(test_id)
+
+    if code <= 0:
+        print(f"Could not get sessions: {swb.strerror(code)}")
+        continue
+
+    print("Sessions:")
+
+    for session_id, session_info in sessions.items():
+
+        print(f"    Session ID: {session_id}")
+        print(f"        Fixed Step: {session_info.get('fixedstep', '')} us")
+        print(f"        Run Frames: {session_info.get('runFrames', '')}")
