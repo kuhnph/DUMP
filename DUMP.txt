@@ -1,34 +1,9 @@
-import simwbPath
-import simwbClient as swb
+sim_time_item = rtdb.Regex(
+    "^MinAtrSWIL\\.SW_time\\.BusObject_Timelocal\\.T_Simulation$",
+    blind=True
+)[0]
 
-
-swb.connect("localhost")
-
-code, tests = swb.testGetList()
-
-if code <= 0:
-    raise RuntimeError(swb.strerror(code))
-
-
-print("=== TESTS ===")
-
-for test_id, test_info in tests.items():
-
-    print(f"\nTest ID: {test_id}")
-    print(f"Description: {test_info.get('description', '')}")
-    print(f"RTDB: {test_info.get('dbname', '')}")
-    print(f"Fixed Step: {test_info.get('fixedstep', '')} us")
-
-    code, sessions = swb.testGetSessions(test_id)
-
-    if code <= 0:
-        print(f"Could not get sessions: {swb.strerror(code)}")
-        continue
-
-    print("Sessions:")
-
-    for session_id, session_info in sessions.items():
-
-        print(f"    Session ID: {session_id}")
-        print(f"        Fixed Step: {session_info.get('fixedstep', '')} us")
-        print(f"        Run Frames: {session_info.get('runFrames', '')}")
+tialo_item = rtdb.Regex(
+    "^MinAtrSWIL\\.SW_time\\.BusObject_Timelocal\\.T_TIALO$",
+    blind=True
+)[0]
