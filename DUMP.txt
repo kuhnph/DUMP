@@ -1,3 +1,7 @@
-curl -fL \
-  'https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-vscode-remote/vsextensions/remote-ssh/0.124.0/vspackage' \
-  -o remote-ssh-0.124.0.vsix
+cd ~/Desktop/git
+
+rm remote-ssh-0.124.0.vsix
+
+curl -fL --compressed \
+'https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-vscode-remote/vsextensions/remote-ssh/0.124.0/vspackage' \
+-o remote-ssh-0.124.0.vsix
