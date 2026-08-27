@@ -1,2 +1,3 @@
-wget -O remote-ssh-0.124.0.vsix \
-'https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-vscode-remote/vsextensions/remote-ssh/0.124.0/vspackage'
+curl -fL \
+  'https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-vscode-remote/vsextensions/remote-ssh/0.124.0/vspackage' \
+  -o remote-ssh-0.124.0.vsix
