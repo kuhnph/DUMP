@@ -1,9 +1,2 @@
-sim_time_item = rtdb.Regex(
-    "^MinAtrSWIL\\.SW_time\\.BusObject_Timelocal\\.T_Simulation$",
-    blind=True
-)[0]
-
-tialo_item = rtdb.Regex(
-    "^MinAtrSWIL\\.SW_time\\.BusObject_Timelocal\\.T_TIALO$",
-    blind=True
-)[0]
+wget -O remote-ssh-0.124.0.vsix \
+'https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-vscode-remote/vsextensions/remote-ssh/0.124.0/vspackage'
