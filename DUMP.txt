@@ -11,128 +11,66 @@ import simwbConstants
 TIME_RTDB = "SW_T_Simulation"
 
 
-# =============================================================================
-# CONNECT TO SIMWB
-# =============================================================================
-
-ret = simwbRT.mapRTDB()
-
-if ret < 0:
-    sys.exit(1)
-
+simwbRT.mapRTDB()
 
 simwbRT.initLog(
     os.path.basename(sys.argv[1])
 )
 
-
-simwbRT.logMessage(
-    "pyTime starting"
-)
-
-
-# =============================================================================
-# ATTACH TO SCHEDULER
-# =============================================================================
-
-ret = simwbRT.initSched(
+simwbRT.initSched(
     sys.argv[1]
 )
 
-if ret < 0:
-
-    simwbRT.logMessage(
-        "pyTime: initSched failed"
-    )
-
-    sys.exit(1)
-
-
-# =============================================================================
-# SIMULATION INFORMATION
-# =============================================================================
 
 frame_rate = float(
     simwbRT.getFrameRate()
 )
 
-
-simwbRT.logMessage(
-    "pyTime frame rate = %f Hz"
-    % frame_rate
-)
-
-
-if frame_rate <= 0.0:
-
-    simwbRT.logMessage(
-        "pyTime: invalid frame rate"
-    )
-
-    sys.exit(1)
-
-
 dt = 1.0 / frame_rate
 
-
-# =============================================================================
-# INITIALIZATION CYCLES
-# =============================================================================
 
 try:
 
     for i in range(simwbConstants.SCHED_INITCYCLES):
-
         simwbRT.waitNextFrame()
 
 
-    # Capture the frame count when normal execution begins.
-    #
-    # This makes SW_T_Simulation begin near 0.0 instead of including
-    # SimWB's initialization frames.
     start_frame = simwbRT.getFrameCount()
 
-
-    simwbRT.logMessage(
-        "pyTime normal execution begins at frame %d"
-        % start_frame
-    )
-
-
-    # =========================================================================
-    # REAL-TIME LOOP
-    # =========================================================================
 
     while True:
 
         simwbRT.waitNextFrame()
 
-
         frame_count = simwbRT.getFrameCount()
 
-
-        # Time relative to the first normal model frame
         relative_frame = frame_count - start_frame
 
         t_simulation = float(relative_frame) * dt
 
 
-        # Write scalar RTDB value.
-        ret = simwbRT.setCVTValue(
+        # IMPORTANT:
+        # SW_T_Simulation is a scalar double,
+        # so write a scalar rather than [scalar].
+        simwbRT.setCVTValue(
             TIME_RTDB,
-            [t_simulation]
+            t_simulation
         )
 
 
-        # Only log occasionally so we do not spam the logger.
         if relative_frame % 1200 == 0:
 
+            # Read the value back immediately after writing it.
+            readback = simwbRT.getCVTValue(
+                TIME_RTDB
+            )
+
             simwbRT.logMessage(
-                "pyTime frame=%d t=%f setCVTValue return=%s"
+                "frame=%d calculated=%f RTDB readback=%s"
                 % (
                     frame_count,
                     t_simulation,
-                    str(ret)
+                    str(readback)
                 )
             )
 
