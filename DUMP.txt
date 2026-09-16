@@ -8,7 +8,7 @@ import simwbRT
 import simwbConstants
 
 
-TIME_RTDB = "SW_T_Simulation"
+TIME_RTDB = "Spirent.SW_T_Simulation"
 
 
 simwbRT.mapRTDB()
@@ -16,6 +16,26 @@ simwbRT.mapRTDB()
 simwbRT.initLog(
     os.path.basename(sys.argv[1])
 )
+
+
+simwbRT.logMessage(
+    "RTDB name = %s"
+    % str(simwbRT.getRTDBName())
+)
+
+
+value = simwbRT.getCVTValue(
+    TIME_RTDB
+)
+
+simwbRT.logMessage(
+    "%s initial value = %s"
+    % (
+        TIME_RTDB,
+        str(value)
+    )
+)
+
 
 simwbRT.initSched(
     sys.argv[1]
@@ -49,9 +69,6 @@ try:
         t_simulation = float(relative_frame) * dt
 
 
-        # IMPORTANT:
-        # SW_T_Simulation is a scalar double,
-        # so write a scalar rather than [scalar].
         simwbRT.setCVTValue(
             TIME_RTDB,
             t_simulation
@@ -60,7 +77,6 @@ try:
 
         if relative_frame % 1200 == 0:
 
-            # Read the value back immediately after writing it.
             readback = simwbRT.getCVTValue(
                 TIME_RTDB
             )
