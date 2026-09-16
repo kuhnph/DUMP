@@ -8,10 +8,6 @@ import simwbRT
 import simwbConstants
 
 
-# =============================================================================
-# RTDB VARIABLE
-# =============================================================================
-
 TIME_RTDB = "SW_T_Simulation"
 
 
@@ -19,47 +15,68 @@ TIME_RTDB = "SW_T_Simulation"
 # CONNECT TO SIMWB
 # =============================================================================
 
-simwbRT.mapRTDB()
+ret = simwbRT.mapRTDB()
+
+if ret < 0:
+    sys.exit(1)
+
 
 simwbRT.initLog(
     os.path.basename(sys.argv[1])
 )
 
-simwbRT.initSched(
+
+simwbRT.logMessage(
+    "pyTime starting"
+)
+
+
+# =============================================================================
+# ATTACH TO SCHEDULER
+# =============================================================================
+
+ret = simwbRT.initSched(
     sys.argv[1]
 )
 
+if ret < 0:
 
-# =============================================================================
-# GET SIMULATION FRAME INFORMATION
-# =============================================================================
-
-frame_rate = simwbRT.getFrameRate()
-
-if frame_rate <= 0:
     simwbRT.logMessage(
-        "Invalid SimWB frame rate: %s"
-        % str(frame_rate)
+        "pyTime: initSched failed"
     )
 
-    simwbRT.initFailed()
     sys.exit(1)
 
 
-dt = 1.0 / float(frame_rate)
+# =============================================================================
+# SIMULATION INFORMATION
+# =============================================================================
 
-
-simwbRT.logMessage(
-    "Time model initialized: frame rate = %.3f Hz, dt = %.9f s"
-    % (
-        frame_rate,
-        dt
-    )
+frame_rate = float(
+    simwbRT.getFrameRate()
 )
 
 
+simwbRT.logMessage(
+    "pyTime frame rate = %f Hz"
+    % frame_rate
+)
+
+
+if frame_rate <= 0.0:
+
+    simwbRT.logMessage(
+        "pyTime: invalid frame rate"
+    )
+
+    sys.exit(1)
+
+
+dt = 1.0 / frame_rate
+
+
 # =============================================================================
-# SCHEDULER INITIALIZATION CYCLES
+# INITIALIZATION CYCLES
 # =============================================================================
 
 try:
@@ -69,46 +86,61 @@ try:
         simwbRT.waitNextFrame()
 
 
+    # Capture the frame count when normal execution begins.
+    #
+    # This makes SW_T_Simulation begin near 0.0 instead of including
+    # SimWB's initialization frames.
+    start_frame = simwbRT.getFrameCount()
+
+
+    simwbRT.logMessage(
+        "pyTime normal execution begins at frame %d"
+        % start_frame
+    )
+
+
     # =========================================================================
     # REAL-TIME LOOP
     # =========================================================================
 
     while True:
 
-        # Wait for the next SimWB frame
         simwbRT.waitNextFrame()
 
-
-        # ---------------------------------------------------------------------
-        # Get current frame number
-        # ---------------------------------------------------------------------
 
         frame_count = simwbRT.getFrameCount()
 
 
-        # ---------------------------------------------------------------------
-        # Convert frame count to simulation time
-        #
-        # t = frame_number * timestep
-        # ---------------------------------------------------------------------
+        # Time relative to the first normal model frame
+        relative_frame = frame_count - start_frame
 
-        t_simulation = float(frame_count) * dt
+        t_simulation = float(relative_frame) * dt
 
 
-        # ---------------------------------------------------------------------
-        # Write simulation time into the RTDB
-        # ---------------------------------------------------------------------
-
-        simwbRT.setCVTValue(
+        # Write scalar RTDB value.
+        ret = simwbRT.setCVTValue(
             TIME_RTDB,
             [t_simulation]
         )
 
 
+        # Only log occasionally so we do not spam the logger.
+        if relative_frame % 1200 == 0:
+
+            simwbRT.logMessage(
+                "pyTime frame=%d t=%f setCVTValue return=%s"
+                % (
+                    frame_count,
+                    t_simulation,
+                    str(ret)
+                )
+            )
+
+
 except KeyboardInterrupt:
 
     simwbRT.logMessage(
-        "Simulation time model shutting down."
+        "pyTime shutting down"
     )
 
     sys.exit(0)
