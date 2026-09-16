@@ -11,64 +11,64 @@ import simwbRT
 
 
 # =============================================================================
-# USER CONFIGURATION
+# RTDB VARIABLE NAMES
 # =============================================================================
 
-# RTDB variable supplying trajectory time to this model.
-#
-# Change this if the actual RTDB variable has a different name.
-TIME_RTDB = "time"
+# Simulation time supplied through the SimWB RTDB
+TIME_RTDB = "SW_T_Simulation"
 
-# RTDB output variable names.
-#
-# These names should EXACTLY match the RTDB variables used as inputs by the
-# Spirent / user-motion model.
-X_ECEF_RTDB = "X_ECEF"
-V_ECEF_RTDB = "V_ECEF"
-A_ECEF_RTDB = "A_ECEF"
-J_ECEF_RTDB = "J_ECEF"
-
-YAW_RTDB   = "yaw"
-PITCH_RTDB = "pitch"
-ROLL_RTDB  = "roll"
+# Trajectory outputs consumed by the Spirent model
+X_ECEF_RTDB = "SW_Xecef"
+V_ECEF_RTDB = "SW_Vecef"
+A_ECEF_RTDB = "SW_Aecef"
+J_ECEF_RTDB = "SW_Jecef"
+EULER_RTDB  = "SW_Euler"
 
 
-# CSV file is expected to live in the same directory as this Python model.
-#
-# Expected CSV column order:
-#
-#  0  time
-#
-#  1  X_ECEF_1
-#  2  X_ECEF_2
-#  3  X_ECEF_3
-#
-#  4  V_ECEF_1
-#  5  V_ECEF_2
-#  6  V_ECEF_3
-#
-#  7  A_ECEF_1
-#  8  A_ECEF_2
-#  9  A_ECEF_3
-#
-# 10  J_ECEF_1
-# 11  J_ECEF_2
-# 12  J_ECEF_3
-#
-# 13  yaw
-# 14  pitch
-# 15  roll
-#
+# =============================================================================
+# TRAJECTORY FILE
+# =============================================================================
+
+# Place firefly_trac.csv in the same directory as this Python model.
 MODEL_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE = os.path.join(MODEL_DIRECTORY, "firefly_trac.csv")
 
 
 # =============================================================================
-# TRAJECTORY CLASS
+# CSV FORMAT
+# =============================================================================
+#
+# Expected column order:
+#
+#  0   time
+#
+#  1   X_ECEF_1
+#  2   X_ECEF_2
+#  3   X_ECEF_3
+#
+#  4   V_ECEF_1
+#  5   V_ECEF_2
+#  6   V_ECEF_3
+#
+#  7   A_ECEF_1
+#  8   A_ECEF_2
+#  9   A_ECEF_3
+#
+# 10   J_ECEF_1
+# 11   J_ECEF_2
+# 12   J_ECEF_3
+#
+# 13   yaw
+# 14   pitch
+# 15   roll
+#
 # =============================================================================
 
+
 class Trajectory:
+
     def __init__(self, filename):
+
         self.time = []
         self.data = []
 
@@ -79,80 +79,76 @@ class Trajectory:
                 "Trajectory file must contain at least two valid data rows."
             )
 
-        # Check that time is strictly increasing.
+        # Make sure time increases monotonically
         for i in range(1, len(self.time)):
             if self.time[i] <= self.time[i - 1]:
                 raise RuntimeError(
-                    "Trajectory time must be strictly increasing. "
-                    "Invalid points at rows {} and {}.".format(i, i + 1)
+                    "Trajectory time is not strictly increasing at index {}."
+                    .format(i)
                 )
 
 
     def _load_csv(self, filename):
-        """
-        Read trajectory CSV into memory once during initialization.
-
-        Non-numeric rows such as a header are ignored.
-
-        Each valid row must contain exactly 16 columns:
-            time
-            X_ECEF[3]
-            V_ECEF[3]
-            A_ECEF[3]
-            J_ECEF[3]
-            yaw
-            pitch
-            roll
-        """
 
         with open(filename, "r") as f:
+
             reader = csv.reader(f)
 
             for row in reader:
 
+                # Each valid row must contain 16 values
                 if len(row) != 16:
                     continue
 
                 try:
-                    values = [float(value.strip()) for value in row]
+                    values = [
+                        float(value.strip())
+                        for value in row
+                    ]
+
                 except ValueError:
-                    # This allows a text header to exist in the CSV.
+                    # Allows the CSV to contain a text header
                     continue
 
+
+                # Column 0 = time
                 self.time.append(values[0])
 
-                # Store only the 15 trajectory outputs.
+                # Columns 1:16 = trajectory data
                 self.data.append(values[1:])
 
 
     def sample(self, t):
         """
-        Linearly interpolate the entire trajectory at time t.
+        Interpolate the trajectory at simulation time t.
 
-        Returns a 15-element list in this order:
+        Returns:
 
-            0-2     X_ECEF
-            3-5     V_ECEF
-            6-8     A_ECEF
-            9-11    J_ECEF
-            12      yaw
-            13      pitch
-            14      roll
+            values[0:3]    X_ECEF
+            values[3:6]    V_ECEF
+            values[6:9]    A_ECEF
+            values[9:12]   J_ECEF
+            values[12:15]  yaw, pitch, roll
         """
 
-        # Before trajectory starts -> hold first point.
+        # Before the beginning of the trajectory,
+        # hold the first trajectory point.
         if t <= self.time[0]:
             return self.data[0]
 
-        # After trajectory ends -> hold final point.
+
+        # After the end of the trajectory,
+        # hold the final trajectory point.
         if t >= self.time[-1]:
             return self.data[-1]
 
-        # Find:
+
+        # Find index i such that:
         #
-        #       time[i] <= t < time[i+1]
+        # self.time[i] <= t < self.time[i + 1]
         #
         i = bisect.bisect_right(self.time, t) - 1
+
 
         t0 = self.time[i]
         t1 = self.time[i + 1]
@@ -160,80 +156,83 @@ class Trajectory:
         y0 = self.data[i]
         y1 = self.data[i + 1]
 
+
+        # Linear interpolation fraction
         alpha = (t - t0) / (t1 - t0)
 
-        # Interpolate all 15 outputs.
-        return [
+
+        # Interpolate all 15 trajectory values
+        values = [
             y0[j] + alpha * (y1[j] - y0[j])
             for j in range(15)
         ]
 
+        return values
+
 
 # =============================================================================
-# RTDB INITIALIZATION
+# RTDB HELPER
 # =============================================================================
 
 def get_rtdb_index(name):
-    """
-    Look up an RTDB item once during initialization.
-
-    Index-based RTDB access is used during the real-time loop because it is
-    slightly faster than looking up variables by name every frame.
-    """
 
     index = simwbRT.getItemIndex(name)
 
     if index < 0:
         raise RuntimeError(
-            "Could not find RTDB variable '{}'.".format(name)
+            "Could not find RTDB variable: {}".format(name)
         )
 
     return index
 
 
 # =============================================================================
-# MAIN MODEL
+# MAIN SIMWB MODEL
 # =============================================================================
 
 def main():
 
     # -------------------------------------------------------------------------
-    # Connect this Python model to the active SimWB RTDB.
+    # Map the active SimWB RTDB
     # -------------------------------------------------------------------------
 
     if simwbRT.mapRTDB() < 0:
-        raise RuntimeError("Failed to map active SimWB RTDB.")
+        raise RuntimeError(
+            "Failed to map active SimWB RTDB."
+        )
 
 
     # -------------------------------------------------------------------------
-    # Initialize SimWB logging.
-    #
-    # argv[1] is supplied by the SimWB scheduler when the model is launched.
+    # Scheduler / log name
     # -------------------------------------------------------------------------
 
     if len(sys.argv) > 1:
+
         scheduler_name = sys.argv[1]
         log_name = os.path.basename(sys.argv[1])
+
     else:
-        # Mainly useful if executing manually for debugging.
+
+        # Useful if manually executing during debugging
         scheduler_name = "TrajectoryModel"
         log_name = "TrajectoryModel"
+
 
     simwbRT.initLog(log_name)
 
 
     # -------------------------------------------------------------------------
-    # Read the trajectory ONCE.
-    #
-    # The CSV is NOT opened again during the real-time simulation loop.
+    # Load trajectory ONCE during initialization
     # -------------------------------------------------------------------------
 
     try:
+
         trajectory = Trajectory(CSV_FILE)
 
     except Exception as error:
+
         simwbRT.logMessage(
-            "Trajectory initialization failed: {}".format(error)
+            "Failed to load trajectory: {}".format(error)
         )
 
         simwbRT.initFailed()
@@ -241,35 +240,37 @@ def main():
 
 
     # -------------------------------------------------------------------------
-    # Get RTDB indices ONCE.
-    #
-    # Expected RTDB dimensions:
-    #
-    # time       scalar
-    #
-    # X_ECEF     double[3]
-    # V_ECEF     double[3]
-    # A_ECEF     double[3]
-    # J_ECEF     double[3]
-    #
-    # yaw        scalar
-    # pitch      scalar
-    # roll       scalar
+    # Find RTDB variables ONCE during initialization
     # -------------------------------------------------------------------------
 
     try:
-        time_index = get_rtdb_index(TIME_RTDB)
 
-        x_ecef_index = get_rtdb_index(X_ECEF_RTDB)
-        v_ecef_index = get_rtdb_index(V_ECEF_RTDB)
-        a_ecef_index = get_rtdb_index(A_ECEF_RTDB)
-        j_ecef_index = get_rtdb_index(J_ECEF_RTDB)
+        time_index = get_rtdb_index(
+            TIME_RTDB
+        )
 
-        yaw_index   = get_rtdb_index(YAW_RTDB)
-        pitch_index = get_rtdb_index(PITCH_RTDB)
-        roll_index  = get_rtdb_index(ROLL_RTDB)
+        x_ecef_index = get_rtdb_index(
+            X_ECEF_RTDB
+        )
+
+        v_ecef_index = get_rtdb_index(
+            V_ECEF_RTDB
+        )
+
+        a_ecef_index = get_rtdb_index(
+            A_ECEF_RTDB
+        )
+
+        j_ecef_index = get_rtdb_index(
+            J_ECEF_RTDB
+        )
+
+        euler_index = get_rtdb_index(
+            EULER_RTDB
+        )
 
     except Exception as error:
+
         simwbRT.logMessage(
             "RTDB initialization failed: {}".format(error)
         )
@@ -279,10 +280,7 @@ def main():
 
 
     # -------------------------------------------------------------------------
-    # Preallocate output lists.
-    #
-    # setCVTValueFromIndex() expects values to be supplied as Python lists.
-    # Scalars therefore use one-element lists.
+    # Preallocate output arrays
     # -------------------------------------------------------------------------
 
     x_ecef = [0.0, 0.0, 0.0]
@@ -290,17 +288,17 @@ def main():
     a_ecef = [0.0, 0.0, 0.0]
     j_ecef = [0.0, 0.0, 0.0]
 
-    yaw   = [0.0]
-    pitch = [0.0]
-    roll  = [0.0]
+    euler = [0.0, 0.0, 0.0]
 
 
     # -------------------------------------------------------------------------
-    # Log basic initialization information.
+    # Initialization log message
     # -------------------------------------------------------------------------
 
     simwbRT.logMessage(
-        "Trajectory loaded: {} points, {:.6f} to {:.6f} seconds".format(
+        "Trajectory loaded successfully: {} samples, "
+        "time {:.6f} to {:.6f} seconds."
+        .format(
             len(trajectory.time),
             trajectory.time[0],
             trajectory.time[-1]
@@ -309,112 +307,157 @@ def main():
 
 
     # -------------------------------------------------------------------------
-    # Python garbage collection can introduce non-deterministic pauses.
-    #
-    # All long-lived model objects have now been created, so disable cyclic
-    # garbage collection before entering the synchronous real-time loop.
-    #
-    # Ordinary Python reference counting remains active.
+    # Disable Python cyclic garbage collection before entering real-time loop
     # -------------------------------------------------------------------------
 
     gc.disable()
 
 
     # -------------------------------------------------------------------------
-    # Register this synchronous model with the SimWB scheduler.
-    #
-    # initSched() tells SimWB that initialization is complete and the model
-    # is ready to enter the real-time loop.
+    # Register with SimWB scheduler
     # -------------------------------------------------------------------------
 
     if simwbRT.initSched(scheduler_name) < 0:
-        simwbRT.logMessage("Failed to initialize SimWB scheduler.")
+
+        simwbRT.logMessage(
+            "Failed to initialize SimWB scheduler."
+        )
+
         simwbRT.initFailed()
         return
 
 
     # =========================================================================
-    # REAL-TIME SIMULATION LOOP
+    # REAL-TIME LOOP
     # =========================================================================
 
     try:
 
         while True:
 
-            # Wait until SimWB releases this model for the next simulation frame.
+            # -----------------------------------------------------------------
+            # Wait for next SimWB simulation frame
+            # -----------------------------------------------------------------
+
             simwbRT.waitNextFrame()
 
 
             # -----------------------------------------------------------------
-            # Read current trajectory time.
-            #
-            # getCVTValueFromIndex() always returns a list.
+            # Read current SimWB simulation time
             # -----------------------------------------------------------------
 
-            time_value = simwbRT.getCVTValueFromIndex(time_index)
+            time_value = simwbRT.getCVTValueFromIndex(
+                time_index
+            )
+
 
             if time_value is None:
                 continue
 
-            t = float(time_value[0])
+
+            t = float(
+                time_value[0]
+            )
 
 
             # -----------------------------------------------------------------
-            # Interpolate trajectory at current simulation time.
+            # Interpolate trajectory at this simulation time
             # -----------------------------------------------------------------
 
             values = trajectory.sample(t)
 
 
             # -----------------------------------------------------------------
-            # Map CSV trajectory values to the RTDB outputs.
+            # Position - ECEF
             # -----------------------------------------------------------------
 
-            # Position: ECEF [m]
             x_ecef[0] = values[0]
             x_ecef[1] = values[1]
             x_ecef[2] = values[2]
 
-            # Velocity: ECEF [m/s]
+
+            # -----------------------------------------------------------------
+            # Velocity - ECEF
+            # -----------------------------------------------------------------
+
             v_ecef[0] = values[3]
             v_ecef[1] = values[4]
             v_ecef[2] = values[5]
 
-            # Acceleration: ECEF [m/s^2]
+
+            # -----------------------------------------------------------------
+            # Acceleration - ECEF
+            # -----------------------------------------------------------------
+
             a_ecef[0] = values[6]
             a_ecef[1] = values[7]
             a_ecef[2] = values[8]
 
-            # Jerk: ECEF [m/s^3]
+
+            # -----------------------------------------------------------------
+            # Jerk - ECEF
+            # -----------------------------------------------------------------
+
             j_ecef[0] = values[9]
             j_ecef[1] = values[10]
             j_ecef[2] = values[11]
 
-            # Attitude
-            yaw[0]   = values[12]
-            pitch[0] = values[13]
-            roll[0]  = values[14]
-
 
             # -----------------------------------------------------------------
-            # Write outputs directly into the RTDB.
+            # Euler angles
             #
-            # The downstream Spirent model reads these exact RTDB variables.
+            # Existing Spirent RTDB variable:
+            #
+            #     SW_Euler = double[3]
+            #
+            # Mapping:
+            #
+            #     [0] = yaw
+            #     [1] = pitch
+            #     [2] = roll
             # -----------------------------------------------------------------
 
-            simwbRT.setCVTValueFromIndex(x_ecef_index, x_ecef)
-            simwbRT.setCVTValueFromIndex(v_ecef_index, v_ecef)
-            simwbRT.setCVTValueFromIndex(a_ecef_index, a_ecef)
-            simwbRT.setCVTValueFromIndex(j_ecef_index, j_ecef)
+            euler[0] = values[12]
+            euler[1] = values[13]
+            euler[2] = values[14]
 
-            simwbRT.setCVTValueFromIndex(yaw_index, yaw)
-            simwbRT.setCVTValueFromIndex(pitch_index, pitch)
-            simwbRT.setCVTValueFromIndex(roll_index, roll)
+
+            # -----------------------------------------------------------------
+            # Write trajectory into the shared RTDB
+            #
+            # These are the SAME RTDB variables consumed by the existing
+            # Spirent Simulink model.
+            # -----------------------------------------------------------------
+
+            simwbRT.setCVTValueFromIndex(
+                x_ecef_index,
+                x_ecef
+            )
+
+            simwbRT.setCVTValueFromIndex(
+                v_ecef_index,
+                v_ecef
+            )
+
+            simwbRT.setCVTValueFromIndex(
+                a_ecef_index,
+                a_ecef
+            )
+
+            simwbRT.setCVTValueFromIndex(
+                j_ecef_index,
+                j_ecef
+            )
+
+            simwbRT.setCVTValueFromIndex(
+                euler_index,
+                euler
+            )
 
 
     except KeyboardInterrupt:
 
-        # SimWB sends SIGINT when the test is stopped.
+        # SimWB normally stops the process when the test ends.
         pass
 
 
