@@ -2,8 +2,6 @@
 
 import sys
 import os
-import csv
-import bisect
 
 import simwbPath
 import simwbRT
@@ -11,116 +9,10 @@ import simwbConstants
 
 
 # =============================================================================
-# RTDB NAMES
+# RTDB VARIABLE
 # =============================================================================
 
-TIME_RTDB   = "SW_T_Simulation"
-
-X_ECEF_RTDB = "SW_Xecef"
-V_ECEF_RTDB = "SW_Vecef"
-A_ECEF_RTDB = "SW_Aecef"
-J_ECEF_RTDB = "SW_Jecef"
-EULER_RTDB  = "SW_Euler"
-
-
-# =============================================================================
-# TRAJECTORY FILE
-# =============================================================================
-
-MODEL_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
-CSV_FILE = os.path.join(MODEL_DIRECTORY, "firefly_trac.csv")
-
-
-# =============================================================================
-# TRAJECTORY CLASS
-# =============================================================================
-
-class Trajectory(object):
-
-    def __init__(self, filename):
-
-        self.time = []
-        self.data = []
-
-        self.load_csv(filename)
-
-        if len(self.time) < 2:
-            raise RuntimeError(
-                "Trajectory file must contain at least two valid rows."
-            )
-
-        for i in range(1, len(self.time)):
-            if self.time[i] <= self.time[i - 1]:
-                raise RuntimeError(
-                    "Trajectory time must be strictly increasing."
-                )
-
-
-    def load_csv(self, filename):
-
-        f = open(filename, "r")
-
-        try:
-
-            reader = csv.reader(f)
-
-            for row in reader:
-
-                if len(row) != 16:
-                    continue
-
-                try:
-                    values = [float(value.strip()) for value in row]
-
-                except ValueError:
-                    # Allows a header row
-                    continue
-
-
-                self.time.append(values[0])
-
-                # Store the 15 trajectory values
-                self.data.append(values[1:])
-
-        finally:
-
-            f.close()
-
-
-    def sample(self, t):
-
-        # Hold first point before trajectory starts
-        if t <= self.time[0]:
-            return self.data[0]
-
-        # Hold last point after trajectory ends
-        if t >= self.time[-1]:
-            return self.data[-1]
-
-
-        # Find lower trajectory sample
-        i = bisect.bisect_right(self.time, t) - 1
-
-        t0 = self.time[i]
-        t1 = self.time[i + 1]
-
-        y0 = self.data[i]
-        y1 = self.data[i + 1]
-
-
-        alpha = (t - t0) / (t1 - t0)
-
-
-        values = []
-
-        for j in range(15):
-
-            value = y0[j] + alpha * (y1[j] - y0[j])
-
-            values.append(value)
-
-
-        return values
+TIME_RTDB = "SW_T_Simulation"
 
 
 # =============================================================================
@@ -139,32 +31,31 @@ simwbRT.initSched(
 
 
 # =============================================================================
-# LOAD TRAJECTORY
+# GET SIMULATION FRAME INFORMATION
 # =============================================================================
 
-try:
+frame_rate = simwbRT.getFrameRate()
 
-    trajectory = Trajectory(CSV_FILE)
-
+if frame_rate <= 0:
     simwbRT.logMessage(
-        "Loaded trajectory: %d samples, %.6f to %.6f seconds"
-        % (
-            len(trajectory.time),
-            trajectory.time[0],
-            trajectory.time[-1]
-        )
-    )
-
-except Exception as error:
-
-    simwbRT.logMessage(
-        "Trajectory load failed: %s"
-        % str(error)
+        "Invalid SimWB frame rate: %s"
+        % str(frame_rate)
     )
 
     simwbRT.initFailed()
-
     sys.exit(1)
+
+
+dt = 1.0 / float(frame_rate)
+
+
+simwbRT.logMessage(
+    "Time model initialized: frame rate = %.3f Hz, dt = %.9f s"
+    % (
+        frame_rate,
+        dt
+    )
+)
 
 
 # =============================================================================
@@ -179,104 +70,45 @@ try:
 
 
     # =========================================================================
-    # MAIN REAL-TIME LOOP
+    # REAL-TIME LOOP
     # =========================================================================
 
     while True:
 
-        # Wait until SimWB releases this process for the next frame
+        # Wait for the next SimWB frame
         simwbRT.waitNextFrame()
 
 
         # ---------------------------------------------------------------------
-        # Read simulation time from the RTDB
+        # Get current frame number
         # ---------------------------------------------------------------------
 
-        time_value = simwbRT.getCVTValue(
-            TIME_RTDB
-        )
-
-        t = float(
-            time_value[0]
-        )
+        frame_count = simwbRT.getFrameCount()
 
 
         # ---------------------------------------------------------------------
-        # Interpolate CSV trajectory
+        # Convert frame count to simulation time
+        #
+        # t = frame_number * timestep
         # ---------------------------------------------------------------------
 
-        values = trajectory.sample(t)
-
-
-        # ---------------------------------------------------------------------
-        # Map trajectory values
-        # ---------------------------------------------------------------------
-
-        X_ECEF = [
-            values[0],
-            values[1],
-            values[2]
-        ]
-
-        V_ECEF = [
-            values[3],
-            values[4],
-            values[5]
-        ]
-
-        A_ECEF = [
-            values[6],
-            values[7],
-            values[8]
-        ]
-
-        J_ECEF = [
-            values[9],
-            values[10],
-            values[11]
-        ]
-
-        Euler = [
-            values[12],
-            values[13],
-            values[14]
-        ]
+        t_simulation = float(frame_count) * dt
 
 
         # ---------------------------------------------------------------------
-        # Write directly into shared RTDB variables
+        # Write simulation time into the RTDB
         # ---------------------------------------------------------------------
 
         simwbRT.setCVTValue(
-            X_ECEF_RTDB,
-            X_ECEF
-        )
-
-        simwbRT.setCVTValue(
-            V_ECEF_RTDB,
-            V_ECEF
-        )
-
-        simwbRT.setCVTValue(
-            A_ECEF_RTDB,
-            A_ECEF
-        )
-
-        simwbRT.setCVTValue(
-            J_ECEF_RTDB,
-            J_ECEF
-        )
-
-        simwbRT.setCVTValue(
-            EULER_RTDB,
-            Euler
+            TIME_RTDB,
+            [t_simulation]
         )
 
 
 except KeyboardInterrupt:
 
     simwbRT.logMessage(
-        "Trajectory model shutting down."
+        "Simulation time model shutting down."
     )
 
     sys.exit(0)
