@@ -1,100 +1,282 @@
 #!/usr/bin/env python2
-# Make sure this is the version of Python you want to
-# run this script. SimWB supports all versions of Python
-# from 2.6 and newer.
 
-# A couple of standard modules we will use. Add what you need.
 import sys
 import os
+import csv
+import bisect
 
-# This module insures that we will load the appropriate
-# SimWB modules for the version of Python that is running
-# this script.
 import simwbPath
-
-# This is the real-time Python module.
 import simwbRT
-# Besides the wealth of functionality provided by Python,
-# there are other methods in the simwbRT module to give
-# access (hooks) into SimWB. See "pydoc simwbRT" for details of
-# all the calls.
-#   logMessage            display a message to the operator
-#   getFrameRate          in Hz
-#   getFrameLength        in microseconds
-#   getFrameCount         0,1,2... incremented every frame
-#   getCVTValue           read an RTDB value by name
-#   setCVTValue           write an RTDB value by name
-#     (and other calls to provide the same functionality but
-#      using different RTDB access methods)
-#   getAltValue           read an RTDB alternate value by name
-#   setAltValue           write an RTDB alternate value by name
-#   getRunTimeFlags       fetch an RTDB items flags (alt, opr, etc)
-#   setOperatorFlag       set an RTDB items operator flag
-#   setAlternateValueFlag set an RTDB items alternate value flag
-#   writeStdOut           send output to the script psuedo-stdout
-#   getRTDBName           return the name of the tests RTDB
-#   getInitialConditionsName
-#                         return the name of a tests initial conditions set
-#   getTestSession        return a dictionary with test and session name
-#   testStop              tell the scheduler to stop the test
-#   getItemMeta           return a dictionary of an RTDB items meta info
-#                           (EU conversion, description, etc)
-#   addGenerator          create a signal generator and associate with RTDB item
-#                           (and associated calls to configure them)
-#   startGenerator        start a single generator
-#   startAllGenerators    start all generators
-#   stopGenerator         stop a single generator
-#   stopAllGenerators     stop all generators
-#
-# These routines are not exhaustive with respect to those
-# available via simwbClient, but is a subset choosen by us to
-# be most useful to the real-time user.
-
-# This call connects you to the RTDB. You are free to read/write
-# RTDB variables after this.
-simwbRT.mapRTDB()
-
-# These calls connect you to the SimWB message logger. You
-# can send messages via simwbRT.logMessage() now.
-simwbRT.initLog(os.path.basename(sys.argv[1]));
-
-# The mapRTDB() and initLog() calls can be in either order.
-
-# We now need to attach to the SimWB scheduler. The scheduler will
-# coordinate when this task runs after this point, and it is
-# crucial to the proper timing of this script.
-#
-# How you do this depends on if this is an initialization script
-# or a regular real-time script.  An initialization script executes
-# once (prior to any models, but after everything is initialized)
-# and then goes away.  A regular real-time script runs every cycle
-# (after input tasks but before any models) and keeps running until
-# the scheduler ends the test.
-# Attach to the scheduler as a real-time script.
-simwbRT.initSched(sys.argv[1])
-
-# To access some useful/needed constants.
 import simwbConstants
 
 
+# =============================================================================
+# RTDB NAMES
+# =============================================================================
+
+TIME_RTDB   = "SW_T_Simulation"
+
+X_ECEF_RTDB = "SW_Xecef"
+V_ECEF_RTDB = "SW_Vecef"
+A_ECEF_RTDB = "SW_Aecef"
+J_ECEF_RTDB = "SW_Jecef"
+EULER_RTDB  = "SW_Euler"
+
+
+# =============================================================================
+# TRAJECTORY FILE
+# =============================================================================
+
+MODEL_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+CSV_FILE = os.path.join(MODEL_DIRECTORY, "firefly_trac.csv")
+
+
+# =============================================================================
+# TRAJECTORY CLASS
+# =============================================================================
+
+class Trajectory(object):
+
+    def __init__(self, filename):
+
+        self.time = []
+        self.data = []
+
+        self.load_csv(filename)
+
+        if len(self.time) < 2:
+            raise RuntimeError(
+                "Trajectory file must contain at least two valid rows."
+            )
+
+        for i in range(1, len(self.time)):
+            if self.time[i] <= self.time[i - 1]:
+                raise RuntimeError(
+                    "Trajectory time must be strictly increasing."
+                )
+
+
+    def load_csv(self, filename):
+
+        f = open(filename, "r")
+
+        try:
+
+            reader = csv.reader(f)
+
+            for row in reader:
+
+                if len(row) != 16:
+                    continue
+
+                try:
+                    values = [float(value.strip()) for value in row]
+
+                except ValueError:
+                    # Allows a header row
+                    continue
+
+
+                self.time.append(values[0])
+
+                # Store the 15 trajectory values
+                self.data.append(values[1:])
+
+        finally:
+
+            f.close()
+
+
+    def sample(self, t):
+
+        # Hold first point before trajectory starts
+        if t <= self.time[0]:
+            return self.data[0]
+
+        # Hold last point after trajectory ends
+        if t >= self.time[-1]:
+            return self.data[-1]
+
+
+        # Find lower trajectory sample
+        i = bisect.bisect_right(self.time, t) - 1
+
+        t0 = self.time[i]
+        t1 = self.time[i + 1]
+
+        y0 = self.data[i]
+        y1 = self.data[i + 1]
+
+
+        alpha = (t - t0) / (t1 - t0)
+
+
+        values = []
+
+        for j in range(15):
+
+            value = y0[j] + alpha * (y1[j] - y0[j])
+
+            values.append(value)
+
+
+        return values
+
+
+# =============================================================================
+# CONNECT TO SIMWB
+# =============================================================================
+
+simwbRT.mapRTDB()
+
+simwbRT.initLog(
+    os.path.basename(sys.argv[1])
+)
+
+simwbRT.initSched(
+    sys.argv[1]
+)
+
+
+# =============================================================================
+# LOAD TRAJECTORY
+# =============================================================================
 
 try:
-    # Scheduler init cycles.
+
+    trajectory = Trajectory(CSV_FILE)
+
+    simwbRT.logMessage(
+        "Loaded trajectory: %d samples, %.6f to %.6f seconds"
+        % (
+            len(trajectory.time),
+            trajectory.time[0],
+            trajectory.time[-1]
+        )
+    )
+
+except Exception as error:
+
+    simwbRT.logMessage(
+        "Trajectory load failed: %s"
+        % str(error)
+    )
+
+    simwbRT.initFailed()
+
+    sys.exit(1)
+
+
+# =============================================================================
+# SCHEDULER INITIALIZATION CYCLES
+# =============================================================================
+
+try:
+
     for i in range(simwbConstants.SCHED_INITCYCLES):
-        # We block on this call until freed by the scheduler.
+
         simwbRT.waitNextFrame()
 
-    # Enter the real-time loop.
+
+    # =========================================================================
+    # MAIN REAL-TIME LOOP
+    # =========================================================================
+
     while True:
+
+        # Wait until SimWB releases this process for the next frame
         simwbRT.waitNextFrame()
-        # Do your work here
+
+
+        # ---------------------------------------------------------------------
+        # Read simulation time from the RTDB
+        # ---------------------------------------------------------------------
+
+        time_value = simwbRT.getCVTValue(
+            TIME_RTDB
+        )
+
+        t = float(
+            time_value[0]
+        )
+
+
+        # ---------------------------------------------------------------------
+        # Interpolate CSV trajectory
+        # ---------------------------------------------------------------------
+
+        values = trajectory.sample(t)
+
+
+        # ---------------------------------------------------------------------
+        # Map trajectory values
+        # ---------------------------------------------------------------------
+
+        X_ECEF = [
+            values[0],
+            values[1],
+            values[2]
+        ]
+
+        V_ECEF = [
+            values[3],
+            values[4],
+            values[5]
+        ]
+
+        A_ECEF = [
+            values[6],
+            values[7],
+            values[8]
+        ]
+
+        J_ECEF = [
+            values[9],
+            values[10],
+            values[11]
+        ]
+
+        Euler = [
+            values[12],
+            values[13],
+            values[14]
+        ]
+
+
+        # ---------------------------------------------------------------------
+        # Write directly into shared RTDB variables
+        # ---------------------------------------------------------------------
+
+        simwbRT.setCVTValue(
+            X_ECEF_RTDB,
+            X_ECEF
+        )
+
+        simwbRT.setCVTValue(
+            V_ECEF_RTDB,
+            V_ECEF
+        )
+
+        simwbRT.setCVTValue(
+            A_ECEF_RTDB,
+            A_ECEF
+        )
+
+        simwbRT.setCVTValue(
+            J_ECEF_RTDB,
+            J_ECEF
+        )
+
+        simwbRT.setCVTValue(
+            EULER_RTDB,
+            Euler
+        )
 
 
 except KeyboardInterrupt:
-    # The scheduler sends tasks a SIGINT (in Python that's a
-    # KeyboardInterrupt) to signal the test is complete. We trap
-    # it for a clean shutdown.
-    #
-    # You can add any shutdown code here.
-    #
+
+    simwbRT.logMessage(
+        "Trajectory model shutting down."
+    )
+
     sys.exit(0)
