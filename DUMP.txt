@@ -1,83 +1,69 @@
-// Open scenario
-if(idx == 2 && !openCommandSent)
+void sendInitialMOT(
+    Netio& netio,
+    const double xEcef[3],
+    const double euler[3],
+    int vehicleNum,
+    int motionModelNum,
+    char* serverIP,
+    int serverPort
+)
 {
+    char motMSG[512];
+
+    int lenMotMSG = snprintf(
+        motMSG,
+        sizeof(motMSG),
+
+        "0,MOT,v%d_m%d,"
+        "%.10f,%.10f,%.10f,"
+        "0,0,0,0,0,0,0,"
+        "%.10f,%.10f,%.10f",
+
+        vehicleNum,
+        motionModelNum,
+
+        xEcef[0],
+        xEcef[1],
+        xEcef[2],
+
+        euler[0],
+        euler[1],
+        euler[2]
+    );
+
+
+    // Make sure snprintf succeeded and did not overflow the buffer
+    if(lenMotMSG < 0 || lenMotMSG >= (int)sizeof(motMSG))
+    {
+        ccurLog_printf(
+            defaultLog,
+            LOG_ERROR,
+            "Failed to create initial MOT message"
+        );
+
+        return;
+    }
+
+
+    // Useful while debugging
+    printCommandBytes(
+        motMSG,
+        (size_t)lenMotMSG
+    );
+
+
     netio.sendRaw(
-        (char*)openMSG,
-        lenOpenMSG,
+        motMSG,
+        (size_t)lenMotMSG,
         serverIP,
         serverPort
     );
 
-    openCommandSent = true;
 
     ccurLog_printf(
         defaultLog,
         LOG_INFO,
-        "sent open command: %s",
-        openMSG
-    );
-}
-
-
-// Configure external trigger
-if(idx == 3 && openCommandSent && !triggerCommandSent)
-{
-    netio.sendRaw(
-        (char*)triggerMSG,
-        lenTriggerMSG,
-        serverIP,
-        serverPort
-    );
-
-    triggerCommandSent = true;
-
-    ccurLog_printf(
-        defaultLog,
-        LOG_INFO,
-        "sent trigger command: %s",
-        triggerMSG
-    );
-}
-
-
-// Start arming
-if(idx == 4 && triggerCommandSent && !armCommandSent)
-{
-    netio.sendRaw(
-        (char*)armMSG,
-        lenArmMSG,
-        serverIP,
-        serverPort
-    );
-
-    armCommandSent = true;
-
-    ccurLog_printf(
-        defaultLog,
-        LOG_INFO,
-        "sent arm command: %s",
-        armMSG
-    );
-}
-
-
-// TEMPORARY:
-// Do not assume AR_NOWAIT has finished arming here.
-if(idx == 5 && armCommandSent && !runCommandSent)
-{
-    netio.sendRaw(
-        (char*)runMSG,
-        lenRunMSG,
-        serverIP,
-        serverPort
-    );
-
-    runCommandSent = true;
-
-    ccurLog_printf(
-        defaultLog,
-        LOG_INFO,
-        "sent run command: %s",
-        runMSG
+        "sent initial MOT command: %s",
+        motMSG
     );
 }
