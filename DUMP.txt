@@ -1,1 +1,83 @@
+// Open scenario
+if(idx == 2 && !openCommandSent)
+{
+    netio.sendRaw(
+        (char*)openMSG,
+        lenOpenMSG,
+        serverIP,
+        serverPort
+    );
 
+    openCommandSent = true;
+
+    ccurLog_printf(
+        defaultLog,
+        LOG_INFO,
+        "sent open command: %s",
+        openMSG
+    );
+}
+
+
+// Configure external trigger
+if(idx == 3 && openCommandSent && !triggerCommandSent)
+{
+    netio.sendRaw(
+        (char*)triggerMSG,
+        lenTriggerMSG,
+        serverIP,
+        serverPort
+    );
+
+    triggerCommandSent = true;
+
+    ccurLog_printf(
+        defaultLog,
+        LOG_INFO,
+        "sent trigger command: %s",
+        triggerMSG
+    );
+}
+
+
+// Start arming
+if(idx == 4 && triggerCommandSent && !armCommandSent)
+{
+    netio.sendRaw(
+        (char*)armMSG,
+        lenArmMSG,
+        serverIP,
+        serverPort
+    );
+
+    armCommandSent = true;
+
+    ccurLog_printf(
+        defaultLog,
+        LOG_INFO,
+        "sent arm command: %s",
+        armMSG
+    );
+}
+
+
+// TEMPORARY:
+// Do not assume AR_NOWAIT has finished arming here.
+if(idx == 5 && armCommandSent && !runCommandSent)
+{
+    netio.sendRaw(
+        (char*)runMSG,
+        lenRunMSG,
+        serverIP,
+        serverPort
+    );
+
+    runCommandSent = true;
+
+    ccurLog_printf(
+        defaultLog,
+        LOG_INFO,
+        "sent run command: %s",
+        runMSG
+    );
+}
