@@ -1,12 +1,94 @@
-void sendInitialMOT(
-    Netio& netio,
-    const double xEcef[3],
-    const double euler[3],
-    int vehicleNum,
-    int motionModelNum,
-    char* serverIP,
-    int serverPort
-)
+// ============================================================================
+// SPIRent STARTUP COMMAND SEQUENCE
+//
+// idx = 2 : Open scenario
+// idx = 3 : Configure external trigger
+// idx = 4 : Send initial MOT state
+// idx = 5 : Arm scenario
+// idx = 6 : Run scenario / enter trigger wait
+// ============================================================================
+
+
+// ----------------------------------------------------------------------------
+// idx = 2
+// Open scenario
+// ----------------------------------------------------------------------------
+
+if(idx == 2 && !scenarioOpened)
+{
+    printCommandBytes(
+        openMSG,
+        lenOpenMSG
+    );
+
+    netio.sendRaw(
+        (char*)openMSG,
+        lenOpenMSG,
+        serverIP,
+        serverPort
+    );
+
+    scenarioOpened = true;
+
+    ccurLog_printf(
+        defaultLog,
+        LOG_INFO,
+        "sent open command: %s",
+        openMSG
+    );
+}
+
+
+// ----------------------------------------------------------------------------
+// idx = 3
+// Configure external trigger
+// ----------------------------------------------------------------------------
+
+if(idx == 3 && scenarioOpened && !triggerSet)
+{
+    printCommandBytes(
+        triggerMSG,
+        lenTriggerMSG
+    );
+
+    netio.sendRaw(
+        (char*)triggerMSG,
+        lenTriggerMSG,
+        serverIP,
+        serverPort
+    );
+
+    triggerSet = true;
+
+    ccurLog_printf(
+        defaultLog,
+        LOG_INFO,
+        "sent trigger command: %s",
+        triggerMSG
+    );
+}
+
+
+// ----------------------------------------------------------------------------
+// idx = 4
+// Send initial motion state
+//
+// Expected format from the original Simulink compose block:
+//
+// 0,MOT,v<vehicle>_m<motion model>,
+// X_ECEF_1,
+// X_ECEF_2,
+// X_ECEF_3,
+// 0,0,0,0,0,0,0,
+// yaw,
+// pitch,
+// roll
+//
+// For the first test, xEcef[] and euler[] can be hard-coded to the first
+// trajectory sample.
+// ----------------------------------------------------------------------------
+
+if(idx == 4 && triggerSet && !initialMotSent)
 {
     char motMSG[512];
 
@@ -32,7 +114,7 @@ void sendInitialMOT(
     );
 
 
-    // Make sure snprintf succeeded and did not overflow the buffer
+    // Make sure snprintf succeeded and did not overflow motMSG
     if(lenMotMSG < 0 || lenMotMSG >= (int)sizeof(motMSG))
     {
         ccurLog_printf(
@@ -40,30 +122,91 @@ void sendInitialMOT(
             LOG_ERROR,
             "Failed to create initial MOT message"
         );
-
-        return;
     }
+    else
+    {
+        printCommandBytes(
+            motMSG,
+            (size_t)lenMotMSG
+        );
+
+        netio.sendRaw(
+            motMSG,
+            (size_t)lenMotMSG,
+            serverIP,
+            serverPort
+        );
+
+        initialMotSent = true;
+
+        ccurLog_printf(
+            defaultLog,
+            LOG_INFO,
+            "sent initial MOT command: %s",
+            motMSG
+        );
+    }
+}
 
 
-    // Useful while debugging
+// ----------------------------------------------------------------------------
+// idx = 5
+// Arm scenario
+// ----------------------------------------------------------------------------
+
+if(idx == 5 && initialMotSent && !scenarioArmed)
+{
     printCommandBytes(
-        motMSG,
-        (size_t)lenMotMSG
+        armMSG,
+        lenArmMSG
     );
 
-
     netio.sendRaw(
-        motMSG,
-        (size_t)lenMotMSG,
+        (char*)armMSG,
+        lenArmMSG,
         serverIP,
         serverPort
     );
 
+    scenarioArmed = true;
 
     ccurLog_printf(
         defaultLog,
         LOG_INFO,
-        "sent initial MOT command: %s",
-        motMSG
+        "sent arm command: %s",
+        armMSG
+    );
+}
+
+
+// ----------------------------------------------------------------------------
+// idx = 6
+// Run scenario
+//
+// With TR,1 previously configured, this should request the transition into
+// trigger wait.
+// ----------------------------------------------------------------------------
+
+if(idx == 6 && scenarioArmed && !scenarioRunning)
+{
+    printCommandBytes(
+        runMSG,
+        lenRunMSG
+    );
+
+    netio.sendRaw(
+        (char*)runMSG,
+        lenRunMSG,
+        serverIP,
+        serverPort
+    );
+
+    scenarioRunning = true;
+
+    ccurLog_printf(
+        defaultLog,
+        LOG_INFO,
+        "sent run command: %s",
+        runMSG
     );
 }
