@@ -1,3 +1,9 @@
-grep -Rni "ccurRTDB_getCVTValue" /usr/local/ccursim 2>/dev/null | head -50
+grep -Rni "typedef.*ItemValue\|struct.*ItemValue" /usr/local/ccursim 2>/dev/null | head -50
 
-grep -Rni "ItemValue" /usr/local/ccursim/include /usr/local/ccursim 2>/dev/null | head -50
+grep -Rni "ccurRTDB_setCVTValue(" /usr/local/ccursim 2>/dev/null | head -50
+
+grep -Rni "getCVT" /usr/local/ccursim --include="*.h" 2>/dev/null
+
+grep -Rni "getCVTValueDouble" /usr/local/ccursim --include="*.h" 2>/dev/null
+
+grep -Rni "ItemValue" /usr/local/ccursim --include="*.h" 2>/dev/null | head -50
