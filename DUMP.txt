@@ -1,1 +1,3561 @@
 
+#ifndef _CCURSIMRTDB_H
+#define _CCURSIMRTDB_H
+//#include <pthread.h>
+#include <sched.h>
+
+// This is to force a revision string cvsRec in .o file so executebles  can be checked for consistency (all the same build date/time)
+#define mkppRev2(name1,name2) name1 ## name2
+#define mkppRev(name1,name2) mkppRev2(name1,name2)
+#define ppREV            mkppRev(pp,__LINE__)
+#define REV_STRING(string) static const char *cvsRev=string; const char **ppREV = &cvsRev
+
+#define MAX_TAGLEN             512  /**< Maximum length of an Item name in the RTDB */
+#define MAX_EUNITSLEN          12   /**< Maximum length of an engineering unit descriptor. */
+#define MAX_DIMENSIONS         8    /**< Maximum number of dimensions for MATLAB Array */
+#define MAX_STRUCTDEPTH        30   /**< Maximum depth for nested structure items.*/
+#define MAX_DESCRIPTIONLEN     256  /**< Max length for the description of an item */
+#define MAX_SUITETESTS         50
+#define MAX_STRINGVARIABLELEN  1024 /**< Maximum length for a string variable in the RTDB. */
+#define MAX_IOBOARDNAME        64
+#define MAX_AFDXMSGNAME        64   /**< Maximum AFDX message name length .*/
+#define MAX_FDXMSGNAME         64   /**< Maximum FDX message name length .*/
+#define MAX_FDXVARNAME         10   /**< Maximum FDX variable name length .*/
+#define MAX_CIGINAME           64   /**< Maximum CIGI Entity name length .*/
+#define MAX_CIGIOUTPACKETS     128   /**< Maximum CIGI Output Packets .*/
+#define MAX_RS232MSGNAME       64   /**< Maximum RS232 message name length .*/
+#define MAX_RTWPROGRAMS        100  /**< Maximum number of RTW and user models per test.*/
+#define MAX_RTWMULTIRATES      20   /**< Maximum number of RTW and user models per test.*/
+#define MAX_MAPPINGVARNAME     64   /**< The maximum length of a message variable for flightgear program.*/
+#define MAX_HOSTNAME           33   /**< The maximum length of a IP host name. */
+#define MAX_INITCONDNAME       64
+#define MAX_NUMBEROFCPUS       32
+#define MAX_ENVFILENAME        64
+#define MAX_SESSIONUSERPARM    256
+#define MAX_FLEXRAYMSGNAME     64   /**< Maximum FlexRay message name length .*/
+#define MAX_FLEXRAYCLUSTERNAME 64   /**< Maximum FLexRay clusteri name length .*/
+#define MAX_IOMAPPINGS         16   /**< Maximum number of I/O mappings for a single points. (Outputs only) */
+#define MAX_IORECORDNAME       256
+#define MAX_USERHARDWAREADDRESSSPACE    512     
+#define USER_BOARDFIRSTID      1000
+#define MAX_MEMREGIONNAME      64   /**< Maximum memory region name length.*/
+#define MAX_EUCONVERSIONNAME   128   /** < Max length for EU conversion name.*/
+#define MAX_EUCONVERSIONRECORDS 10000
+#define MAX_WAVEFILENAME       128
+#define MAX_1553MSGNAME        64   /**< Maximum DDC1553 message name length .*/
+#define MAX_1553BUFFERLEN      64
+#define MAX_ARIONOBJNAME       64
+#define MAX_RTADBMSGNAME       64
+#define MAX_PARMSIZEVISIBLE    3500 /** Simulink parameters that have more than this number of elements will not been in the RTDB.*/
+#define MAX_PROJECTNAME        64
+#define DEFAULT_PROJECTNAME    "<default>"
+
+#define MAX_MODELNAME          64
+#define MAX_A2LVARNAME         80
+
+#define MAX_SPAREITEMS         120
+#define MAX_GROUPNAME          16
+
+#define MAX_STRUCTENTRIES      100
+
+#define GUI_CLIENTISCC         400
+#define GUI_CLIENTISHMI        401
+#define GUI_CLIENTISBUILDER    0x200
+#define GUI_CLIENTAPPMASK      0xff
+
+#define MAX_ECATMASTER_BOARDS   4
+#define MAX_ECATDEVICENAMELENGTH 32      
+#define MAX_ECATDOMAINNAME       32
+#define MAX_ECATDOMAINS         20
+#define MAX_ECATSLAVES          100
+
+#define MAX_ECATSLAVE_BOARDS    4
+#define MAX_PDODESCRIPTION      64
+#define MAX_FORMNAME            64
+
+#define MAX_TABLECANENTRIES     2048
+#define MAX_TABLELINENTRIES     512
+#define MAX_TABLESENTENTRIES    128
+#define MAX_ARINCLABELENTRIES   (8*256*36)  // 8 boards x max labels x num channels
+
+#define MAX_VTD_PKGNAME         64
+#define CARMAKER_EXECNAME       "CarMaker.linux64"
+
+#define MAX_POINTSPERID     100 // The maximum number of signals mapped to a single CAN/LIN/SENT message
+
+#define MAX_IO_SHUTDOWNTIME  10 // Alow max 10 seconds to reach end values on I/O shutdown
+
+#define MAX_RTDB_PROP_FILES  33      // 32 UEI devices in one box plus base config file
+
+#define ccurMax(a,b) ((a) > (b) ? (a) :(b))
+#define ccurMin(a,b) ((a) < (b) ? (a) :(b))
+
+#define POINTGROUP_MASK  0xf
+enum pointGroup {
+     SimWB_ANALOG  = 1,
+     SimWB_BOOLEAN = 2,
+     SimWB_MBIT    = 3,
+     SimWB_STRING  = 4,
+     SimWB_PARAMETER= 8,
+     SimWB_SHARED_PARAMETER = 10,
+     SimWB_MDLSIGNAL= 12
+};
+
+#define POINTDIRECTION_MASK 0xf0
+enum pointDirection {
+    SimWB_DIR_INPUT = 0x10,
+    SimWB_DIR_OUTPUT= 0x20,
+    SimWB_DIR_INOUT = 0x30
+};
+#define POINT_MASK (POINTGROUP_MASK | POINTDIRECTION_MASK) 
+
+#define POINTDIRECTIONRT_MASK 0xf000
+enum pointDirectionRT {
+    SimWB_DIR_RTINPUT = 0x1000,
+    SimWB_DIR_RTOUTPUT= 0x2000
+};
+
+#define RTDB_ISINPUT(pType) ((pType & POINTDIRECTION_MASK) & SimWB_DIR_INPUT)
+#define RTDB_ISOUTPUT(pType) ((pType & POINTDIRECTION_MASK) & SimWB_DIR_OUTPUT)
+#define RTDB_ISDIGITAL(pType) ((pType & POINTGROUP_MASK) == SimWB_BOOLEAN )
+#define RTDB_ISANALOG(pType) ((pType & POINTGROUP_MASK) == SimWB_ANALOG )
+#define RTDB_ISSTRING(pType) ((pType & POINTGROUP_MASK) == SimWB_STRING )
+
+#define RTDB_ISRTINPUT(pType) (pType  & SimWB_DIR_RTINPUT)
+#define RTDB_ISRTOUTPUT(pType) (pType & SimWB_DIR_RTOUTPUT)
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Type of data points supported in the RTDB.
+ */
+enum PointType {
+    RTDBPARAMETER     = SimWB_PARAMETER | SimWB_ANALOG | SimWB_DIR_INPUT,
+    RTDBSHRDPARAMETER = SimWB_SHARED_PARAMETER | SimWB_ANALOG | SimWB_DIR_INPUT,
+    RTDBAI            = SimWB_ANALOG | SimWB_DIR_INPUT,
+    RTDBAO            = SimWB_ANALOG | SimWB_DIR_OUTPUT,
+    RTDBAIO           = SimWB_ANALOG | SimWB_DIR_INOUT,
+    RTDBDI            = SimWB_BOOLEAN | SimWB_DIR_INPUT,
+    RTDBDO            = SimWB_BOOLEAN | SimWB_DIR_OUTPUT,
+    RTDBDIO           = SimWB_BOOLEAN | SimWB_DIR_INOUT,
+    RTDBSTRINGIN      = SimWB_STRING | SimWB_DIR_INPUT,
+    RTDBSTRINGOUT     = SimWB_STRING | SimWB_DIR_OUTPUT,
+    RTDBSTRINGIO      = SimWB_STRING | SimWB_DIR_INOUT,
+    RTDBSTRINGPARM    = SimWB_STRING | SimWB_DIR_INOUT,
+    RTDBMDLSIGNAL     = SimWB_MDLSIGNAL | SimWB_ANALOG | SimWB_DIR_OUTPUT
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Supported data type for a RTDB item value.
+ */
+enum RTDB_CVTType {
+    CVTTYPE_char    =1,   /**< value in CVT is 'C' char */
+    CVTTYPE_uchar   =2,   /**< value in CVT is 'C' unsigned char */
+    CVTTYPE_int     =3,   /**< value in CVT is 'C' int */
+    CVTTYPE_uint    =4,   /**< value in CVT is 'C' unsigned int */
+    CVTTYPE_float   =5,   /**< value in CVT is 'C' float */
+    CVTTYPE_short   =6,   /**< value in CVT is 'C' short */
+    CVTTYPE_ushort  =7,   /**< value in CVT is 'C' unsigned short */
+    CVTTYPE_double  =8,   /**< value in CVT is 'C' double */
+    CVTTYPE_llong   =9,   /**< value in CVT is 'C' long long 64 bit integer */
+    CVTTYPE_string  =10  /**< Fixed size array of char[]. This is not in the CVT */
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Supported data type for a RTDB raw  value.
+ */
+enum RTDB_RawType {
+    RAWTYPE_char    = CVTTYPE_char,   /**< Raw value is 'C' char */
+    RAWTYPE_uchar   = CVTTYPE_uchar,  /**< Raw value is 'C' unsigned char */
+    RAWTYPE_int     = CVTTYPE_int,    /**< Raw value is 'C' int */
+    RAWTYPE_uint    = CVTTYPE_uint,   /**< Raw value is 'C' unsigned int */
+    RAWTYPE_float   = CVTTYPE_float,  /**< Raw value is a 'C' float. This is used for AFDX messages where we can pack any data type in the message. */
+    RAWTYPE_short   = CVTTYPE_short,  /**< Raw value is 'C' short */
+    RAWTYPE_ushort  = CVTTYPE_ushort, /**< Raw value is 'C' unsigned short */
+    RAWTYPE_double  = CVTTYPE_double, /**< Raw value is a 'C' double.  This is used for AFDX messages where we can pack any data type in the message. */ 
+    RAWTYPE_llong   = CVTTYPE_llong,  /**< Raw value is a 'C' float. This is used for AFDX messages where we can pack any data type in the message. */
+    RAWTYPE_string  = CVTTYPE_string, /**< Fixed size array of char[].*/
+    RAWTYPE_packed  =12,              /**< Raw value is packed in the input/output buffer with number of bits and starting position as defined in the item IOAddress record (AFDX) .*/
+    RAWTYPE_bit     =13,              /**< Raw value is packed in a bit range int the input/output buffer with number of bits and starting position as defined in the item IOAddress record.
+                                           <BR> This is different from ARINC word which always uses 32 bits.*/
+    RAWTYPE_blob    =14               /**< Raw value is a blobl */
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Run time flags associated to an RTDB item.
+ */
+enum RTDB_RunTimeFlags {
+    RTDBFL_ALTVALUE     =0x1,        /**< The alternate value is in effect. */
+    RTDBFL_OPERATOR     =0x2,        /**< The operator has entered a value. */
+    RTDBFL_ARCHIVEPAUSED =0x4,       /**< Data logging for the point is temporarily disabled, METAFL_ARCHIVEENABLE is off. */
+    RTDBFL_OUTOFEURANGE =0x8,        /**< The EU value is outside the EU limits. */
+    RTDBFL_OUTOFHARDWARERANGE =0x10, /**< The raw hardware  value is outside of the max/min value specified for the hardware . */
+    RTDBFL_INVERTPARITY  =0x20,      /**< Invert parity on the raw arinc word when outputting the label corresponding to this data point. */
+    RTDBFL_RAWVALUE     =0x40,       /**< Value in CVT or alternate value is raw. */
+    RTDBFL_IPA          =0x80 
+
+};
+
+typedef struct {
+    unsigned int size;
+    char *data;
+} ccur_fgetsLine;
+
+#define MAX_DBNAME          64  /**< Maximum name for a database. */
+#define MAX_DBDESCRIPTION   256 /**< Maximum description length for a database. */
+#define MAX_SESSIONID       128 /**< Maximum lenght of a test Id string. */
+#define MAX_TESTID          128 /**< Maximum lenght of a session Id string. */
+#define MAX_RTDBLOAD        16  /** Max number of RTDB's that can be loaded. */
+#define MAX_SIMWBBOARDS     32  /**<  Max number of board instances. This is for association with different loaded RTDB */
+
+
+typedef struct RTDBMetaInfo {
+    int maxNumRTDBItems;
+
+    int numRTDBItemsDefined;    /**< Total number of RTDB items defined in the real-time database */
+    int numHardwareConfigsDefined;
+    int maxNumStringVariables;  /**< Maximum # of string variables we can store in the RTDB */
+    int RTDBLoaded;             /**< Wheter a Data base has been loaded in memory. */
+    char dbFileName[MAX_DBNAME];  /**< db file this RTDB was loaded from */
+    char dbDescription[MAX_DBDESCRIPTION]; /**< description of the currently load database. */
+    char groupName[MAX_GROUPNAME+1];
+} RTDBMetaInfo;
+
+typedef unsigned char StringVariableValue[MAX_STRINGVARIABLELEN];
+
+#if 0
+typedef union RTDBArrayValue {
+    long long ll;           /**< Value of the item if its cvt type is long long (64 bit integer).*/
+    double d;               /**< Value of the item if its cvt type is double */
+    float f;                /**< Value of the item if its cvt type is float */
+    short s;                /**< Value of the item if its cvt type is short */
+    unsigned short us;      /**< Value of the item if its cvt type is unsigned short */
+    char           c;       /**< Value of the item if its cvt type is char */
+    unsigned char  uc;      /**< Value of the item if its cvt type is unsigned char */
+    int            i;       /**< Value of the item if its cvt type is int */
+    unsigned int   ui;      /**< Value of the item if its cvt type is unsigned int */
+    short          stringIndex; /**< Index of the string value in the string table */
+    StringVariableValue *stringValue; /**< For temporary storage (Not referring to RTDB values. */
+} RTDBArrayValue;
+#endif
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object to hold the engineering unit value of a RTDB item independent of its data type.
+ * This is used in call to getCVTValue and getAlternateValue.
+ */
+typedef struct ItemValue {
+    int stringLength;
+    int numElements;            /**< The number of elements for array type items. */
+    int numMallocedElements;    /**< size of the buffer for getCVT values if it has been preallocated by the caller. for getCVTValue, etc... This can be less than the number of elements.*/
+    int isRTDB ;                /**< Indicates whether the string comes from RTDB (true) or local storage (false). */
+    union {
+        union {
+            long long ll __attribute__ ((aligned(8))) ;           /**< Value of the item if its cvt type is long long (64 bit integer).*/
+            double d __attribute__ ((aligned(8))) ;               /**< Value of the item if its cvt type is double */
+            float f;                /**< Value of the item if its cvt type is float */
+            short s;                /**< Value of the item if its cvt type is short */
+            unsigned short us;      /**< Value of the item if its cvt type is unsigned short */
+            char           c;       /**< Value of the item if its cvt type is char */
+            unsigned char  uc;      /**< Value of the item if its cvt type is unsigned char */
+            int            i;       /**< Value of the item if its cvt type is int */
+            unsigned int   ui;      /**< Value of the item if its cvt type is unsigned int */
+            short          stringIndex; /**< Index of the string value in the string table */
+            StringVariableValue *stringValue __attribute__ ((aligned(8))) ; /**< For temporary storage (Not referring to RTDB values. */
+        } Scalar __attribute__ ((aligned(8))) ;
+        //RTDBArrayValue *Array;
+        char *array_c __attribute__ ((aligned(8))) ;
+        unsigned char *array_uc __attribute__ ((aligned(8))) ;
+        short *array_s __attribute__ ((aligned(8))) ;
+        unsigned short *array_us __attribute__ ((aligned(8))) ;
+        int *array_i __attribute__ ((aligned(8))) ;
+        unsigned int *array_ui __attribute__ ((aligned(8))) ;
+        float *array_f __attribute__ ((aligned(8))) ;
+        double *array_d __attribute__ ((aligned(8))) ;
+        long long *array_ll __attribute__ ((aligned(8))) ;
+        void *array_void __attribute__ ((aligned(8))) ;
+    } Val;
+    int dimensions[MAX_DIMENSIONS] __attribute__ ((aligned(8))) ;
+} ItemValue;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object to hold the a single engineering unit value of a RTDB item independent of its data type.
+ * This is used for the RTDB default value and RTDB alternate value.
+ */
+typedef struct ItemValueScalar {
+    int stringLength;
+    int numElements;            /**< To be compatible w/ ItemValue. */
+    int numMallocedElements;    /**<  To be compatible w/ ItemValue. */
+    int isRTDB ;                /**< Indicates whether the string comes from RTDB (true) or local storage (false). */
+    union {
+        long long ll __attribute__ ((aligned(8))) ;           /**< Value of the item if its cvt type is long long (64 bit integer).*/
+        double d __attribute__ ((aligned(8))) ;               /**< Value of the item if its cvt type is double */
+        float f;                /**< Value of the item if its cvt type is float */
+        short s;                /**< Value of the item if its cvt type is short */
+        unsigned short us;      /**< Value of the item if its cvt type is unsigned short */
+        char           c;       /**< Value of the item if its cvt type is char */
+        unsigned char  uc;      /**< Value of the item if its cvt type is unsigned char */
+        int            i;       /**< Value of the item if its cvt type is int */
+        unsigned int   ui;      /**< Value of the item if its cvt type is unsigned int */
+        short          stringIndex; /**< Index of the string value in the string table */
+        StringVariableValue *stringValue __attribute__ ((aligned(8))) ; /**< For temporary storage (Not referring to RTDB values. */
+    } V __attribute__ ((aligned(8))) ;
+    int dimensions[MAX_DIMENSIONS];
+} ItemValueScalar;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object to provide a value to an RTDB item.
+ */
+typedef struct ItemValueDef {
+    ItemValue value;    /**< The actual value of the object. */
+    short     cvtType;  /**< The type of the object so that ItemValue can interpreted correctly. */
+} ItemValueDef;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object to provide a value to a scalar only  RTDB item.
+ */
+typedef struct ItemValueDefScalar {
+    ItemValueScalar value;    /**< The actual value of the object. */
+    short     cvtType;  /**< The type of the object so that ItemValue can interpreted correctly. */
+} ItemValueDefScalar;
+
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object to hold the raw value of a RTDB item  independent of its data type.
+ */
+typedef union RawValue {
+    int            i;   /**< Raw value is a 'C' int. */
+    unsigned int   ui;  /**< Raw value is a 'C' unsigned int. */
+    short s;            /**< Raw value is a 'C' short. */
+    unsigned short us;  /**< Raw value is a 'C' unsigned short. */
+    char           c;   /**< Raw value is a 'C' char. */
+    unsigned char  uc;  /**< Raw value is a 'C' unsigned char. */
+    float          f;   /**< Raw value is a 'C' float. This is mainly for AFDX message */
+    double         d;   /**< Raw value is a 'C' double. This is mainly for AFDX message */
+    long long      ll;   /**< Raw value is a 'C' long long. This is mainly for AFDX message */
+} RawValue;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Additional  flags for  for the I/O record. Describes some additional properties specific to the device.
+ */
+enum IO_Flags {
+    IOFL_29BITCANID     =0x1,   /**< The CAN Id is 29 bit instead of default 11. */
+    IOFL_BIGENDIAN      =0x2,   /**< Swap bytes in from little-endian(Intel) to big-endian when writing data point value to AFDX message and 
+                                    when extracting from AFDXr, FlexRay or CAN message. */
+    IOFL_BCDFORMAT      =0x4,
+    IOFL_FIFOTX         =0x8,   /**< Use FIFO mode when sending ARINC 429 instead of scheduled mode. */
+    IOFL_TXONCHANGE     =0x10,  /**< Send FIFO label on value change otherwise only send on user request even the value has changed. */
+    IOFL_TXEVERYNFRAME  =0x20,
+    IOFL_BCDSSM         =0x40,  /**< Set when the RTDB item is the SSM bits for a BCD label*/
+    IOFL_CANID_RTR      =0x80,  /**< Set when the input CAN ID is defined as RTR */
+    IOFL_INPUT_USER     =0x100, /**< Call user supplied routine on CAN Id receive. */
+    IOFL_OUTPUT_USER    =0x200, /**< Call user supplied routine before CAN Id transmit. */
+    IOFL_SETUP_USER     =0x400, /**< Call user supplied routine at initialization time. The routine will be called both for the corresponding input and output CAN Id
+                                   so the user can do separate setup for input and/or output. */
+    IOFL_Arinc429_SDI   =0x800,
+    IOFL_CAN_EXTDATA    =0x1000, /**< Support for CAN FD packet > 8 bytes. */ 
+    IOFL_CAN_FASTDATA   =0x2000, /**< Support for CAN FD  fast data rate */ 
+    IOFL_CAN_NODATA     =0x4000, /**< Support for sending/receiving  CAN messages with no paylod , still needs to be mapped but we ignore mapping */ 
+    IOFL_SERIAL_NOMSGID =0x8000, /**< Binary serial message with no message id in payload */ 
+    IOFL_CAN_MUX        =0x10000,/**< CAN signal is muxed*/ 
+    IOFL_CAN_DBC        =0x20000,/**< CAN mapping comes from DBC*/ 
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Run time  flags for an message oriented device such as ARINC 429,AFDX or CAN  . Not all flags apply to all devices
+ */
+enum MSGIO_Flags {
+
+    MSGIO_TXNOW            =0x1, /**< For FIFO mode ARINC label, only send the label when this is set . */
+    MSGIO_FIFO             =0x10, /**< Defined originally as a FIFO label in the RTDB . Current operating mode of the label. */
+    MSGIO_SCHED            =0x20, /**< Defined originally as a scheduled label in the RTDB . Current operating mode of the label. */
+    MSGIO_TXONCHANGE       =0x40,
+    MSGIO_TXEVERYFRAME     =0x80,
+    MSGIO_PAUSED           =0x100, /**< This schedule label has been paused.*/
+    MSGIO_TXSOFTTIMER      =0x200, /**< AFDX schedule is via a software timer. */
+    MSGIO_INVERTPARITY     =0x400, /**< Invert parity when sending arinc 4209 labels. */
+    MSGIO_VARIABLELENGTH   =0x800, /**<  Message is variable length (for NETIO) */
+    MSGIO_Arinc429_SDI     =0x800, /**<  ARINC 429 Label uses SDI (ARINC 429 boards only ) */
+    MSGIO_NODATA           =0x1000 /**<  Send message with no payloadi (CAN) */
+};
+enum UEI_DevType {
+    UEI_ANALOG    = 1,
+    UEI_DIGITAL   = 2,
+    UEI_MF101     = 3,
+    UEI_ARINC429  = 4,
+    UEI_CAN       = 5,
+    UEI_RELAY     = 6,
+    UEI_AFDX      = 7 
+}; 
+
+enum UEI_MF101_SUBSYTEM {
+    MF101_AI      = 1,
+    MF101_AO      = 2,
+    MF101_DI_FET  = 3,
+    MF101_DO_FET  = 4,
+    MF101_DI_TTL  = 5,
+    MF101_DO_TTL  = 6
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing some specific properties of ARINC 429 labels in the shared memory RTDB.
+ */
+typedef struct ARINC429LabelProperties {
+    short boardId;
+    short boardNum;
+    unsigned char  channelNum;
+    unsigned short labelNum;            /**< Arinc 429 labels values are from 0 to 255. If SDI is used the label in this table is (sdi << 8) | label. */
+    unsigned short type;
+    unsigned short arinc429Flags;        /**< Special flags for arinc FIFO/Schedule labels.*/
+    unsigned short defaultFlags;        /**< Default original flags for arinc FIFO/Schedule labels.*/
+    unsigned int arinc429ScheduleRate; /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode.*/
+    unsigned int defaultScheduleRate; /**< The default original rate when the label is configure as scheduled.*/
+    int runCount;                     /**< Internal count to check for value change based on the label scheduled rate. */
+    int initCount;                    /**< Initial count for the previous running count .*/
+    unsigned long long  tickLastUpdate __attribute__ ((aligned(8))) ; /**< Input labels only. Tick when this item was last updated.*/
+    int          lastUpdateUSec;      /**< Interval in micro seconds between the last 2 updates of the label .*/
+    unsigned int *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount __attribute__ ((aligned(8))) ;
+    int          *pLastUpdateUSec __attribute__ ((aligned(8))) ;  /**< Interval in micro seconds between the last 2 updates of the label .*/
+    long long    *pTickLastUpdateIn __attribute__ ((aligned(8))) ;    /**< Time stamp (_rdtsc()) when the label was last received .*/
+    long long    *pTickLastSent __attribute__ ((aligned(8))) ;        /**< Time stamp (_rdtsc()) when the label was last transmitted. */
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+    unsigned int data;
+    unsigned char pointCount;
+    int           pointHashIndex[MAX_POINTSPERID];
+} ARINC429LabelProperties;
+
+typedef struct ARINCTable {
+    int tableReady;
+    int numEntries;
+    ARINC429LabelProperties arincProperties[MAX_ARINCLABELENTRIES];
+} ARINCTable;
+
+
+// CAN ID mapping controls
+#define CAN_CTRL_MAPPING      0
+#define CAN_CTRL_PAUSERESUME  1
+#define CAN_CTRL_TXNOW        2
+#define CAN_CTRL_SCHEDFIFO    3
+#define CAN_CTRL_TXONCHANGE   4
+#define CAN_CTRL_SCHEDRATE    5
+// Addition mapping controls for ARINC429 input
+#define ARINC429_CTRL_RXCOUNT      10
+#define ARINC429_CTRL_RXPERIOD     11
+#define ARINC429_CTRL_RXLASTRCV    12
+#define ARINC429_CTRL_RAWVALUE     13
+
+// CAN time constant  
+#define CAN_ASYNCIO_RUNSCHED  250  // microsec for async io timer
+#define CAN_SCHEDRATE_MULT    (1000/CAN_ASYNCIO_RUNSCHED) // multiplier to convert milli second to timer count for schedrate
+
+#define HDLC_RX_MAPPING     1
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing some specific properties of CAN Id's   in the shared memory RTDB.
+ */
+typedef struct CANIdProperties {
+    short boardId;
+    short boardNum;
+    short netNum;
+    unsigned short  type;
+    unsigned int   canId;
+    int            lastUpdateUSec;    /**< Interval in micro seconds between the last 2 updates of the CANID .*/
+    unsigned long long  tickLastUpdate __attribute__ ((aligned(8))) ; /**< CAN id input points only. Tick when this item was last updated.*/
+    unsigned short flags;             /**< Special flags for FIFO/Schedule CAN Id's.*/
+    unsigned short defaultFlags;      /**< Special flags for FIFO/Schedule CAN Id's.*/
+    float          scheduleRate;      /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode. (not supported)*/
+    float          defaultScheduleRate;      /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode. (not supported)*/
+    int            runCount;          /**< Internal count to check for value change based on the CAN Id scheduled rate. */
+    int            initCount;         /**< Initial count for the previous running count .*/
+    float          *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int   *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int   *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int   *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char  *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char  *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char  *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int   *pRxCount __attribute__ ((aligned(8))) ;
+    int            *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    unsigned int   rxCount __attribute__ ((aligned(8))) ;
+    unsigned int   txCount;
+    unsigned char  message[64];     /** Copy of message */
+    unsigned char  msgLen;
+    unsigned char  pointCount;
+    int            pointHashIndex[MAX_POINTSPERID];  // So we can resolve the point name when sending can message
+    short          metaFlags[MAX_POINTSPERID];
+    float          euMaxValue[MAX_POINTSPERID];
+    float          euMinValue[MAX_POINTSPERID];
+} CANIdProperties;
+
+typedef struct CANTable {
+    int tableReady;
+    int numEntries;
+    CANIdProperties canIdProperties[MAX_TABLECANENTRIES];
+} CANTable;
+
+
+// SENT channel Mapping controls
+#define  SENT_CTRL_FAST_CHANNEL      0
+#define  SENT_CTRL_SHORT_CHANNEL     1
+#define  SENT_CTRL_ENHANCED_CHANNEL  2
+#define  SENT_CTRL_STATUS_BIT0       3
+#define  SENT_CTRL_STATUS_BIT1       4
+#define  SENT_CTRL_PAUSE_RESUME      5
+#define MAX_CPSENTSLOTS    10
+
+typedef struct SENTIdProperties {
+    short boardId;
+    short boardNum;
+    short channelNum;
+    unsigned short type;
+    unsigned int  sentId;
+    int          lastUpdateUSec;      /**< Interval in micro seconds between the last 2 updates of the SENTID .*/
+    unsigned long long  tickLastUpdate __attribute__ ((aligned(8))) ; /**< SENT id input points only. Tick when this item was last updated.*/
+    unsigned int flags;             /**< Special flags for FIFO/Schedule CAN Id's.*/
+    int runCount;                   /**< Internal count to check for value change based on the CAN Id scheduled rate. */
+    int initCount;                  /**< Initial count for the previous running count .*/
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+    unsigned char *pSynced __attribute__ ((aligned(8))) ;
+    unsigned short *pnSyncs __attribute__ ((aligned(8))) ;
+    unsigned char *pFIFOEntries __attribute__ ((aligned(8))) ;
+    unsigned int  *pAuxTX __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pCRCErrors __attribute__ ((aligned(8))) ;
+    int        *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    float      *pSyncPulseLength __attribute__ ((aligned(8))) ;
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+    unsigned int  data;
+    unsigned char nibbles;
+    unsigned char pointCount;
+    int           pointHashIndex[MAX_POINTSPERID];
+    short         metaFlags[MAX_POINTSPERID];
+    float         euMaxValue[MAX_POINTSPERID];
+    float         euMinValue[MAX_POINTSPERID];
+} SENTIdProperties;
+
+typedef struct SENTTable {
+    int tableReady;
+    int numEntries;
+    SENTIdProperties sentIdProperties[MAX_TABLESENTENTRIES];
+} SENTTable;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing some specific properties of LIN Id's   in the shared memory RTDB.
+ */
+typedef struct LINIdProperties {
+    short boardId;
+    short boardNum;
+    short netNum;
+    unsigned short type;
+    unsigned int   frameId;
+    unsigned short flags;                /**< Special flags for FIFO/Schedule CAN Id's.*/
+    unsigned short defaultFlags;         /**< Special flags for FIFO/Schedule CAN Id's.*/
+    int          lastUpdateUSec;       /**< Interval in micro seconds between the last 2 updates of the CANID .*/
+    unsigned long long  tickLastUpdate __attribute__ ((aligned(8))) ;/**< CAN id input points only. Tick when this item was last updated.*/
+    unsigned int scheduleRate;        /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode. (not supported)*/
+    unsigned int defaultScheduleRate; /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode. (not supported)*/
+    int runCount;                   /**< Internal count to check for value change based on the CAN Id scheduled rate. */
+    int initCount;                  /**< Initial count for the previous running count .*/
+    unsigned int *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pRxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount __attribute__ ((aligned(8))) ;
+    int        *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+    unsigned char message[8];
+    unsigned char msgLen;
+    unsigned char pointCount;
+    int           pointHashIndex[MAX_POINTSPERID];
+    short         metaFlags[MAX_POINTSPERID];
+    float         euMaxValue[MAX_POINTSPERID];
+    float         euMinValue[MAX_POINTSPERID];
+} LINIdProperties;
+
+typedef struct LINTable {
+    int tableReady;
+    int numEntries;
+    LINIdProperties linIdProperties[MAX_TABLELINENTRIES];
+} LINTable;
+
+typedef struct CalibrationEntry {
+    double gain;
+    double offset;
+} CalibrationEntry;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing hardware record for items attached to real hardware.
+ */
+typedef struct HardwareConfig {
+    int   hashIndex;                    /**< Index # in hash table for this item */
+    char  name[MAX_IORECORDNAME];       /**< Name of this record. */
+    short boardId;                      /**< The type of board i.e. AI64SS,12AO16,etc. */
+    short boardNumber;                  /**< The board number when multiple boards of same type */
+    short type;                         /**< Type of record, either INPUT or OUTPUT. */
+    int   index;                        /**< Index within array variable that is mapped. */
+    union {
+        struct {
+            unsigned short channelNumber;   /**< The channel # for AI/AO , the bit # corresponding to this RTDB item */
+        } Analog;
+        struct {
+            unsigned short channelNumber;   /**< The channel # for AI/AO , the bit # corresponding to this RTDB item */
+            unsigned short ctrlType;        /**< Control type for the mapping, 0: buffer variable; 1:buffer count variable */
+        } AI64SS_Stream;
+        struct {
+            unsigned short channelNumber;   /**< The channel # for AI/AO , the bit # corresponding to this RTDB item */
+            char waveFile[MAX_WAVEFILENAME]; /**< Name of the wave file to output to the channel .*/
+            double frequency __attribute__ ((aligned(8))) ;               /**< Frequency in Hz at which to clock the wave file.*/
+        } AO16_W;
+        struct {
+            unsigned short channelNumber;   /**< The channel # for AI/AO , the bit # corresponding to this RTDB item */
+            char waveFile[MAX_WAVEFILENAME]; /**< Name of the wave file to output to the channel .*/
+            double frequency __attribute__ ((aligned(8))) ;               /**< Frequency in Hz at which to clock the wave file.*/
+        } DA3218_W;
+        struct {
+            unsigned short channelNumber;   /**< The channel # for output , the bit # corresponding to this RTDB item */
+            double initialFrequency __attribute__ ((aligned(8))) ;               /**< Frequency in Hz at which to clock the wave file.*/
+            double initialPhase __attribute__ ((aligned(8))) ;
+            unsigned short controlNumber;
+        } HITV370;
+        struct {
+            unsigned short bitNumber;   /**< The channel # for AI/AO , the bit # corresponding to this RTDB item */
+        } Digital;
+        struct {
+            unsigned short bitNumber;  /**< The channel # for AI/AO , the bit # corresponding to this RTDB item */
+            unsigned short mode;       /**< Output mode for NAI_76C2 */
+            float         vMaxHigh;    /** Maximum voltage allowed without error.*/
+            float         vMinLow;     /** Minimum allowed without error.*/
+            float         vUpper;      /** Upper voltage to signal logical 1.*/
+            float         vLower;      /** Lower voltage to signal logical 0.*/
+            float         current;     /** Simk source current.*/ 
+            float         debounceTime; /** Debounce Time in sec for input only.*/
+            unsigned short varNumber;
+        } NAI7xCxK6;
+       
+        /**
+         * Mapping information for ARINC 429 boards.
+         */
+        struct {
+            unsigned char channelNumber;    /**< Channel on the board for this point. */
+            unsigned char labelNumber;      /**< Label value for this point. */
+            unsigned char startBit;         /**< Startbit (MSB== parity bit is 0) .*/
+            unsigned char numBits;          /**< Number of bits .*/
+            unsigned char ctrlType;        /**< Control type for the mapping,  */
+            unsigned char sdi;        /**< Control type for the mapping,  */
+            unsigned short txPeriod;        /**< Transmit period (ms) for the sdi/label combination. */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            unsigned short order;           /**< Order in which ot send the labels when in FIFO (Non-schedule mode). */
+        } Arinc429;
+        /**
+         * Mapping information for AFDX boards.
+         */
+        struct {
+            unsigned short vLinkId;         /**< Virtual link id. */
+            unsigned short startByte;       /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                              which 32 bits are considered an ARINC word */
+            unsigned short stringLength;    /**< String length for string input variable. If 0 the string is a NULL termintated string. */
+            unsigned char  startBit;        /**< Startbit in start byte where the data mapping for this item begins.*/
+            unsigned char  numBits;         /**< Number of bits .*/
+            unsigned char  rawType;         /**< Raw type for the data to be copied into the message. */
+            unsigned char  ctrlType;        /**< Control type for the mapping,  */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            char     messageName[MAX_AFDXMSGNAME];   /**< AFDX Message name. */
+        } AFDX;
+        /**
+         * Mapping information for FDX message.
+         */
+        struct {
+            unsigned int    groupId;                        /**< Group ID in the FDX message. */
+            unsigned int    groupSize;                      /**< Group Size in the FDX message. */
+            char            fdxType[MAX_FDXVARNAME];        /**< Type of the FDX variable.  1. SIGNAL   - 0 
+                                                                                            2. SYSVAR   - 1
+                                                                                            3. ENVVAR   - 2
+                                                                                            4. PDU      - 3
+                                                                               */
+            char            id[MAX_FDXMSGNAME];             /**< FDX Message name. */
+            unsigned int    startByte;                      /**< startByte of the current variable in bytes from group beginning. */
+            char            valueType[MAX_FDXVARNAME];      /**< FDX Value Type             1. RAW      - 0
+                                                                                            2. PHYSICAL - 1
+                                                                                */
+            char            fdxDirection[MAX_FDXVARNAME];   /**< FDX direction              1. AUTO     - 0
+                                                                                            2. TXRQ     - 1
+                                                                                */
+            unsigned char   rawType;                        /**< Raw type for the data to be copied into the message. */
+            unsigned char  ctrlType;        /**< Control type for the mapping,  */
+            unsigned short  ioFlags;                        /**< Additional I/O specific flags.*/
+        } FDX;
+
+        /**
+         * Mapping information for NET TCP/UDP message.
+         */
+        struct {
+            unsigned short startByte;       /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                              which 32 bits are considered an ARINC word */
+            unsigned short stringLength;    /**< String length for string input variable. If 0 the string is a NULL termintated string. */
+            unsigned char  startBit;        /**< Startbit in start byte where the data mapping for this item begins.*/
+            unsigned char  numBits;         /**< Number of bits .*/
+            unsigned char  rawType;         /**< Raw type for the data to be copied into the message. */
+            unsigned char  ctrlType;        /**< Control type for the mapping,  */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            char     messageName[MAX_AFDXMSGNAME];   /**< AFDX Message name. */
+        } NETIO;
+        struct {
+            char varName[MAX_MAPPINGVARNAME] ;   /**< The ROS message field to which is RTDBItem is mapped.. */
+            char messageName[MAX_AFDXMSGNAME];   /**< AFDX Message name. */
+            char structName[MAX_TAGLEN];
+        } ROS2_MSGS;
+        struct {
+            short streamNumber;
+            unsigned int tagId;
+        } IADS_SRC;
+        /**
+         * Mapping information for RTMAPS UDP message.
+         */
+        struct {
+            unsigned short startByte;       /**< Where in the message the data is mapped.  */
+            unsigned short stringLength;    /**< String length for string input variable. If 0 the string is a NULL termintated string. */
+            unsigned char  startBit;        /**< Startbit in start byte where the data mapping for this item begins.*/
+            unsigned char  numBits;         /**< Number of bits .*/
+            unsigned char  rawType;         /**< Raw type for the data to be copied into the message. */
+            unsigned char  ctrlType;        /**< Control type for the mapping,  */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+        } RTMAPS;
+
+        /**
+         * Mapping information for NET UDP message.
+         */
+        struct {
+            unsigned short startByte;       /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                              which 32 bits are considered an ARINC word */
+            unsigned short stringLength;    /**< String length for string input variable. If 0 the string is a NULL termintated string. */
+            unsigned char  startBit;        /**< Startbit in start byte where the data mapping for this item begins.*/
+            unsigned char  numBits;         /**< Number of bits .*/
+            unsigned char  rawType;         /**< Raw type for the data to be copied into the message. */
+            unsigned char  ctrlType;        /**< Control type for the mapping,  */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            char     messageName[MAX_AFDXMSGNAME];   /**< UDP Message name. */
+            char     varName[MAX_MAPPINGVARNAME] ;   /**< The message variable (I.e. the Simulink port name) to which is RTDBItem is mapped.. */
+        } UDPPacket;
+        /**
+         * Mapping information for DDC 1553  boards.
+         */
+        struct {
+            unsigned short startByte;       /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                              which 32 bits are considered an ARINC word */
+            unsigned char  startBit;        /**< Startbit in start byte where the data mapping for this item begins.*/
+            unsigned char  numBits;         /**< Number of bits .*/
+            unsigned char  rawType;         /**< Raw type for the data to be copied into the message. */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            unsigned char  ctrlType;        /**< Control type for the mapping,  */
+            char     messageName[MAX_1553MSGNAME];   /**< DDC1553 Message name. */
+        } DDC1553;
+        /**
+         * Mapping information for ECAT master 
+         */
+        struct {
+            unsigned short startByte;         /**< Startbyte .*/
+            unsigned char startBit;         /**< Startbit  .*/
+            unsigned short numBits;          /**< Number of bits .*/
+            unsigned char rawType;         /**< Raw type for the data to be copied into the message. */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+        } ECATMaster;
+        struct {
+            char domain[MAX_ECATDOMAINNAME];
+            unsigned short slaveNumber;
+            unsigned short syncMaster;
+            unsigned short syncMasterOffset;
+            unsigned short pdoAddress;
+            unsigned int   vendorId;
+            unsigned int   slaveId;
+            unsigned short pdoEntry;
+            unsigned short pdoSubIndex;
+            unsigned short numBits;          /**< Number of bits .*/
+            unsigned short rawType;          /**< Number of bits .*/
+        } EtherLabECATMaster;
+        /**
+         * Mapping information for ECAT slave 
+         */
+        struct {
+            unsigned short startByte;         /**< Startbyte .*/
+            unsigned char startBit;         /**< Startbit (MSB== parity bit is 0) .*/
+            unsigned char numBits;          /**< Number of bits .*/
+            unsigned char rawType;         /**< Raw type for the data to be copied into the message. */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            unsigned short pdoAddress;      /**< For ESD slave only. */
+            unsigned short pdoEntry;
+            unsigned short pdoSubIndex;
+            char           description[MAX_PDODESCRIPTION];
+            char           entryName[MAX_PDODESCRIPTION];
+        } ECATSlave;
+        /**
+         * Mapping information for resolver boards.
+         */
+        struct {
+            unsigned char  channelNumber;   /**< Channel on the board for this point. */
+            unsigned char  ctrlType;        /**< Module number for NAI-79C3-SF6 board. */
+        } Resolver;
+        /**
+         * Mapping information for RVDT boards.
+         */
+        struct {
+            unsigned char  channelNumber;   /**< Channel on the board for this point. */
+        } RVDT;
+        /**
+         * Mapping information for MOXA boards.
+         */
+        struct {
+            unsigned short channelNumber;   /**< Channel/Port # . */
+            unsigned short msgId;           /**<  Message Id for multiplexed a la CAN message */
+            unsigned short startByte;       /**< Where in the message the data is mapped. This is used when raw type is packed because we must know
+                                              which 32 bits are considered an ARINC word */
+            unsigned short stringLength;    /**< String length for string input variable. If 0 the string is a NULL termintated string. */
+            unsigned short startBit;        /**< Startbit in start byte where the data mapping for this item begins.*/
+            unsigned char  numBits;         /**< Number of bits .*/
+            unsigned char  rawType;         /**< Raw type for the data to be copied into the message. */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            unsigned short ctrlType;        /**<  for HDLC RX address for instance */
+        } Serial;
+        struct {
+            unsigned short channelNumber;   /**< Channel/Port # . */
+            unsigned short mode;            /**< Additional parameter for GPIB data points. Used to discriminate between AC/DC  & Voltage/Current.*/
+            unsigned short samplingRate;    /**< Rate in ms  at which to read/write the point.*/
+        } GPIB;
+        struct {
+            unsigned short ctrlNumber;   /**< Button/Axis number . */
+            unsigned short ctrlType;     /**< Control type. I.e. axis or button.*/
+            unsigned char  buttonType;   /**< Whether button toggles.*/
+        } JoyStick;
+        struct {
+            unsigned short ctrlNumber;   /**< Button/Axis number . */
+            unsigned short ctrlType;     /**< Control type. I.e. axis or button.*/
+            unsigned char  buttonType;   /**< Whether button toggles.*/
+        } LogiWheel;
+        struct {
+            unsigned short ctrlNumber;   /**< Button/Axis number . */
+            unsigned short ctrlType;     /**< Control type. I.e. axis or button.*/
+            unsigned char  buttonType;   /**< Whether button toggles.*/
+        } HotasX56;
+        struct {
+            unsigned short ctrlNumber;   /**< Primany number, button number, etc. */
+            unsigned short ctrlType;     /**< Primary, button, LED or joystick axis. */
+        } FANPOD;
+        struct {
+            char varName[MAX_MAPPINGVARNAME] ;   /**< The FlightGear message variable to which is RTDBItem is mapped.. */
+        } FlightGear;
+        struct {
+            char varName[MAX_MAPPINGVARNAME] ;   /**< The XPlane message variable to which is RTDBItem is mapped.. */
+        } XPlane;
+        struct {
+            char varName[MAX_MAPPINGVARNAME] ;   /**< The R-Factor Pro message variable to which is RTDBItem is mapped.. */
+        } RFactor;
+        struct {
+            char varName[MAX_MAPPINGVARNAME] ;   /**< The R-Factor terrain server  message variable to which is RTDBItem is mapped.. */
+        } RFactor_TS;
+        struct {
+            char varName[MAX_MAPPINGVARNAME] ;   /**< The SENSO wheel message variable to which is RTDBItem is mapped.. */
+        } SensoWheel;
+        struct {
+            char varName[MAX_MAPPINGVARNAME] ;   /**< The VTD message variable to which is RTDBItem is mapped.. */
+        } VTD;
+        struct {
+            char varName[MAX_TAGLEN] ;                              /**< The RTDB variable name where this item is copied. */
+        } CopyOutIn;
+        struct {
+            char           cigiPacketProp[MAX_CIGINAME+1];          /**< CIGI Packet Property such as altitude etc  . */
+            char           packetType[MAX_CIGINAME+1];              /**< CIGI Packet Type. */
+            char           packetUniqIdentifier[MAX_CIGINAME+1];    /**< CIGI Packet Type. */
+            unsigned char  rawType;                                 /**< Raw type for the data to be copied into the message. */
+            unsigned short ioFlags;                                 /**< Additional I/O specific flags.*/
+            unsigned short txPeriod;                                /**< Transmit period (ms). */
+            char           cigiInterfaceName[MAX_CIGINAME+1];       /**< CIGI Packet Type. */
+        } CIGIIO;
+
+        struct {
+            unsigned int   canId;        /**< Can Identifier  . */
+            unsigned char  netNumber;    /**< Net on the board for this point. */
+            unsigned short startBit;     /**< Start it .*/
+            unsigned char  startByte;    /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                              which 32 bits are considered an ARINC word */
+                     int   mux;          /**< Multiplexer value for multiplexed record. -1 for the multiplexer point. 0 for non multiplexed record. */
+            unsigned char  numBits;      /**< Number of bits .*/
+            unsigned char  rawType;      /**< Raw type for the data to be copied into the message. */
+            unsigned int   ioFlags;      /**< Additional I/O specific flags.*/
+            float          txPeriod;     /**< Transmit period (ms) for the sdi/label combination. */
+            unsigned short sendNFrames;  /**< send this can id every n frames .*/
+            unsigned short messageLength;/**< The number of bytes to transmit. If 0, the number of bytes is determinted from the last bit mapped to the CAN id message. */
+            unsigned short sendOrder;    /**<  The order in which to send the CAN messages. Lower number go first  */
+            unsigned char  ctrlType;
+            struct {
+                unsigned char  isLin;        /**<   This is a LIN channel for IXXAT IBP640 board */
+                unsigned char  eventFrameId; /** The event frame that owns this frame. */
+            } LINIO;
+        } CANIO;
+        struct {
+            unsigned int   frameId;      /**< Frame ID  . */
+            unsigned char  startBit;     /**< Start it .*/
+            unsigned short startByte;    /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                              which 32 bits are considered an ARINC word */
+            unsigned char  numBits;      /**< Number of bits .*/
+            unsigned char  rawType;      /**< Raw type for the data to be copied into the message. */
+            unsigned short ioFlags;      /**< Additional I/O specific flags.*/
+            unsigned short txPeriod;     /**< Transmit period (ms) for the sdi/label combination. */
+            unsigned char  messageLength;/**< The number of bytes to transmit. If 0, the number of bytes is determinted from the last bit mapped to the LIN id message. */
+            unsigned char  ctrlType;
+            unsigned char  eventFrameId; /** The event frame that owns this frame. */
+        } LINDevice;
+        /**
+         * Mapping information for shared memory type device.
+         */
+        struct {
+            unsigned short startBit;     /**< Start bit .*/
+            unsigned int   startByte;    /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                              which 32 bits are considered an ARINC word */
+            unsigned char  numBits;      /**< Number of bits .*/
+            unsigned char  rawType;      /**< Raw type for the data to be copied into the message. */
+            unsigned short ioFlags;      /**< Additional I/O specific flags.*/
+            unsigned short runNFrame;    /**< Only update this mapping every N frames.*/
+            unsigned short runModFrame;  /**< Update this frame at frame modulo this.*/
+            unsigned short stringLength; /**< Maximum length of string to extract from region when mapped to string .*/
+            char     regionName[MAX_MEMREGIONNAME];   /**< FlexRay Message name. */
+        } MEMDevice;
+        /**
+         * Mapping information for TZM FlexRay boards.
+         */
+        struct {
+            unsigned short stringLength;   /**< String length for string input variable. If 0 the string is a NULL termintated string. */
+            unsigned short startByte;      /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                              which 32 bits are considered an ARINC word */
+            unsigned short startBit;       /**< Startbit in start byte where the data mapping for this item begins.*/
+            unsigned short numBits;        /**< Number of bits .*/
+            unsigned short ioFlags;        /**< Additional I/O specific flags.*/
+            unsigned char  rawType;        /**< Raw type for the data to be copied into the message. */
+            char     messageName[MAX_FLEXRAYMSGNAME];   /**< FlexRay Message name. */
+        } FLEXRAY;
+        /**
+         * Mapping information for EB5100 FlexRay boards.
+         */
+        struct {
+            short          recordType;     /**< Record type, 1 for TUM function. */
+            unsigned short ioFlags;        /**< Additional I/O specific flags.*/
+            unsigned char  rawType;        /**< Raw type for the data to be copied into the message. */
+            union {
+                struct {
+                    short   signalIndex;    /**< Signal index in EB board . */
+                    short   groupIndex;     /**< Signal group index in EB board . */
+                } Signal;
+                struct {
+                    short   tumId;           /**< TUM ID for TUM records . */
+                    short   tumInstance;     /**< TUM Instance for TUM records. */
+                } TUM;
+                struct {
+                    short pduIndex;          /**< PDU index for PDU records. */ 
+                } PDU;
+                struct {
+                    unsigned int ecuAddress;    /**< ECU data address for XCP records.*/
+                } XCP;
+            } U;
+
+        } EB5100;
+        struct {
+            unsigned long long ident __attribute__ ((aligned(8))) ;        /**< Ident 0-0xFFFFFF*/
+            unsigned long long startByte __attribute__ ((aligned(8))) ;        /**< 0-262132 */
+            unsigned char startBit;         /**< Startbit (MSB== parity bit is 0) .*/
+            unsigned char numBits;          /**< Number of bits .*/
+            unsigned char rawType;     /**< Raw type for the data to be copied into the message. */
+			unsigned int  dimension;		/**< for arrays .*/
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            char  objName[MAX_ARIONOBJNAME];   /**< Identification Name (ascii idtNumber) */
+        } Arion;
+        struct {
+            unsigned long long id __attribute__ ((aligned(8))) ;		/* ident */
+            unsigned char rawType;	/**Mapping 1 <-> 1 type=rawType=DTYPE, except boolean*/
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+            char msgName[MAX_RTADBMSGNAME];
+        } Rtadb;
+        struct {
+            unsigned char  parmChar1[MAX_USERHARDWAREADDRESSSPACE];
+        } USERIO;
+        /**
+         * Mapping information for LCAIO.
+         */
+        struct {
+            int hardwareType;     /**< Type of this record; whether is digital or analog. NIHardwareType */
+            union {
+                unsigned short channelNumber;  //bits & channel are both called channel in this context
+                unsigned short bitNumber;
+            } U;
+        } LCAIO;
+        /* Mapping for CCUR PWM RCIM based board.*/
+        struct {
+            unsigned short channelNumber;   /**< The PWM channel,0-12 for PWM output, 0-1 for sine wave 6 phase output */
+            unsigned short ctrlType;        /**< Control type for the mapping,  */
+        } PWM_1012;
+        /* Mapping for CCUR PWM RCIM based inout .*/
+        struct {
+            unsigned short channelNumber;   /**< The PWM channel,0-12 for PWM output, 0-1 for sine wave 6 phase output */
+            unsigned short ctrlType;        /**< Control type for the mapping,  */
+        } PWM_1112;
+        /* Mapping for CCUR SENT RCIM based  .*/
+        struct {
+            unsigned short channelNumber;   /**< The SENT channel */
+            unsigned short ctrlType;        /**< Control type for the mapping,  */
+            unsigned short sentId;
+            unsigned short ioFlags;
+            unsigned short startBit;
+            unsigned short numBits;
+            char slots[MAX_CPSENTSLOTS];
+        } CP_SENT;
+        struct {
+            unsigned short channelNumber;   /**< The pseudo channel */
+            unsigned short ctrlType;        /**< Control type for the mapping,  */
+        } CP_COS64;
+        struct {
+            unsigned short channelNumber;   /**< The pseudo channel */
+            unsigned short ctrlType;        /**< Control type for the mapping,  */
+        } CP_KNOCKSENSOR;
+        /* Mapping for CCUR FISC hardware .*/
+        struct {
+            unsigned short faultNumber;   /**< The fault number in the config file */
+            unsigned short ctrlType;      /**< 1 for high current fault */
+        } FISC;
+        /** Mapping for FGPA Engine board */
+        struct {
+            unsigned short ioFlags;
+            unsigned short channelNumber;
+            unsigned short ctrlType;
+        } CP_FPGA_ArV;
+        /** Mapping for Wheel Speed Sensor board */
+        struct {
+            unsigned short channelNumber;
+            unsigned short ctrlType;
+        } CP_WSSENSOR;
+        /** Mapping for UEGO board */
+        struct {
+            unsigned short channelNumber;
+            unsigned char  ctrlType;        /**< Control type for the mapping,  0 for lambda,1 for heater*/
+        } CP_UEGO;
+        struct {
+            unsigned short channelNumber;
+            unsigned short ctrlType;
+        } CP_RESSIM;
+        /**
+         * Mapping information for NI boards .
+         */
+        struct {
+            int hardwareType;     /**< Type of this record; whether is digital or analog. NIHardwareType */
+            union {
+                struct {
+                    unsigned short counterNumber;
+                    unsigned short controlNumber;  /**< Mapping #. For instance for pulse generation, we have 1 record for the frequency and 1 for
+                                                        the duty cycle. */
+                    unsigned short counterType ;   /**< One of NICounterType. */
+                    unsigned short ctrFlags;       /**< Additional flags for counter gating,etc.*/
+                    double         initialDelay;   /**< Initial delay in seconds units to start the counter.*/
+                    double         parm1 __attribute__ ((aligned(8))) ;          /**< Fixed frequency/duty cycle if not mapped or high ticks / low ticks.*/
+                    double         parm2 __attribute__ ((aligned(8))) ;          /**< Reset value when Z index is on for motion encoder.*/          
+                    double         parm3 __attribute__ ((aligned(8))) ;          /**< Initial angle when Z index is on for motion encoder.*/
+                    unsigned short zIndexPhase;    /**< Phase to use to reset the counter when Z indexing is on. */
+                } Counter;
+                struct {
+                    unsigned short bitNumber;
+                } Digital;
+                struct {
+                    unsigned short channelNumber;
+                    unsigned char gain;             /**< Channel gain, from 0 to 7 */
+                    unsigned char diffSE;           /**< Differential,NRSE or RSE */
+                    unsigned char dither;           /**< 1 to enable dither on the channel */
+                    unsigned char bipolar;          /** Set to 1 when channel is to be configured in bipolar mode*/
+                } Analog;
+            } U;
+        } NIBoard;
+        struct {
+            unsigned short channelNumber;
+            unsigned short ctrlType;
+        } HR_TB4702;
+        /**
+         * Mapping information for CP_MFIO.
+         */
+        struct {
+            int hardwareType;     /**< Type of this record; whether is digital or analog. */
+            union {
+                unsigned short channelNumber;  //bits & channel are both called channel in this context
+                unsigned short bitNumber;
+            } U;
+        } CP_MFIO;
+        /**
+         * Mapping information for XCP slave
+         */
+        struct {
+            unsigned short ioFlags;         /**<  Additional I/O specific flags.*/
+            int            size;
+            unsigned int   ecuAddress;
+            unsigned char  rawType;         /**<  Raw type for the data to be copied into the message. */
+            unsigned char  recordType;   /**<   Whether MEASUREMENT / CHARACTERISTIC / INSTANCE_MEASUREMENT */
+            char varName[MAX_A2LVARNAME] ;   /**<   */ 
+            char modelName[MAX_MODELNAME] ;   /**<   */ 
+            char modelVar[MAX_TAGLEN] ;   /**<   */ 
+            char isModel;                 /**<  XCP mapping of internal Simulink parameters and signals */
+        } XCP_SLAVE;
+         struct {
+            unsigned short ioFlags;
+            unsigned short channelNumber;
+            unsigned short ctrlType;
+        } CP_CMFIO;
+        struct {
+            unsigned int devType;                  /** One of UEI_XXX dev supported */
+            unsigned int slotNumber;               /** 0 index slot where the physical board is installed. */
+            unsigned int modelNumber;               /** Model number of the UEI card (i.e. 217, 254, 433, etc.) */
+            union {
+                struct {
+                    unsigned short channelNumber;   /**< The channel # for AI/AO , the bit # corresponding to this RTDB item */    
+                    unsigned short subsystem;
+                    float lowthreshold;
+                    float highthreshold;
+                    unsigned short gain;
+                    struct {
+                        double excVoltageRMS;
+                        double excFrequency;
+                        unsigned short wiringScheme;
+                        unsigned short externalExcitation;
+                    } LVDTRVDT;
+                } AnaDig;
+                struct {
+                    unsigned short VLId;            /**< Virtual link id. */
+                    unsigned short startByte;       /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                                      which 32 bits are considered an ARINC word */
+                    unsigned short stringLength;    /**< String length for string input variable. If 0 the string is a NULL termintated string. */
+                    unsigned char  startBit;        /**< Startbit in start byte where the data mapping for this item begins.*/
+                    unsigned char  numBits;         /**< Number of bits .*/
+                    unsigned char  rawType;         /**< Raw type for the data to be copied into the message. */
+                    unsigned char  ctrlType;        /**< Control type for the mapping,  */
+                    unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+                    unsigned short   portID;
+                    char           messageName[MAX_AFDXMSGNAME];   /**< AFDX Message name. */
+                } AFDX;
+                struct {
+                    unsigned char channelNumber;    /**< Channel on the board for this point. */
+                    unsigned char labelNumber;      /**< Label value for this point. */
+                    unsigned char startBit;         /**< Startbit (MSB== parity bit is 0) .*/
+                    unsigned char numBits;          /**< Number of bits .*/
+                    unsigned char ctrlType;        /**< Control type for the mapping,  */
+                    unsigned char sdi;        /**< Control type for the mapping,  */
+                    unsigned short txPeriod;        /**< Transmit period (ms) for the sdi/label combination. */
+                    unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+                    unsigned short order;           /**< Order in which ot send the labels when in FIFO (Non-schedule mode). */
+                } Arinc429;
+                struct {
+                    unsigned int   canId;        /**< Can Identifier  . */
+                    unsigned char  netNumber;    /**< Net on the board for this point. */
+                    unsigned short startBit;     /**< Start it .*/
+                    unsigned char  startByte;    /**< Where in the message the data is mapped. This is used when raw type is packed because we must know 
+                                                      which 32 bits are considered an ARINC word */
+                             int   mux;          /**< Multiplexer value for multiplexed record. -1 for the multiplexer point. 0 for non multiplexed record. */
+                    unsigned char  numBits;      /**< Number of bits .*/
+                    unsigned char  rawType;      /**< Raw type for the data to be copied into the message. */
+                    unsigned int   ioFlags;      /**< Additional I/O specific flags.*/
+                    float          txPeriod;     /**< Transmit period (ms) for the sdi/label combination. */
+                    unsigned short sendNFrames;  /**< send this can id every n frames .*/
+                    unsigned short messageLength;/**< The number of bytes to transmit. If 0, the number of bytes is determinted from the last bit mapped to the CAN id message. */
+                    unsigned short sendOrder;    /**<  The order in which to send the CAN messages. Lower number go first  */
+                    unsigned char  ctrlType;
+                } CANIO;
+            } U;
+        } UEI;
+        struct {
+            unsigned short serviceId;
+            unsigned short instanceId;
+            unsigned short methodId;
+            unsigned int startByte;
+            unsigned int numBytes;
+            unsigned char  rawType;      /**< Raw type for the data to be copied into the message. */
+            unsigned short ioFlags;         /**< Additional I/O specific flags.*/
+        } SOMEIP;
+        struct {
+            unsigned short ioFlags;
+            unsigned short channelNumber;
+            unsigned short ctrlType;
+        } CP_FPGA_ArX;
+        struct {
+            unsigned short ioFlags;
+            unsigned short channelNumber;
+            unsigned short ctrlType;
+        } CP_FPGA_C9;
+    } IOAddress;
+} HardwareConfig;
+
+#define EU_RAWTOPHYSICAL 0x80
+/**
+ * Type of entry in the conversion table. \sa EUConversion .
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ */
+enum EUConversionType {
+    EU_RATFUNC = 1 , /**< Rational function .*/
+    EU_TABINTERP = 2 , /**< Table with interpolation. */
+    EU_TABNOINTERP = 3   /**< Table with no interpolation. */
+};
+#define EU_MAXTABLEENTRIES  50
+#define EU_MAXPOLYNOMIAL    3
+
+#define EU_LINEARCONVERSION 0x1
+#define EU_1OVERXCONVERSION 0x2
+
+#define EU_ERRORNOINVERSION 0x1
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Engineering conversion record held in shared memory. 
+ * This is indexed via a separate hash table pointed to in the EUFactors meta data.
+ * This defines a conversion from physical (Engineering units) to raw via either a
+ * rational polynomial function as raw = (a*X^2 + b*X + c)/(d*X^2 + e*X + F) or <BR>
+ * an interpolation table defined in rangesX and rangesY.<BR>
+ * When the polynomial is different from strictly linear , i.e. A*X + B, this function cannot
+ * be inverted and therefore cannot be used to convert from physical to raw units.
+ */
+typedef struct EUConversion {
+    int   hashIndex;                    /**< Index # in hash table for this item */
+    char  name[MAX_EUCONVERSIONNAME];   /**< Name of this conversion. */
+    int   type;                         /**< Type of conversion \sa EUConversionType. By default, conversion
+                                         is physical to raw. raw to physical to raw defined by oring with EU_RAWTOPHYSICAL */
+    int   flags;                        /**< Whether the polynomial is linear and can be inverted.*/
+    double numerators[EU_MAXPOLYNOMIAL] __attribute__ ((aligned(8))) ;    /**< a,b,c coefficients. */       
+    double denominators[EU_MAXPOLYNOMIAL] __attribute__ ((aligned(8))) ;   /**< d,e,f coefficients. */
+    int    nRanges;                     /**< Number of entries in interpolation table. */
+    double rangesX[EU_MAXTABLEENTRIES] __attribute__ ((aligned(8))) ;
+    double rangesY[EU_MAXTABLEENTRIES] __attribute__ ((aligned(8))) ;
+    double rangesInvertedX[EU_MAXTABLEENTRIES] __attribute__ ((aligned(8))) ;
+    double rangesInvertedY[EU_MAXTABLEENTRIES] __attribute__ ((aligned(8))) ;
+    double directA __attribute__ ((aligned(8))) ;                  /**< For linear conversion only. Those are calculated a load time. Raw = directA * Physical_value  + directB .*/
+    double directB __attribute__ ((aligned(8))) ;
+    double inverseA __attribute__ ((aligned(8))) ;                  /**< For linear conversion only.  Pysical_value = inverseA * Raw  + inverseB .*/
+    double inverseB __attribute__ ((aligned(8))) ;
+    char   description[MAX_DESCRIPTIONLEN];   /**< Conversion description */
+    char   engUnits[MAX_EUNITSLEN];           /**< Engineering unit descriptor for physical units. */
+} EUConversion;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Meta flags for an RTDB item. Describe specific properties of the  RTDB item such as : item has EU conversion, is logged in the data logger,etc.
+ */
+enum RTDB_MetaFlags {
+    METAFL_HASEUCONVERSION  =1,     /**< Use EU conversion factors A & B to convert raw value. If not set there is no conversion and the raw value is stored as is in the RTDB */
+    METAFL_HASDEFAULT       =2,     /**< Item has a default value associated with it. The RTDB item is initialized to this value when the RTDB is loaded and the item value
+                                         has not been specified in the initial condition set.*/
+    METAFL_HASEULIMITS      =4,     /**< Check EU limits for valid value when placing in RTDB. This only applies to RTDB item mapped to hardware device.*/
+    METAFL_ARCHIVE          =8,     /**< Log the value of this item to the historical files at run time. This puts the point in the list of point that can be logged. 
+                                         If this is on, METFAFL_ARCHIVEENABLE is turned on at initialization. At run time, the user can toggle the METAFL_ARCHIVENABLE flag 
+                                         to enable/disable the logging. */
+    METAFL_ARCHIVEENABLE    =0x10,  /**< Dynamic logging flag. When on, the item is logged when off item is no longer logged. This flag can be toggled at run time. */
+    METAFL_INVERTLOGICAL    =0x20,  /**< Set when boolean raw data must be inverted before storing in the CVT. */
+    METAFL_SIGNEDEUVAL      =0x40,  /**< Set  the EU value is a signed number, i.e. the most significant bit of the hardware raw value is the sign bit. */
+    METAFL_CLAMP2EULIMIT    =0x80,  /**< If set and HASEULIMITS also set, the input and output values EU values are clamped to the max/min defined by the EU limits. */
+    METAFL_NOALTVALUE       =0x100, /**< If set , the item does not have an alternate value. */
+    METAFL_PLAYBACK         =0x200, /**< If set , we're in playback mode and the item has data coming from the data logger . */
+    METAFL_CIRCULARLOGGER   =0x400, /**< If set , this item goes into the circular data logger file . */
+    METAFL_READONLY         =0x800, /**< Read only item, value cannot be set from the GUI.*/
+    METAFL_EUCONVRECORD     =0x1000, /**< Use EU conversion in table instead  of A,B factors . */
+    METAFL_ASYNCENTRY       =0x2000, /**< Set by asyncio input thread when new value is set so that I/O tasks can output even when value has not changed.*/
+    METAFL_COLMAJOR         =0x4000, /**< Col major for MATLAB type arrays. */    
+    METAFL_SPARE            =0x8000, /**< Last spare bit. */
+    METAFL_NOSTRUCT         =0x10000  /**< Don't include this item in the C CVTTABLE struct. */
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Meta data only for a RTDB item. All those are specified as part of the
+ * definition of a RTDB item. This does not contain anything related to the
+ * value of an item.
+ */
+typedef struct RTDBItemMeta {
+    int   hashTableIndex;    /**< Index # in hash table for this item */
+    int   rtdbItemIndex;    /**< Index # in RTDB table for this item */
+    struct  {
+            double a __attribute__ ((aligned(8))) ;           /**< For EU conversion EU = a*raw+b      */
+            double b __attribute__ ((aligned(8))) ;           /**< For EU conversion EU = a*raw+b      */
+    } EUFactors __attribute__ ((aligned(8))) ;
+    short pointType;    /**< Point type (RTDBAI,RTDBAO,....)     */
+    short rawType;      /**< 'C' Data type for the corresponding raw value. */
+    short cvtType;      /**< 'C' Data type for the data in the CVT table */
+    short valueSize;    /**< Size of an element value in byte. */
+    int   dimensions[MAX_DIMENSIONS];    /**< Dimension of the data point */
+    int   numElements;  /**< Number of elements in vector including all dimensions. I.e. 4 if this is a 2X2 matrix.*/
+    float euMaxValue;   /**< Maximum value allowed for this item */
+    float euMinValue;   /**< Minimum value allowed for this item */
+    int   stringIndex;     /**< For string variable only. This points to the location of the value of this string variable in the string table. */
+    int   altStringIndex;  /**< For string variable only. This points to the location of the alternate value of this string variable in the string table. */
+    int   maxStringLength; /**< The maximum length in bytes for the string variable. */
+    int   cvtOffset;    /**< Offset in cvt struct where the value of this item resides. For arrays, values are contiguous in the CVT and alternate value table. */
+    int   loggingPeriod;/**< In us, how often we log the value of this item to historical file. */
+    unsigned int uSecToDB; /**< For async input points, time in usec between the interrupt and the write to the RTDB.*/
+    unsigned int   metaFlags;    /**< Meta flags for this data items. One of METAFL_xxx. \sa RTDB_MetaFLags  */
+    unsigned short euMsgPeriod;  /**< Maximum rate in second at which to issue  repeated EU out of range messages.*/
+    unsigned int   updateIntervalUSec; /**< ARINC 429 input points only. Time interval between last two succesive updates.*/
+    unsigned long long  tickLastUpdate __attribute__ ((aligned(8))) ; /**< ARINC 429 input points only. Tick when this item was last updated.*/
+    short unitIndex;            /**<  Class for the unit if defined */
+    unsigned char unitClass;            /**<  Class for the unit if defined */
+    
+    int  rawOffset[MAX_IOMAPPINGS];    /**< Offset to raw value in raw value table. Need one per mapping for output points since each device
+                                          might compute a different value. */
+    int   euConversionIndex; /**< Index into EU conversion record table */
+    char *euConversionName __attribute__ ((aligned(8))) ; /**< EU conversion record name.Only valid in static non-shared record when creating the record. */
+    int   euConversionError __attribute__ ((aligned(8))) ; /**< Set when conversion raw to physical can not be inverted. */
+    short ioTableIndex[MAX_IOMAPPINGS];      /**< Index into arinc429 table or CAN id table when this point is mapped to an output arinc 429 label or CAN Id.*/
+    float shutDownRate; /**< Shutdown rate in EU/s to reach the shutdown condition on output.*/
+    float endValue;     /**< End value for the item at the end of the test.*/
+    short endCount;  /**< The number of out channels to shutdown for this item.**/
+    char  hasEndValue;  /**< This Item has an end value .**/
+    char  isSpare;            /**<  This is a spare item.*/
+    char mappingResolved __attribute__ ((aligned(8)));
+} RTDBItemMeta;
+
+typedef union HardWareRecord {
+        int   index;  /**< Point to records w/ mapping information. Only one for input points and
+                           can be multiple for outputs. This is the hash index in the table of hardware records. */
+        char  *name __attribute__ ((aligned(8))) ;    /** < Points to the record name. */
+} HardwareRecord;
+
+typedef struct RTDBItemAux {
+    char description[MAX_DESCRIPTIONLEN];   /**< Point description */
+    char engUnits[MAX_EUNITSLEN];           /**< Engineering unit descriptor */
+    HardwareRecord hardwareRecord[MAX_IOMAPPINGS];
+    ItemValue defaultValue __attribute__ ((aligned(8))) ;      /**< Default value at initialization */
+} RTDBItemAux;
+
+typedef struct RTDBSpareItem {
+    int hashTableIndex;      /** hashtable location where the item is initialli created .*/
+    int rtdbItemIndex;
+    int flags;
+    short pointType;    /**< Point type (RTDBAI,RTDBAO,....)     */
+    short cvtType;      /**< 'C' Data type for the data in the CVT table */
+
+} RTDBSpareItem;
+
+typedef struct RTDBSpareItemTable {
+    int numSpareItems;
+    RTDBSpareItem items[MAX_SPAREITEMS];
+} RTDBSpareItemTable;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Data corresponding to a RTDB item.<BR>
+ * The cvt value (Not overriden value) of this item is in the CVT.<BR>
+ * Override value. <BR>
+ * run time flags.
+ */
+typedef struct RTDBItemData {
+    unsigned char    rtFlags1;  /**< Run time flags for this item, see RTDBFL_xxx flags. */
+} RTDBItemData;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * RTDB data item object. Contains both meta and data parts.
+ */
+typedef struct RTDBItem {
+    RTDBItemMeta meta;  /**< Meta information for the item. */
+    //RTDBItemData data __attribute__ ((aligned(8))) ;  /**< Actual real-time data corresponding to the item. */
+} RTDBItem;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Utility object to retrieve list of items from the RTDB
+ */
+typedef struct RTDBItemPair
+{
+    char name[MAX_TAGLEN];   /**< Name of the RTDB item. */
+    RTDBItem *pItem __attribute__ ((aligned(8))) ;         /**< Pointer to the RTDB item structure in memory. */
+} RTDBItemPair,*RTDBItemPairPtr;
+
+typedef struct RTDBStructDef {
+    char name[MAX_TAGLEN];   /**< Name of the RTDB item. */
+    int  numElements;
+    volatile void *pCVTAddress;
+    volatile void *pAltAddress;
+} RTDBStructDef;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Utility object to retrieve or update  list of item meta information from / to  the RTDB.
+ */
+typedef struct RTDBItemMetaPair
+{
+    char name[MAX_TAGLEN];   /**< Name of the RTDB item for which we provide the meta information. */
+    RTDBItemMeta itemMeta;  /**< Item meta information */
+    RTDBItemAux  itemMetaAux;
+} RTDBItemMetaPair;
+
+typedef struct RTDBItemMetaMappingPair
+{
+    RTDBItemMetaPair metaPair;
+    HardwareConfig   hardwareConfig;
+} RTDBItemMetaMappingPair;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Utility object to set or get RTDB item value in the RTDB.
+ */
+typedef struct RTDBItemValuePair
+{
+    char name[MAX_TAGLEN];   /**< Name of the RTDB item for which we provide the value. */
+    ItemValueDef valueDef;  /**< Value for the item. This also contains the data type so that 
+                              the information can be interpreted correctly.*/
+    ItemValueDef altValueDef;
+    double       rawValue;
+    //unsigned short pointType;
+    unsigned char rtFlags;  /**< Value of run-time flags */
+
+} RTDBItemValuePair;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Utility object to retrieve initial condition for data items.
+ */
+#define MAX_NAMESPACE 128
+typedef struct RTDBItemInitCondition 
+{
+    char  name[MAX_TAGLEN];   /**< Name of the RTDB item. */
+    char  nameSpace[MAX_NAMESPACE];
+    short cvtType;
+    short pointType;
+    ItemValue value;
+} RTDBItemInitCondition;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Utility object to retrieve logging flags corresponding to an initial condition set.
+ */
+typedef struct RTDBItemLogging 
+{
+    char  name[MAX_TAGLEN];   /**< Name of the RTDB item. */
+    int   loggingPeriod;
+    short metaFlags;
+    short pointType;
+} RTDBItemLogging;
+
+
+/**
+ * \ingroup RTDBAccess
+ * Utility object passed to generic IO user hook routine. 
+ */
+typedef struct BoardUserHookMappingDefn {
+    RTDBItem *pItem[MAX_IOMAPPINGS];    /**< Pointer to the items mapped to this channel. */
+    int       mappingCount;             /**< Number of mapping define for this device channel. */ 
+    double    euValue[MAX_IOMAPPINGS] __attribute__ ((aligned(8))) ;  /**< For input mappings, this is the value after EU conversion has been applied to the raw value and this value
+                                          will be stored in the RTDB.<BR>
+                                          For output mappings, this is the value that is in the RTDB and will be converted to raw value when written to the hardware.*/
+    double    rawValue __attribute__ ((aligned(8))) ;                 /**< On input, this is the value read from the hardware, modifying this value has not effect on the value stored in the RTDB.<BR>
+                                          On output, this value is undefined since the conversion from EU value to raw occurs after the user routine has been called.*/
+    char      *name[MAX_IOMAPPINGS];        /**< The name of the RTDB items mapped to this channel/bit.*/
+    char      signedValue[MAX_IOMAPPINGS];  /**< Whether the eu value is signed . Only used for output mappings. Undefined for input mappings.*/
+} BoardUserHookMappingDefn;
+
+/* Common defines for hardware related structure */
+#define MAX_AI64SSCHANNELS   64
+#define MAX_AI64LLCHANNELS   64
+#define MAX_AD3224_DSCHANNELS 32
+#define MAX_AD6418_CHANNELS   64
+#define MAX_DA3218_CHANNELS   32
+#define MAX_CPMFIOBOARDS      6
+#define MAX_CPMFIOCHANNELS_IN 16 
+#define MAX_CPMFIOCHANNELS_OUT 16
+#define MAX_CPMFIOBITS        96
+#define MAX_LCAIOBOARDS      6
+#define MAX_LCAIOCHANNELS_IN 32 /*16 for Diff*/
+#define MAX_LCAIOCHANNELS_OUT 4
+#define MAX_LCAIOBITS        18
+#define MAX_16AO12CHANNELS   16
+#define MAX_16AO16BOARDS     10
+#define MAX_16AO16WAVEBOARDS  5
+#define MAX_DA3218WAVEBOARDS  5
+#define MAX_PK50_295CHANNELS 10
+#define MAX_PK50_110CHANNELS 64
+#define MAX_PDAQAOCHANNELS   96
+#define MAX_DIO96BITS        96
+#define MAX_DIO96INBOARDS    4
+#define MAX_DIO96OUTBOARDS   4
+
+#define MAX_RFACTOR_PROXIMITYQUERIES 10
+
+#define MAX_NAI76C2BITS      48
+
+#define MAX_ADLINK7256_DOBITS 16
+#define MAX_ADLINK7256_BOARDS 4
+
+#define MAX_ADLINK7296_BITS   96
+
+#define MAX_ADLINK7230_DIBITS 16
+#define MAX_ADLINK7230_DOBITS 16
+
+#define MAX_ARINC429CHANNELS 16
+#define MAX_ARINC429LABELS   256
+#define MAX_ARINC429BOARDS   4
+
+#define MAX_BTILX429BOARDS   4
+#define MAX_BTILX429CHANNELS 32
+
+#define MAX_DD42992BOARDS    8
+#define MAX_DD42992LABELS    256
+#define MAX_DD42992CHANNELS  36
+
+#define MAX_AFDXBOARDS       4
+#define MAX_AFDXMESSAGELEN   8196
+#define MAX_AFDXVIRTUALLINKS 50
+#define MAX_MSGPERVL         50
+#define MAX_AFDXMESSAGES     (MAX_AFDXBOARDS*MAX_AFDXVIRTUALLINKS*MAX_MSGPERVL)
+
+#define MAX_AITAFDXBOARDS     3
+
+#define MAX_NETMSGS           256
+#define MAX_NETBOARDS         4
+#define MAX_NETMSGNAME        64   /**< Maximum NET message name length .*/
+#define MAX_NETMESSAGELEN     262144
+#define MAX_NETMESSAGES      (MAX_NETBOARDS*MAX_NETMSGS)
+
+#define MAX_RTMAPSBOARDS      4
+#define MAX_RTMAPSMESSAGELEN  262144
+#define RTMAPS_MINRATE        1
+
+#define MAX_UDPMSGS           100
+#define MAX_UDPBOARDS         2
+#define MAX_UDPMESSAGELEN     262144
+#define MAX_UDPMESSAGES      (MAX_NETBOARDS*MAX_NETMSGS)
+
+#define MAX_FDXGRPS           256
+#define MAX_FDXBOARDS         4
+#define MAX_FDXMESSAGELEN     16386
+#define MAX_FDXMESSAGES      (MAX_FDXBOARDS*MAX_FDXGRPS)
+
+#define MAX_NAI79C3SF6_CHANNELS 12
+#define MAX_NAI79C3SF6_MODULES 3
+#define MAX_NAI79C3SF6_CHANNELS_PER_MODULE 4
+#define MAX_NAI79C3SF6_SF_MODULE_CHANNELS 4
+#define MAX_NAI79C3SF6_6D_MODULE_CHANNELS 3
+#define MAX_NAI79C3SF6_E7_MODULE_CHANNELS 4
+#define NAI79C3SF6_MODULE_MODEL_6D 0x3644 // DS
+#define NAI79C3SF6_MODULE_MODEL_SF 0x5346 // SD 
+#define NAI79C3SF6_MODULE_MODEL_Z0 0x5A30 // NULL 
+#define NAI79C3SF6_MODULE_MODEL_E7 0x4537 // Encoder
+#define NAI79C3SF6_SF_MAXRPS 190
+
+#define MAX_RESOLVERCHANNELS 6
+#define MAX_RESOLVERCHANNELS_INPUT 8
+#define MAX_RESOLVERBOARDS   8
+
+#define MAX_RVDTCHANNELS 12
+#define MAX_RVDTCHANNELS_INPUT 8
+#define MAX_RVDTBOARDS   2
+
+#define MAX_RS232BOARDS   2
+#define MAX_RS232MESSAGELEN   1024
+#define MAX_RS232MESSAGES     32
+#define MAX_RS232CHANNELS 16
+
+#define MAX_CANNETS         4
+#define MAX_CANBOARDS       12
+#define MAX_CANIDS          100
+#define MAX_CANMESSAGELEN   64
+#define MAX_VIRTCANNETS     12
+
+#define MAX_SOCKCANNETS     4
+#define MAX_NVARXCANNETS    6
+
+#define MAX_PEAKCANBOARDS   3
+#define MAX_PEAKCANNETS     2
+
+#define MAX_LINBOARDS       12
+#define MAX_LINIDS          100
+#define MAX_LINMESSAGELEN   8
+
+#define MAX_MOXABOARDS       10
+#define MAX_MOXACHANNELS     8
+#define MAX_MGTXBOARDS       4
+#define MAX_MGTXCHANNELS     4
+
+#define MAX_SIOXBOARDS       2
+#define MAX_SIOXCHANNELS     8
+
+#define MAX_SIOHDLCBOARDS    2
+#define MAX_SIOHDLCCHANNELS  4
+
+#define MAX_RESOLVERCHANNELS 6
+#define MAX_RESOLVERCHANNELS_INPUT 8
+#define MAX_RESOLVERBOARDS   8
+
+#define MAX_RVDTCHANNELS 12
+#define MAX_RVDTCHANNELS_INPUT 8
+#define MAX_RVDTBOARDS   2
+
+#define MAX_JOYSTICKBUTTONS 12
+#define MAX_JOYSTICKAXIS    8
+#define MAX_JOYSTICKFILEPATHLENGTH    2048
+#define MAX_LOGIWHEELBUTTONS 22
+#define MAX_LOGIWHEELAXIS    6
+#define MAX_HOTASX56JOYSTICKBUTTONS 17
+#define MAX_HOTASX56JOYSTICKAXIS    7
+#define MAX_HOTASX56THROTTLEBUTTONS 36
+#define MAX_HOTASX56THROTTLEAXIS    8
+#define MAX_HOTASX56FILEPATHLENGTH    2048
+
+#define MAX_FANPODPRIMARY   5
+#define MAX_FANPODBUTTON    24
+// each of the 15 LEDs has R,G,B
+#define MAX_FANPODLED       (15*3)
+// each JSAXIS has x,y
+#define MAX_FANPODJSAXIS    (1*2)
+
+#define MAX_PEAKCANBOARDS   3
+#define MAX_PEAKCANNETS     2
+
+#define MAX_ROCKETPORTBOARDS    2
+#define MAX_ROCKETPORTCHANNELS 32
+
+#define MAX_FASTCOMMBOARDS       4
+#define MAX_FASTCOMMCHANNELS     8
+#define MAX_SERIALCHANNELS   16
+#define MAX_SERIALBOARDS    8
+
+#define MAX_FLEXRAYBOARDS       8
+#define MAX_FLEXRAYMESSAGELEN   128
+#define MAX_FLEXRAYMESSAGES     256
+
+#define MAX_EB5100BOARDS     3
+
+#define MAX_MEMORYREGIONS    25
+
+#define MAX_1553CHANNELS       8
+#define MAX_1553BOARDS          2
+#define MAX_1553RTS            32
+#define MAX_1553MAILBOXES      32
+
+#define MAX_TMC12CHANNELS      6
+
+#define MAX_ARIONBOARDS  1
+//#define MAX_ARIONOBJECTS 16
+#define MAX_ARIONOBJECTS 512
+#define MAX_ARIONIDT  0xffffff
+#define MIN_ARIONIDT  0x1000
+#define MAX_ARIONSIZE 262132
+
+#define MAX_RTADBBOARDS 1
+
+#define MAX_VMIC4132_CHANNELS  32
+#define MAX_VMIC3122_CHANNELS  64
+#define MAX_PAS2581_CHANNELS   8
+#define MAX_NAI64DL1_CHANNELS  16
+#define MAX_VMIC2210_BITS      64
+#define MAX_PAS9795_BITS       72
+#define MAX_PAS9782_CHANNELS   8
+
+#define MAX_ADVTECH1758_BITS   128
+
+#define MAX_NIESERIESAICHANNELS 64
+#define MAX_NIESERIESDIOBITS    8
+#define MAX_NIESERIESAOCHANNELS 2
+#define MAX_NIESERIESCOUNTERS   2
+
+#define MAX_NI670XAOCHANNELS    16
+#define MAX_NI670XDIOBITS       8
+
+#define MAX_HITV370_CHANNELS    4
+#define MAX_HITV370_BOARDS      4
+
+
+#define MAX_PWM1012_CHANNELS 12
+#define MAX_PWM1012_BOARDS   4
+
+#define MAX_PWM1112_CHANNELS 12
+#define MAX_PWM1112_BOARDS   4
+
+#define MAX_OPTO32BITS_IN     24
+#define MAX_OPTO32BITS_OUT    8
+
+#define MAX_OPTO16X16BITS_IN     16
+#define MAX_OPTO16X16BITS_OUT    16
+
+#define MAX_SENSOWHEELS       2
+
+#define MAX_CIGISESSIONS    4
+#define MAX_CIGIPROPERTIES  20 
+
+#define MAX_VTDSESSIONS    4
+#define MAX_VTD_PACKETS  100 
+
+#define MAX_CPSENT_CHANNELS 12
+#define MAX_CPSENT_BOARDS   3
+#define MAX_CPSENT_IDS      4
+#define MAX_CPSENT_NIBBLES  6
+#define MAX_SENTMESSAGELEN  6
+
+#define MAX_CPWSSENSOR_CHANNELS 4
+#define MAX_KNOCKSENSOR_CHANNELS 16
+
+#define MAX_ACRO_AP231CHANNELS  16
+#define MAX_ACRO_AP341CHANNELS  16
+#define MAX_ACRO_AP441CHANNELS  32
+#define MAX_ACRO_AP445CHANNELS  32
+#define MAX_ACRO_AP408CHANNELS  32
+#define MAX_ACRO_AP503CHANNELS  36
+
+#define MAX_ACC_IIRO16CHANNELS  16
+
+#define MAX_UEGOBOARDS          4
+#define MAX_UEGOCHANNELS        4
+#define MAX_UEGOCONTROLS        15
+
+#define UEGO_DATA_TABLE         1
+#define UEGO_DATA_POLY          2
+#define UEGO_MAX_TABLEENTRIES  40
+#define UEGO_MAX_POLYS          4
+#define UEGO_SENSOR_NARROWBAND  1
+#define UEGO_SENSOR_WIDEBAND    2
+
+#define UEGO_CTRL_LAMBDA        0
+#define UEGO_CTRL_HEATER        1
+
+#define UEGO_CTRL_UN_FAULT_OPEN    3
+#define UEGO_CTRL_UN_FAULT_GND     4
+#define UEGO_CTRL_UN_FAULT_VBAT    5
+
+#define UEGO_CTRL_VM_FAULT_OPEN    6
+#define UEGO_CTRL_VM_FAULT_GND     7
+#define UEGO_CTRL_VM_FAULT_VBAT    8    
+#define UEGO_CTRL_IP_FAULT_OPEN    9
+#define UEGO_CTRL_IP_FAULT_GND    10
+#define UEGO_CTRL_IP_FAULT_VBAT   11    
+#define UEGO_CTRL_IA_FAULT_OPEN   12
+#define UEGO_CTRL_IA_FAULT_GND    13
+#define UEGO_CTRL_IA_FAULT_VBAT   14    
+
+#define MAX_RESSIMBOARDS          4
+#define MAX_RESSIMCHANNELS        16
+#define MAX_RESSIMCONTROLS        6
+#define RESSIM_CTRL_RESISTANCE     0
+#define RESSIM_CTRL_FAULT_RA_GND   1
+#define RESSIM_CTRL_FAULT_RA_VPLUS 2    
+#define RESSIM_CTRL_FAULT_RB_GND   3
+#define RESSIM_CTRL_FAULT_RB_VPLUS 4
+#define RESSIM_CTRL_FAULT_OPEN     5
+                           
+
+/* FPGA related MACROs */
+#define FPGA_MAX_ADC_CHANNELS       16
+#define FPGA_MAX_ANALOG_OUT         16
+#define FPGA_MAX_ANALOG_IN          16
+
+#define FPGA_MAX_DIGITAL            96 
+#define FPGA_DIGITAL_GROUPSIZE      4
+
+#define ARRIAX_DC_MAX_ANALOG_OUT    12
+#define ARRIAX_DC_MAX_ANALOG_IN     12
+#define ARRIAX_MAX_DIGITAL          32 
+#define ARRIAX_DC_MAX_DIGITAL       32 
+#define ARRIAX_DC_DIGITAL_GROUPSIZE  4
+
+#define FPGA_MAX_CYLINDERS                   16
+#define FPGA_MAX_PULSECAPTURE_CHANNELS       32
+#define FPGA_MAX_CAMSHAFTS                   4
+#define FPGA_POINT_PER_PULSECAPTURE_CHANNEL  6 // CO used to be 5
+#define FPGA_POINT_PER_PMSM_ELECTRIC_MOTOR_CHANNEL 4
+#define FPGA_MAX_PWMOUT                 96
+#define FPGA_MAX_PWMIN                  96
+
+#define FPGA_MAX_ANALOG_THRESHOLD       32
+#define FPGA_MAX_TOOTHWHEEL             32
+#define FPGA_MAX_ENCODERS               32
+#define FPGA_MAX_DECODERS               32
+#define FPGA_MAX_WAVEGEN_CHANNELS       32
+#define FPGA_MAX_HPFP                   32
+#define FPGA_MAX_INVERTER                1
+#define FPGA_MAX_UVW_ENCODERS           32
+#define FPGA_MAX_PMSM_ELECTRIC_MOTOR     1
+#define FPGA_MAX_FOC_X1                  1
+#define FPGA_MAX_KNOCK_SENSOR            8
+#define FPGA_MAX_RESOLVER_TX            32
+#define FPGA_MAX_LVDT_RVDT_TX           32
+#define FPGA_MAX_SYNCHRO_TX             32
+#define FPGA_MAX_RESOLVER_RX            32
+#define FPGA_MAX_LVDT_RVDT_RX           32
+#define FPGA_MAX_SYNCHRO_RX             32
+#define FPGA_MAX_MULTIPLEXER            96
+#define FPGA_MAX_MUXPERCH               96
+#define FPGA_MAX_SENT_TX                32
+#define FPGA_MAX_SENT_RX                32
+#define FPGA_MAX_SIO_TX                 4
+#define FPGA_MAX_SIO_RX                 4
+#define FPGA_MAX_REGISTER_WRITE         128
+#define FPGA_MAX_REGISTER_READ          128
+#define FPGA_MAX_NPHASE_WAVEGEN_CHANNELS 32
+#define FPGA_NPHASE_WAVEGEN_MAXPHASES    16
+#define FPGA_MAX_WAVEGEN_RX_CHANNELS     32
+#define FPGA_MAX_SPI_MASTER_CHANNELS     8
+#define FPGA_MAX_SPI_MASTER_CS           6
+#define FPGA_MAX_SPI_SLAVE_CHANNELS      8
+#define FPGA_MAX_SPI_MASTER_CL           32
+#define FPGA_MAX_CLOCKS                  8
+#define FPGA_MAX_WSS_CHANNELS            32
+#define FPGA_MAX_WSS_MAGNETS             512
+#define FPGA_MAX_CIC_CHANNELS            32
+#define FPGA_MAX_IIR_CHANNELS            32
+#define FPGA_MAX_RECORDER_CHANNELS       16
+#define FPGA_MAX_AWGN_CHANNELS           32
+#define FPGA_MAX_ENGINE                  8
+#define FPGA_POINT_PER_HPFP_CHANNEL      3
+#define FPGA_POINT_PER_THRESHOLD_CHANNEL 2
+#define FPGA_MAX_SENT_TX_NIBBLES        6
+#define FPGA_MAX_SENT_TX_DATA           512
+#define FPGA_MAX_SENT_RX_NIBBLES        6
+#define FPGA_MAX_SENT_RX_DATA           512
+#define FPGA_CTRL_CRANKSHAFT_RPM        1
+#define FPGA_CTRL_ENGINE_ENABLE         2
+#define FPGA_CTRL_CRANKSHAFT_ANGLE      3
+#define FPGA_CTRL_CAMSHAFT_ADVANCE      5
+#define FPGA_CTRL_IGNINJ_CH             10   
+
+#define FPGA_CTRL_ANAOUT                  60  
+#define FPGA_CTRL_ANAIN                   80  
+#define FPGA_CTRL_ANAIN_INPUT_VOLTAGE     81
+#define FPGA_CTRL_ANAIN_THRESHOLD_OUTPUT  82  
+#define FPGA_CTRL_DIGITAL                 100 
+
+#define FPGA_CTRL_PWMOUT_FREQ           40   
+#define FPGA_CTRL_PWMOUT_DUTYCYCLE      41   
+#define FPGA_CTRL_PWMOUT_ONESHOTCOUNT   42
+#define FPGA_CTRL_PWMIN_FREQ            50   
+#define FPGA_CTRL_PWMIN_DUTYCYCLE       51   
+#define FPGA_CTRL_PWMIN_PULSECOUNT      52   
+#define FPGA_CTRL_DECODER_COUNTER       70   
+#define FPGA_CTRL_DECODER_ANGLE         71   
+#define FPGA_CTRL_DECODER_RPM           72
+#define FPGA_CTRL_ENCODER_RPM           75   
+#define FPGA_CTRL_ENCODER_ANGLE         76   
+#define FPGA_CTRL_WAVEGEN_FREQ          78
+#define FPGA_CTRL_HPFP_CH               73
+#define FPGA_CTRL_TOOTHWHEELRPM         120 
+#define FPGA_CTRL_TOOTHWHEELANGLE       121
+#define FPGA_CTRL_INVERTER_VOLTAGE      77
+#define FPGA_CTRL_UVW_ENCODER_RPM       79
+#define FPGA_CTRL_UVW_ENCODER_ANGLE     83
+#define FPGA_CTRL_PMSM_ELECTRIC_MOTOR_TLOAD      84
+#define FPGA_CTRL_FOC_X1_RPM               85
+#define FPGA_CTRL_FOC_X1_FREQUENCY         86
+#define FPGA_CTRL_KNOCK_SENSOR_DC_OFFSET   87
+#define FPGA_CTRL_KNOCK_SENSOR_GAIN        88
+#define FPGA_CTRL_KNOCK_SENSOR_CRANK_ANGLE 89 
+#define FPGA_CTRL_KNOCK_SENSOR_KNOCK_OUT   90
+#define FPGA_CTRL_PMSM_ELECTRIC_MOTOR_INFO 91
+#define FPGA_CTRL_RESOLVER_TX_FREQ         92
+#define FPGA_CTRL_RESOLVER_TX_DATA         93
+#define FPGA_CTRL_LVDT_RVDT_TX_FREQ        94
+#define FPGA_CTRL_LVDT_RVDT_TX_DATA        95
+#define FPGA_CTRL_SYNCHRO_TX_FREQ          96
+#define FPGA_CTRL_SYNCHRO_TX_DATA          97
+#define FPGA_CTRL_MUX_CONTROL              98
+#define FPGA_CTRL_SENT_TX_STATE  	       101
+#define FPGA_CTRL_SENT_TX_NIBBLE_NUMBER    102   
+#define FPGA_CTRL_SENT_TX_NIBBLES          103
+#define FPGA_CTRL_SENT_TX_DATA             104
+#define FPGA_CTRL_SENT_RX_ERROR_RATE       105   
+#define FPGA_CTRL_SENT_RX_NIBBLES          106
+#define FPGA_CTRL_SENT_RX_DATA             107
+#define FPGA_CTRL_SIO_TX_DATA              108
+#define FPGA_CTRL_SIO_RX_DATA              109
+#define FPGA_CTRL_SIO_TX_COUNT             110
+#define FPGA_CTRL_SIO_RX_COUNT             111
+#define FPGA_CTRL_REGISTER_WRITE_DATA           112
+#define FPGA_CTRL_REGISTER_WRITE_PROG_DATA      113
+#define FPGA_CTRL_REGISTER_READ_DATA            114
+#define FPGA_CTRL_LVDT_RVDT_RX_ANGULAR_POSITION 126
+#define FPGA_CTRL_LVDT_RVDT_RX_SPEED            127
+#define FPGA_CTRL_LVDT_RVDT_RX_RPM              128
+#define FPGA_CTRL_LVDT_RVDT_RX_DIRECTION        129
+#define FPGA_CTRL_RESOLVER_RX_ANGULAR_POSITION  116
+#define FPGA_CTRL_RESOLVER_RX_SPEED             117
+#define FPGA_CTRL_RESOLVER_RX_RPM               118
+#define FPGA_CTRL_RESOLVER_RX_DIRECTION         119
+#define FPGA_CTRL_SYNCHRO_RX_ANGULAR_POSITION   122
+#define FPGA_CTRL_SYNCHRO_RX_SPEED              123
+#define FPGA_CTRL_SYNCHRO_RX_RPM                124
+#define FPGA_CTRL_SYNCHRO_RX_DIRECTION          125
+#define FPGA_CTRL_NPHASE_WAVEGEN_FREQ           130
+#define FPGA_CTRL_NPHASE_WAVEGEN_PHASE          131
+#define FPGA_CTRL_NPHASE_WAVEGEN_AMPLITUDE      132
+#define FPGA_CTRL_WAVEGEN_RX_FREQ               134
+#define FPGA_CTRL_WAVEGEN_RX_MAGNITUDE          133
+#define FPGA_CTRL_WAVEGEN_RX_FREQ_TX            135
+
+#define FPGA_CTRL_SPI_MASTER_CSSELECTION        136
+#define FPGA_CTRL_SPI_MASTER_COMMANDCODE        137
+#define FPGA_CTRL_SPI_MASTER_NUMITERATIONS      138
+#define FPGA_CTRL_SPI_MASTER_FRAMESIZE          139
+#define FPGA_CTRL_SPI_MASTER_RAMSTARTADDRESS    140
+#define FPGA_CTRL_SPI_MASTER_GO                 141
+#define FPGA_CTRL_SPI_MASTER_INFINITE           142
+#define FPGA_CTRL_SPI_MASTER_BREAK              143
+#define FPGA_CTRL_SPI_MASTER_WAITING            144
+#define FPGA_CTRL_SPI_MASTER_INVALID            145
+#define FPGA_CTRL_SPI_MASTER_FIFOCOUNT          146
+#define FPGA_CTRL_SPI_MASTER_WATERMARK          147
+#define FPGA_CTRL_SPI_MASTER_EMPTY              148
+#define FPGA_CTRL_SPI_MASTER_DATATX             149
+#define FPGA_CTRL_SPI_MASTER_DATARX             150
+#define FPGA_CTRL_SPI_MASTER_SKIPDATATX         151
+#define FPGA_CTRL_SPI_MASTER_SKIPDATARX         152
+
+#define FPGA_CTRL_SPI_SLAVE_SPIMODE             153
+#define FPGA_CTRL_SPI_SLAVE_FIFOENABLE          154
+#define FPGA_CTRL_SPI_SLAVE_FIFOMSB             155
+#define FPGA_CTRL_SPI_SLAVE_ADDRESSINMSB        156
+#define FPGA_CTRL_SPI_SLAVE_DATAINMSB           157
+#define FPGA_CTRL_SPI_SLAVE_DATAOUTMSB          158
+#define FPGA_CTRL_SPI_SLAVE_COMMANDSIZE         159
+#define FPGA_CTRL_SPI_SLAVE_DATASIZE            160
+#define FPGA_CTRL_SPI_SLAVE_DATAREAD            161
+#define FPGA_CTRL_SPI_SLAVE_REGISTERCONTROL     164
+#define FPGA_CTRL_SPI_SLAVE_ERRORCOUNT          165
+#define FPGA_CTRL_SPI_SLAVE_FIFOCOUNT           166
+#define FPGA_CTRL_SPI_SLAVE_VALIDPACKETCOUNT    167
+#define FPGA_CTRL_SPI_SLAVE_BUFFERRESPONSE      168
+#define FPGA_CTRL_SPI_SLAVE_SIGNATURERESPONSE   169
+#define FPGA_CTRL_SPI_SLAVE_DATA                170
+#define FPGA_CTRL_SPI_SLAVE_FIFODATA            171
+#define FPGA_CTRL_SPI_SLAVE_PACKETTOTALRESET    172
+#define FPGA_CTRL_SPI_SLAVE_ERRORCOUNTRESET     173
+#define FPGA_CTRL_SPI_SLAVE_MEMORYRESET         174
+#define FPGA_CTRL_SPI_SLAVE_SAMPLEEDGERESET     175
+#define FPGA_CTRL_SPI_SLAVE_PORTFLAGS           176
+
+#define FPGA_CTRL_SPI_MASTER_DELAY              177
+#define FPGA_CTRL_SPI_MASTER_MEMORYRESET        178
+#define FPGA_CTRL_SPI_MASTER_GOING              179
+#define FPGA_CTRL_SPI_MASTER_STATE              180
+#define FPGA_CTRL_SPI_MASTER_DCOMMANDCODE       181
+#define FPGA_CTRL_SPI_MASTER_DCSSELECTION       182
+#define FPGA_CTRL_SPI_MASTER_DFRAMESIZE         183
+#define FPGA_CTRL_SPI_MASTER_DRAMSTARTADDRESS   184
+#define FPGA_CTRL_SPI_MASTER_CURRENTINDEX       185
+
+#define FPGA_CTRL_WSS_RPM                       186
+#define FPGA_CTRL_WSS_FCI                       187
+#define FPGA_CTRL_WSS_FM                        188
+#define FPGA_CTRL_WSS_AKDATA                    189
+#define FPGA_CTRL_WSS_DF11STRENGTH              190
+
+#define FPGA_CTRL_SIO_TX_NUMPACKETS             191
+#define FPGA_CTRL_SIO_TX_NUMWORDSINPACKET0      192
+#define FPGA_CTRL_SIO_TX_NUMWORDSINPACKET1      193
+#define FPGA_CTRL_SIO_TX_NUMWORDSINPACKET2      194
+#define FPGA_CTRL_SIO_TX_FRAMECOUNT             195
+#define FPGA_CTRL_SIO_TX_RCIMEDGECOUNT          196
+
+//#define FPGA_CTRL_SIO_RX_NUMPACKETS              197
+#define FPGA_CTRL_SIO_RX_NUMWORDSPERPACKET       198
+//#define FPGA_CTRL_SIO_RX_NUMBITSPERWORDPERPACKET 199
+//#define FPGA_CTRL_SIO_RX_WORDERRORPERPACKET      200
+//#define FPGA_CTRL_SIO_RX_NUMWORDS                201
+#define FPGA_CTRL_SIO_RX_CLEARCOUNT              202
+#define FPGA_CTRL_LVDS                           203 
+#define FPGA_CTRL_DC_DIGITAL                     204
+#define FPGA_CTRL_RECORDER_PAUSE                 205
+
+#define FPGA_CTRL_AWGN_NOISE_VAR_SCALAR0         206
+#define FPGA_CTRL_AWGN_NOISE_VAR_SCALAR1         207
+#define FPGA_CTRL_AWGN_SNR_DB0                   208
+#define FPGA_CTRL_AWGN_SNR_DB1                   209
+
+#define MAX_UNITDEFS                    256
+#define MAX_HRTB4702CHANNELS            (12+1)  // Channel thirteen is pseudo for board sound speed
+
+enum CaptureType {
+    CAPTURE_CSV,
+    CAPTURE_INITCOND,
+    CAPTURE_RTFORM,
+    CAPTURE_MAT
+};
+enum SnapShotVars {
+    SNAPSHOT_PARAMETERS=1,
+    SNAPSHOT_SIGNALS=2,
+    SNAPSHOT_RTDBIn=4,
+    SNAPSHOT_RTDBOut=8
+};
+enum CapType {
+    TYPE_CAPTURE  = 1,
+    TYPE_SNAPSHOT = 2
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ *  Links speed for ARINC 429 channel.
+ */
+enum ARINC429_Speed {
+    SPEED_LOW,
+    SPEED_HIGH 
+}; 
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Parity for ARINC 429 channel
+ */
+#ifndef CCUR_WINE_FMU
+enum ARINC429_Parity {
+    PARITY_NONE,
+    PARITY_EVEN,
+    PARITY_ODD 
+}; 
+#endif
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Serial type for serial device 
+ */
+enum Serial_Type {
+    RS_232=1,
+    RS_422=2, 
+    RS_423=3, 
+    RS_485=4
+}; 
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * The board identification.
+ */
+#define NI_BOARD_MASK  0x100
+#define NI_MAX_BOARDID 0x200
+enum BoardID {
+    NotMapped=0,
+    AI64SS=1,
+    AO16=2,
+    DIO96_IN=3,
+    DIO96_OUT=4,
+    ARINC429=5,
+    AIM_AFDX=6,
+    RESOLVER_OUT=7,
+    RVDT_OUT=8,
+    RS232=9,
+    GPIB=10,
+    JOYSTICK=11,
+    FLIGHTGEAR=12,
+    XPLANE=13,
+    NETJOYSTICK=14,
+    CANIO_ESD405=15,
+    RESOLVER_IN=16,
+    RVDT_IN=17,
+    FLEXRAY=18,
+    IOIPA_T=19,
+    PDAQAO=20,
+    CANIO_PEAK=21,
+    EB5100=22,
+    MEM_DEVICE=23,
+    LCAIO=24,
+    //LCAIO=25,
+    AI64LL=26,
+    ADLINK_7256=27,
+    PK_50_295=28,
+    PAS2080_IN=29,
+    PAS2080_OUT=30,
+    AO16_W=31,
+    DDC1553_67=32,
+    PK_50_110=33,
+    TMC12=34,
+    MOXA_CPXX=35,
+    ARION=36,
+    VMIC_4132=37,
+    VMIC_3122=38,
+    VMIC_2210=39,
+    NAI_64DL1=40,
+    PAS_9782=41,
+    PAS_9795=42,
+    PAS_2581=43,
+    HIT_V370=44,
+    //LCAIO_DIN=45,
+    //LCAIO_DOUT=46,
+    RTADB=47,
+    ECAT_MASTER=48,
+    ECAT_SLAVE=49,
+    FASTCOMM_SERIAL=50,
+    AI64SS_STREAM=51,
+    PWM_1012=52,
+    BTI_Lx429=53,
+    NETIO=54,
+    OPTO32=55,
+    PWM_1112=56,
+    LOGIWHEEL_G2X=57,
+    R_FACTOR=58,
+    SENSO_WHEEL=59,
+    AIT_AFDX=60,
+    UDP_PACKET=61,
+    AD3224_DS=62,
+    ADLINK_7230=63,
+    ADLINK_7296=64,
+    RTDBITEM_COPY=65,
+    NAI_76C2_K6=66,
+    DA3218=67,
+    R_FACTOR_TS=68,
+    ROCKET_PORT=69,
+    ELAB_ECAT_MASTER=70,
+    DD_429_92=71,
+    BABY_LIN=72,
+    CP_FISC=73,
+    ESD_ECAT_SLAVE=74,
+    OPTO16X16=75,
+    CIGI_IO=76,
+    CP_FPGA_ArV=77,
+    NAI_79C3_K6=78,
+    SIOX_SERIAL=79,
+    CP_SENT=80,
+    CP_COS64=81,
+    CP_MFIO=82,
+    DA3218_W=83,
+    NAI_79C3_SF6=84,
+    CP_WSSENSOR=85,
+    CP_KNOCKSENSOR=86,
+    DOLPHIN_IX=87,
+    CAN_IXXAT=88,
+    CP_UEGO=89,
+    FDX=90,
+    SIO_HDLC=91,
+    CP_RESSIM=92,
+    NAI_79C3_E7=93,
+    VTD=94,
+    CANIO_VIRT=95,
+    CANIO_SOCK=96,
+    HR_TB4702=97,
+    CANIO_NV_ARX=98,
+    RTMAPS=99,
+    AD6418=100,
+    XCP_SLAVE=101,
+    CANLIN_IXXAT_640=102,
+    FANPOD_DD2=103,
+    MICROGATE_GTX=104,
+    CP_CMFIO=105,
+    ROS2_MSGS=106,
+    ADVTECH_1758=107,
+    IADS_SRC=108,
+    UEI=109,
+    CP_FPGA_ArX=110,
+    ACRO_AP231=111,
+    ACRO_AP341=112,
+    ACRO_AP408=113,
+    ACRO_AP441_1=114,
+    ACRO_AP441_2=117,
+    ACRO_AP445=115,
+    ACRO_AP503=116,
+    ACC_IIRO16=118,
+    SOMEIP=119,
+    HOTASX56=120,
+    NETIO_STREAM=121,
+    CP_FPGA_C9=122,
+    
+    NI6601=NI_BOARD_MASK,   /**< All NI boards should be >= 0x100, we use mask to have a common value for all of them .*/
+    NI6602=NI_BOARD_MASK+1,
+    NIDIO96=NI_BOARD_MASK+2,
+    NI6509=NI_BOARD_MASK+3, 
+    NI6052=NI_BOARD_MASK+4, 
+    NI6033=NI_BOARD_MASK+5,
+    NI6023=NI_BOARD_MASK+6, 
+    NI6024=NI_BOARD_MASK+7, 
+    NI6025=NI_BOARD_MASK+8, 
+    NI6030=NI_BOARD_MASK+9, 
+    NI6031=NI_BOARD_MASK+10, 
+    NI6032=NI_BOARD_MASK+11, 
+    NI6034=NI_BOARD_MASK+12, 
+    NI6036=NI_BOARD_MASK+13, 
+    NI6040=NI_BOARD_MASK+14, 
+    NI6070=NI_BOARD_MASK+15, 
+    NI6071=NI_BOARD_MASK+16, 
+    NI6703=NI_BOARD_MASK+20,
+    NI6704=NI_BOARD_MASK+21,
+    NI6509_PCIE=NI_BOARD_MASK+22
+
+};
+
+enum NIHardwareType {
+    HardwareAnalog = 1,
+    HardwareDigital = 2,
+    HardwareCounter = 3 
+};
+enum NIAIType {
+    NI_RSE=1,
+    NI_NRSE=2,
+    NI_DIFF=3
+};
+#define NI_CTR_CLEARVARAFTERTRIGGER 0x01
+#define NI_CTR_DECRTOZERO           0x04
+#define NI_CTR_NONCUMULATIVE        0x02
+
+enum NICounterType {
+    NICounter_Frequency=1,  // Output
+    NICounter_Ticks=2,      // Output
+    NICounter_Time=3,       // Output
+    NICounter_CountPulse=4,             // Input
+    NICounter_PulseWidth=5,             // Input
+    NICounter_FrequencyMeasure=6,       // Input
+    NICounter_2EdgesSeparation=7,       // Input
+    NICounter_MotionEncoder_X1=8,       // Input
+    NICounter_MotionEncoder_X2=9,       // Input
+    NICounter_MotionEncoder_X4=10,      // Input
+    NICounter_MotionEncoder_2PulseCounting=11,
+    NICounter_SinglePulse=12,   // Output
+    NICounter_PulseTrain=13,    // Output
+    NICounter_SinglePeriod=14,      // Input
+    NICounter_PositionSensing=15    // Input
+        
+};
+enum NIEncoderPhase {
+    NICounter_EncoderAHBH = 1,
+    NICounter_EncoderAHBL = 2,
+    NICounter_EncoderALBH = 3,
+    NICounter_EncoderALBL = 4 
+};
+enum Logical_Operator {
+    LOGOP_GT    =1,
+    LOGOP_GE    =2,
+    LOGOP_LT    =3,
+    LOGOP_LE    =4,
+    LOGOP_EQ    =5,
+    LOGOP_NE    =6,
+    LOGOP_NOT   =7
+};
+
+enum RtadbDimemsion {
+    RTADB_DIM_SCALAR = 0,
+    RTADB_DIM_VECTOR = 1,
+    RTADB_DIM_MATRIX = 2
+};
+enum RtadbNature {
+    RTADB_NAT_LOGICAL  = 0,
+    RTADB_NAT_PHYSICAL = 1
+};
+enum RtadbType {
+    RTADB_TYP_BOOLEAN = 0,
+    RTADB_TYP_DOUBLE  = 1,
+    RTADB_TYP_FLOAT   = 2,
+    RTADB_TYP_INT     = 3,
+    RTADB_TYP_SHORT   = 4
+};
+enum ProtocolType {
+    Protocol_UDP = 1,
+    Protocol_TCP = 2
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Definition of a specific channel on an IO board.
+ */
+typedef struct IOSerialChannelDef {
+    int parity;         /**< The parity. One of ARINC429_Parity. */
+    int speed;          /**< The rx/tx speed for the channel. One of ARINC429_Speed. */
+    int modified;       /**< Whether the data has been modified. This is to support update from the client via the configuration server. */
+    int terminator;
+    int stopBits;
+    int binaryLength;
+    int flowControl;
+    int characterSize;
+    int inputType;
+    int outputType;
+    int period;
+    int customBaudEnabled;
+    unsigned customSampleRate;
+    unsigned long customBaudRate;
+    unsigned short inStartByte;   /**<  How to decode the message id for input binary formatted message */
+    unsigned short inStartBit;
+    unsigned short inNumBits; 
+    unsigned short inIOFlags; /**<  Whether the input messageid is big/little endian */
+    unsigned short outStartByte;   /**<  How to decode the message id for output binary formatted message */
+    unsigned short outStartBit;
+    unsigned short outNumBits; 
+    unsigned short outIOFlags; /**<  Whether the output messageid is big/little endian */
+    char           *outMsgIdItemName;
+
+    unsigned char serialType;
+    unsigned char synchronous;
+    unsigned char dce;
+    int cpu;        /**< CPU affinity for output channel thread. */
+} IOSerialChannelDef;
+
+typedef struct IOARINC429ChannelDef {
+    int parity;         /**< The parity. One of ARINC429_Parity. */
+    int speed;          /**< The rx/tx speed for the channel. One of ARINC429_Speed. */
+    int modified;       /**< Whether the data has been modified. This is to support update from the client via the configuration server. */
+    int period;
+    int type;
+} IOARINC429ChannelDef;
+
+enum AFDX_NetConfig {
+    AFDX_VL_NETA =1,
+    AFDX_VL_NETB =2,
+    AFDX_VL_NETBoth =3,
+    AFDX_VL_NETDelayA =4,
+    AFDX_VL_NETDelayB =5,
+    AFDX_VL_NETVL =6 
+};
+
+enum AFDX_PortType {
+    AFDX_PortSAP=1,
+    AFDX_PortUDP=2 
+};
+
+enum AFDX_TXType {
+    AFDX_TXQueue=1,
+    AFDX_TXSample=2 
+};
+
+enum AFDX_VLType {
+    AFDX_VL_TX=1,
+    AFDX_VL_RX=2 
+};
+
+enum FlexRay_Type {
+    FLEXRAY_TX=1,
+    FLEXRAY_RX=2 
+};
+
+enum RS232_Type {
+    RS232_TX=1,
+    RS232_RX=2 
+};
+enum Buffer_Type {
+    BUFFER_TX=1,
+    BUFFER_RX=2 
+};
+
+enum NAI79C3_Mode_Type {
+    NAI79C3_Resolver=0,
+    NAI79C3_Synchro=3,
+};
+enum NAI79C3_E7_CounterMode_Type {
+    // values match those specified in ccursim/PCIE79C3_ENC.h
+    NAI79C3_E7_QUAD_1X=5,
+    NAI79C3_E7_QUAD_2X=6,
+    NAI79C3_E7_QUAD_4X=7
+};
+enum NAI79C3_E7_IndexMode_Type {
+    NAI79C3_E7_INDEXMODE_OFF=0,
+    NAI79C3_E7_INDEXMODE_LOAD_ON_I=1,
+    NAI79C3_E7_INDEXMODE_LATCH_ON_I=2,
+    NAI79C3_E7_INDEXMODE_GATE_ON_I=3,
+    NAI79C3_E7_INDEXMODE_RESET_ON_I=4
+};
+enum NAI79C3_Model_Type {
+    MODEL_Z0=1,
+    MODEL_SF=2,
+    MODEL_6D=3, 
+    MODEL_W2=4,
+    MODEL_E7=5 
+};
+
+enum Resolver_Type {
+    RESOLVER_ROTSPEED=1,
+    RESOLVER_POSANGLE=2 
+};
+
+enum RVDT_Type {
+    RVDT_2WIRE=1,
+    RVDT_4WIRE=2 
+};
+enum DDC1553_CtrlType {
+    DDC1553_RT = 1,
+    DDC1553_BC = 2,
+    DDC1553_BM = 3 
+};
+enum DDC155_MessageType {
+    RTMsg = 0,
+    BC2RT = 1,
+    RT2BC = 2,
+    RT2RT = 3,
+    BC2RT_ASYNC = 0x11,
+    RT2BC_ASYNC = 0x12,
+    BC_MCODE = 5,
+    RT_MCODE = 6,
+    RT_STATUS = 7
+};
+enum RFPRO_MessageType{
+    RFPRO_NONE = 0,
+    // legacy physics - can be input or output
+    RFPRO_PHYSICS_LEGACY         = 1,
+    // outputs
+    RFPRO_PHYSICS_OUTPUT         = 2,
+    RFPRO_MOTION_PLATFORM        = 3,
+    RFPRO_MOTION_PLATFORM_LEGACY = 4,
+    RFPRO_PROXIMITY_QUERY        = 5,
+    RFPRO_PROXIMITY_QUERY_LEGACY = 6,
+    RFPRO_TRAFFIC_VEHICLE_CONFIG = 7,
+    RFPRO_TRAFFIC_VEHICLE_STATE  = 8,
+    RFPRO_SPECIAL_ACTOR          = 9,
+    RFPRO_LIGHT                  = 10,
+    RFPRO_SCENELIGHT             = 11,
+    RFPRO_FMODPARAMETER          = 12,
+    // inputs
+    RFPRO_PHYSICS_INPUT                = 13,
+    RFPRO_PROXIMITY_QUERYRESULT        = 14,
+    RFPRO_PROXIMITY_QUERYRESULT_LEGACY = 15,
+    RFPRO_OPPONENT_STATE               = 16
+};
+
+enum ANALOG_VoltRange {
+    Volt_10V_x2=1,     /**< +-10 Volt range. */
+    Volt_5V_x2=2,      /**< +-5 Volt range. */
+    Volt_2_5V_x2=3,    /**< +-2.5 Volt range. */
+    Volt_1_5V_x2=4,    /**< +-1.5 Volt range. */
+    Volt_1_25V_x2=5,   /**< +-1.25 Volt range. */
+    Volt_10V_x1=6,     /**< 0 to 10 V unipolar */ 
+    Volt_5V_x1=7,      /**< 0 to 5V unipolar */ 
+    Volt_20V_x1=8,       /**< 0 to 20V unipolar */ 
+    Volt_20V_x2=9,      /**< +- 20V unipolar */ 
+    Volt_3V_x2 = 10,
+    Volt_16V_x1 = 11,
+    Volt_Neg2_5V_to_7_5V = 12
+};
+enum RawUnit_Type {
+    RawUnit_Count=0,   /**< Raw value is in channel count. This is the default.*/
+    RawUnit_Volt=1     /**< Raw value is stored in volt.*/
+};
+enum HotasX56_Ctrl {
+    HotasX56JoyStickAxis    = 1,
+    HotasX56JoyStickButton  = 2, 
+    HotasX56ThrottleAxis    = 3, 
+    HotasX56ThrottleButton  = 4 
+};
+enum JoyStick_Ctrl {
+    JoyStickAxis = 1,
+    JoyStickButton = 2 
+};
+enum LogiWheel_Ctrl {
+    WheelAxis = 1,
+    WheelButton = 2, 
+    WheelGearShift = 3 ,
+    WheelTorque = 4 
+};
+enum FANPOD_Ctrl {
+    FANPODPrimary = 1,
+    FANPODButton = 2,
+    FANPODLED = 3,
+    FANPODJSAxis = 4
+};
+enum TaskClass {
+    TASK_NOCLASS=0,
+    TASK_DATALOGGER=1,
+    TASK_PLAYBACKIN=2,
+    TASK_PLAYBACKOUT=3,
+    TASK_IO_INPUT=4,
+    TASK_IO_OUTPUT=6,
+    TASK_IO_ASYNC=7,
+    TASK_MODELEXEC=8,
+    TASK_SCRIPT=9,
+    TASK_INITSCRIPT=10,
+    TASK_SCHEDULER=11 
+};
+
+enum MemDevice {
+    MEMREGION_IPC=1,
+    MEMREGION_POSIX=2,
+    MEMREGION_VMIC5565=3,
+    MEMREGION_SCRAMNET150=4,
+    MEMREGION_SCRAMNET_GT=5 
+};
+enum EB5100Record {
+    EB5100_NORMALRECORD = 0,
+    EB5100_TUM_FUNCTION = 1,
+    EB5100_PDU_RECORD = 2,
+    EB5100_INTERNAL_VAR = 3,
+    EB5100_XCP_RECORD = 4 
+};
+
+enum UnitClass {
+    UNIT_DITANCE=1,
+    UNIT_AREA=2,
+    UNIT_VOLUME=3,
+    UNIT_VOL_FLOW=4,
+    UNIT_MASS_FLOW=5,
+    UNIT_SPEED=6,
+    UNIT_ANG_SPEED=7,
+    UNIT_MASS=8,
+    UNIT_FORCE=9,
+    UNIT_TIME=10,
+    UNIT_ENERGY=11,
+    UNIT_POWER=12,
+    UNIT_PRESSURE=13,
+    UNIT_ANGLE=14,
+    UNIT_TEMPERATURE=15,
+    UNIT_CURRENT=16,
+    UNIT_VOLTAGE=17,
+    UNIT_ACCELERATION=18,
+    UNIT_RESISTANCE=19,
+    UNIT_INDUCTANCE=20,
+    UNIT_CAPACITANCE=21,
+    UNIT_TORQUE=22,
+};
+
+enum TB4702_Ctrl {
+    TB7402_CTRL_SOUND_SPEED = 1,
+    TB7402_CTRL_VOLTAGE = 2,
+    TB7402_CTRL_FREQ   = 3,
+    TB7402_CTRL_CYCLE  = 4,
+    TB7402_CTRL_ENABLE = 5,
+    TB7402_CTRL_RESP0  = 6,
+    TB7402_CTRL_RESP1  = 7,
+    TB7402_CTRL_RESP2  = 8,
+    TB7402_CTRL_RESP3  = 9,
+    TB7402_CTRL_RESP4  = 10,
+    TB7402_CTRL_RESP5  = 11
+};
+
+#define AFDX_MAXNAMELEN 128
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   AFDX symbol definition.
+*/
+typedef struct AFDXSymbolDef {
+    int id;
+    char name[AFDX_MAXNAMELEN];
+} AFDXSymbolDef;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   AFDX message definition.
+*/
+typedef struct IOAFDXMessage {
+    char name[MAX_AFDXMSGNAME+1];
+    unsigned int   srcIP;           /**< Source IP for the message in "a <<24 | b << 16 | c << 8 | d"  format where IP is a.b.c.d */
+    unsigned int   destIP;          /**< Destination IP for the message in "a <<24 | b << 16 | c << 8 | d"  format where IP is a.b.c.d */
+    unsigned short srcPort;
+    unsigned short destPort;
+    unsigned short maxMessageLength;
+    unsigned char  portType;        /**< Port Type, either SAP or UDP. */
+    unsigned char  txType;          /**< Transmit type, either queueing or sampling.*/
+    unsigned char  subVL;           /**< Sub Vl number for this message [1-4] .*/
+    double         samplingRate;    /**< Sampling rate in ms for sampling port .*/
+    unsigned short msgFlags;
+    unsigned char netConfig;
+    unsigned short skew;
+} IOAFDXMessage;
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   IONET message static properties.
+*/
+typedef struct IONETMessage {
+    char name[MAX_NETMSGNAME+1];
+    unsigned int   destIP;          /**< Destination IP for the message in "a <<24 | b << 16 | c << 8 | d"  format where IP is a.b.c.d */
+    unsigned short destPort;        /**< Destination port for transmit. */
+    unsigned short srcPort;         /**< Source port for receive.*/
+    unsigned int   messageLength;   /**< # of bytes in the message including the identifier. */
+    unsigned short messageId;       /** Message identifier so we can get different messages on the same port. */
+    unsigned char  protocol;        /**< Protocol UDP or TCP . */
+    double         samplingRate __attribute__ ((aligned(8))) ;    /**< Sampling rate in ms for sampling port .*/
+    unsigned short msgFlags;        /** Whether FIFO or schedule,etc. */
+    unsigned short type ;           /** Whether IN/OUT */
+    char  *streamName;              /** The name of the streamthis message is attached to for NETIO bi directional stream support */
+} IONETMessage;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   UDP header properties. Describes commands sent to the defined IP/port combination at I/O task initialization;
+*/
+typedef struct IOUDPHeader {
+    char *commands __attribute__ ((aligned(8))) ;
+    unsigned short  destPort __attribute__ ((aligned(8)));
+    unsigned int destIP; 
+} IOUDPHeader;
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   UDP message static properties.
+*/
+typedef struct IOUDPMessage {
+    char name[MAX_NETMSGNAME+1];
+    unsigned int   destIP;          /**< Destination IP for the message in "a <<24 | b << 16 | c << 8 | d"  format where IP is a.b.c.d */
+    unsigned short destPort;        /**< Destination port for transmit. */
+    unsigned short srcPort;         /**< Source port for receive.*/
+    unsigned int   messageLength;   /**< # of bytes in the message including the identifier. */
+    unsigned char  protocol;        /**< Protocol UDP or TCP . */
+    double         samplingRate __attribute__ ((aligned(8))) ;    /**< Sampling rate in ms for sampling port .*/
+    unsigned short msgFlags;        /** Whether FIFO or schedule,etc. */
+    unsigned short type ;           /** Whether IN/OUT */
+} IOUDPMessage;
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   CIGI message static properties.
+*/
+typedef struct IOCIGIMessage {
+    char cigiInterfaceName[MAX_CIGINAME+1];
+    unsigned int   destIP;          /**< Destination IP for the message in "a <<24 | b << 16 | c << 8 | d"  format where IP is a.b.c.d */
+    unsigned short destPort;        /**< Destination port for transmit. */
+    unsigned short srcPort;         /**< Source port for receive.*/
+    double         samplingRate __attribute__ ((aligned(8))) ;    /**< Sampling rate in ms for sampling port .*/
+    unsigned short msgFlags;        /** Whether FIFO or schedule,etc. */
+    unsigned short type ;           /** Whether IN/OUT */
+    unsigned short cigiMajorVersion;
+    unsigned short cigiMinorVersion;
+} IOCIGIMessage;
+
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   FDX message static properties.
+*/
+typedef struct IOFDXMessage {
+    unsigned int   groupId;
+    unsigned int   groupSize;
+    unsigned int   destIP;          /**< Destination IP for the message in "a <<24 | b << 16 | c << 8 | d"  format where IP is a.b.c.d */
+    unsigned short destPort;        /**< Destination port for transmit. */
+    double         samplingRate __attribute__ ((aligned(8))) ;    /**< Sampling rate in ms for sampling port .*/
+} IOFDXMessage;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   RTMAPS properties.
+*/
+typedef struct RTMAPSProps {
+    unsigned int   destIP;          /**< Destination IP for the message in "a <<24 | b << 16 | c << 8 | d"  format where IP is a.b.c.d */
+    unsigned short destPort;        /**< Destination port for transmit. */
+    unsigned short srcPort;         /**< Source port for receive.*/
+    unsigned int   outMessageLength;   /**< # of bytes in the message including the identifier. */
+    unsigned int   inMessageLength;   /**< # of bytes in the message including the identifier. */
+    double         samplingRate __attribute__ ((aligned(8))) ;    /**< Sampling rate in ms for sampling port .*/
+    unsigned short msgFlags;        /** Whether FIFO or schedule,etc. */
+} RTMAPSProps;
+
+
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing specific run-time properties of AFDX messages in the shared memory RTDB.
+ */
+typedef struct AFDXResidentMessage {
+    int boardId_Number;              /**< Board id/number combination where this message is defined.*/
+    unsigned short vlId;            /**< Virtual link Id associated with this message. */
+    unsigned long long timeStamp __attribute__ ((aligned(8))) ;   /**< in CPU ticks when the message was read in or written out.*/
+    unsigned int flags;             /**< Special flags for FIFO/Schedule messages.*/
+    unsigned int scheduleRate;      /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode.*/
+    unsigned int defaultFlags;        /**< The originak special flags for FIFO/Schedule messages as configure in the RTDB.*/
+    unsigned int defaultScheduleRate; /**< The original schedule rate configured in the RTDB.*/
+    IOAFDXMessage message;          /**< The afdx message. */
+    int runCount;                   /**< Internal count to check for value change based on the label scheduled rate. */
+    int initCount;                  /**< Initial count for the previous running count .*/
+    unsigned int *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char *pNetConfig __attribute__ ((aligned(8))) ;
+    unsigned int  *pNetSkew __attribute__ ((aligned(8))) ;
+    unsigned char *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount   __attribute__ ((aligned(8))) ;
+    unsigned int *pErrorInfo __attribute__ ((aligned(8))) ;
+    int          *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+} AFDXResidentMessage;
+
+// RTMAPS message mapping controls
+#define RTMAPS_CTRL_MAPPING      0
+#define RTMAPS_CTRL_PAUSERESUME  1
+#define RTMAPS_CTRL_TXNOW        2
+#define RTMAPS_CTRL_SCHEDFIFO    3
+#define RTMAPS_CTRL_TXONCHANGE   4
+#define RTMAPS_CTRL_SCHEDRATE    5
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing specific run-time properties of RTMAPS message in the shared memory RTDB.
+ */
+typedef struct RTMAPSResidentMessage {
+    int boardNumber;                /**< Board number where this message is defined.*/
+    unsigned long long timeStamp __attribute__ ((aligned(8))) ;   /**< in CPU ticks when the message was read in or written out.*/
+    unsigned int flags;             /**< Special flags for FIFO/Schedule messages.*/
+    double       scheduleRate __attribute__ ((aligned(8))) ;      /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode.*/
+    unsigned int defaultFlags;        /**< The originak special flags for FIFO/Schedule messages as configure in the RTDB.*/
+    double       defaultScheduleRate __attribute__ ((aligned(8))) ; /**< The original schedule rate configured in the RTDB.*/
+    RTMAPSProps  rtmapsProps;
+    int runCount;                   /**< Internal count to check for value change based on the label scheduled rate. */
+    int initCount;                  /**< Initial count for the previous running count .*/
+    double       *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount __attribute__ ((aligned(8))) ;
+    float        *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+} RTMAPSResidentMessage;
+
+
+// NET message mapping controls
+#define NET_CTRL_MAPPING      0
+#define NET_CTRL_PAUSERESUME  1
+#define NET_CTRL_TXNOW        2
+#define NET_CTRL_SCHEDFIFO    3
+#define NET_CTRL_TXONCHANGE   4
+#define NET_CTRL_SCHEDRATE    5
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing specific run-time properties of NETIO messages in the shared memory RTDB.
+ */
+typedef struct NETResidentMessage {
+    int boardNumber;                /**< Board number where this message is defined.*/
+    unsigned long long timeStamp __attribute__ ((aligned(8))) ;   /**< in CPU ticks when the message was read in or written out.*/
+    unsigned int flags;             /**< Special flags for FIFO/Schedule messages.*/
+    double       scheduleRate __attribute__ ((aligned(8))) ;      /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode.*/
+    unsigned int defaultFlags;        /**< The originak special flags for FIFO/Schedule messages as configure in the RTDB.*/
+    double       defaultScheduleRate __attribute__ ((aligned(8))) ; /**< The original schedule rate configured in the RTDB.*/
+    IONETMessage message;          /**< The NETIO message. */
+    int runCount;                   /**< Internal count to check for value change based on the label scheduled rate. */
+    int initCount;                  /**< Initial count for the previous running count .*/
+    double       *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount __attribute__ ((aligned(8))) ;
+    float        *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+} NETResidentMessage;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing specific run-time properties of UDP messages in the shared memory RTDB.
+ */
+typedef struct UDPResidentMessage {
+    int boardNumber;                /**< Board number where this message is defined.*/
+    unsigned long long timeStamp __attribute__ ((aligned(8))) ;   /**< in CPU ticks when the message was read in or written out.*/
+    unsigned int flags;             /**< Special flags for FIFO/Schedule messages.*/
+    double       scheduleRate __attribute__ ((aligned(8))) ;      /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode.*/
+    unsigned int defaultFlags;        /**< The originak special flags for FIFO/Schedule messages as configure in the RTDB.*/
+    double       defaultScheduleRate __attribute__ ((aligned(8))) ; /**< The original schedule rate configured in the RTDB.*/
+    IOUDPMessage message;          /**< The UDP message. */
+    int runCount;                   /**< Internal count to check for value change based on the label scheduled rate. */
+    int initCount;                  /**< Initial count for the previous running count .*/
+    double       *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount __attribute__ ((aligned(8))) ;
+    int          *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+} UDPResidentMessage;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing specific run-time properties of CIGI messages in the shared memory RTDB.
+ */
+typedef struct CIGIResidentMessage {
+    int                 inUse;
+    unsigned long long timeStamp __attribute__ ((aligned(8))) ;   /**< in CPU ticks when the message was read in or written out.*/
+    unsigned int flags;             /**< Special flags for FIFO/Schedule messages.*/
+    double       scheduleRate __attribute__ ((aligned(8))) ;      /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode.*/
+    unsigned int defaultFlags;        /**< The originak special flags for FIFO/Schedule messages as configure in the RTDB.*/
+    double       defaultScheduleRate __attribute__ ((aligned(8))) ; /**< The original schedule rate configured in the RTDB.*/
+    IOCIGIMessage message;          /**< The CIGI message. */
+    int runCount;                   /**< Internal count to check for value change based on the label scheduled rate. */
+    int initCount;                  /**< Initial count for the previous running count .*/
+    double       *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount __attribute__ ((aligned(8))) ;
+    int          *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+} CIGIResidentMessage;
+
+// FDX message mapping controls
+#define FDX_CTRL_MAPPING      0
+#define FDX_CTRL_PAUSERESUME  1
+#define FDX_CTRL_TXNOW        2
+#define FDX_CTRL_SCHEDFIFO    3
+#define FDX_CTRL_TXONCHANGE   4
+#define FDX_CTRL_SCHEDRATE    5
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Object describing specific run-time properties of FDX messages in the shared memory RTDB.
+ */
+typedef struct FDXResidentMessage {
+    int boardNumber;                /**< Board number where this message is defined.*/
+    unsigned long long timeStamp __attribute__ ((aligned(8))) ;   /**< in CPU ticks when the message was read in or written out.*/
+    unsigned int flags;             /**< Special flags for FIFO/Schedule messages.*/
+    double       scheduleRate __attribute__ ((aligned(8))) ;      /**< Save current schedule rate here  so it can be restored later when going back from FIFO to schedule mode.*/
+    unsigned int defaultFlags;        /**< The originak special flags for FIFO/Schedule messages as configure in the RTDB.*/
+    double       defaultScheduleRate __attribute__ ((aligned(8))) ; /**< The original schedule rate configured in the RTDB.*/
+    IOFDXMessage message;          /**< The FDX message. */
+    int runCount;                   /**< Internal count to check for value change based on the label scheduled rate. */
+    int initCount;                  /**< Initial count for the previous running count .*/
+    double       *pScheduleRate __attribute__ ((aligned(8))) ;
+    unsigned int *pTxCount __attribute__ ((aligned(8))) ;
+    unsigned int *pTxErrors __attribute__ ((aligned(8))) ;
+    unsigned int *pFlags __attribute__ ((aligned(8))) ;
+    unsigned char *pSchedFIFO __attribute__ ((aligned(8))) ;
+    unsigned char *pTxOnChange __attribute__ ((aligned(8))) ;
+    unsigned char *pPaused __attribute__ ((aligned(8))) ;
+
+    unsigned int *pRxCount __attribute__ ((aligned(8))) ;
+    float        *pLastUpdateUSec __attribute__ ((aligned(8))) ;
+    unsigned int rxCount __attribute__ ((aligned(8))) ;
+    unsigned int txCount;
+} FDXResidentMessage;
+
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * AFDX virtual link definition.
+ */
+typedef struct IOAFDXVirtualLink {
+    unsigned short vlId;            /**< Virtual link number .*/
+    unsigned short maxFrameLength;
+    unsigned short minFrameLength;
+    unsigned char bag;
+    unsigned char vlType;
+    unsigned char subVLs;
+    unsigned long long macAddress __attribute__ ((aligned(8))) ;
+    unsigned char netConfig;
+    unsigned short skew;
+    unsigned short maxSkew;
+    unsigned short maxJitter;
+    unsigned short noIPFrag;
+
+    unsigned short nMessages;       /**< How many messages in the array below. */
+    unsigned short nAllocMessages;
+    IOAFDXMessage  *messages __attribute__ ((aligned(8))) ;
+} IOAFDXVirtualLink;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   RS232 message definition.
+*/
+typedef struct IORS232Message {
+    char name[MAX_RS232MSGNAME];
+    unsigned int messageLength;
+    unsigned int channelNumber;
+} IORS232Message;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   FLEXRAY message definition.
+*/
+typedef struct IOFlexRayMessage {
+    char name[MAX_FLEXRAYMSGNAME+1];
+    char           channelMask;        /**< Either 'A' or 'B' */
+    char           type;           /**< RX or TX */
+    unsigned short controllerNumber; /**< What controller on the board is this message used on .*/
+    unsigned int   slotId;           /**< Message slotId/frameId.*/ 
+    unsigned int   baseCycle ;
+    unsigned int   cycleRepetition;
+    unsigned int   length;
+    unsigned int   bufferIndex;   /**< Index in the flexray board buffer memory. Placed here for convenience as it is
+                                     used by the fcbTransmit... API function .*/
+    char           isDynamicSlot; /**< Used internally by the flexrayio tasks.*/
+} IOFlexRayMessage;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   Memory region definition definition.
+*/
+typedef struct IOMemoryRegion {
+    char name[MAX_MEMREGIONNAME+1];    /**< Region name .*/
+    char           regionType;         /**< POSIX or IPC */
+    int            ipcId;              /**< Message slotId/frameId.*/ 
+    char           memoryPath[256];    /**< Either pathname for ftok or entry in /dev/shm for POSIX.*/
+    int            projectNumber;      /**< ProjectNumber for ftok.*/
+    int            numberOfPages;      /**< Number of pages to map for VMIC5565.*/    
+    int            interruptId;        /**< InterruptId for scramnet GT200 on write */
+} IOMemoryRegion;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   Arion Object definition.
+*/
+typedef struct IOArionObject {
+    char name[MAX_ARIONOBJNAME+1];     /**< Object name .*/
+    unsigned long long  ident __attribute__ ((aligned(8))) ;              /**< Ident */
+    int            priority;           /**< Priority.*/
+    int            size;               /**< Size (in bytes) of the Object.*/    
+    int            dir;                /**< Direction : [IN/OUT].*/    
+    char lognum[MAX_STRINGVARIABLELEN+1];     /**< Object name .*/
+} IOArionObject;
+
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+   Rtadb Message definition.
+*/
+typedef struct IORtadbMessage {
+    char msgName[MAX_RTADBMSGNAME+1];
+    unsigned long long id __attribute__ ((aligned(8))) ;			/* ident */
+    unsigned char dimension;
+    unsigned char nature;
+    unsigned char type;
+    //unsigned char rawType;
+    unsigned int width;
+    unsigned int height;
+} IORtadbMessage;
+
+#define DDC1553_CTRL_MAPPING  0
+#define DDC1553_CTRL_TXNOW    1
+#define DDC1553_MODECODE_WORD 2
+#define DDC1553_RT_MODECODE   3
+#define DDC1553_RT_MODECODE_W 4
+#define DDC1553_RT_STATUS_W   5
+typedef struct IODDC1553Message {
+    int controllerType;
+    unsigned char channelNumber;
+    int period;
+    int slotNumber;
+    unsigned char  messageType;
+    unsigned char messageLength;
+    unsigned char rxLength;
+    unsigned char txLength;
+    unsigned char mailboxSource;
+    unsigned char mailboxDestination;
+    unsigned char rtAddrSource;
+    unsigned char rtAddrDestination;
+    unsigned char modeCode;
+    char messageName[MAX_1553MSGNAME] ;
+} IODDC1553Message;
+
+typedef struct IOHITV370Property {
+    char record[128];
+} IOHITV370Property;
+
+typedef struct HOTASX56Properties {
+    char joyStickLocation[MAX_HOTASX56FILEPATHLENGTH];
+    char throttleLocation[MAX_HOTASX56FILEPATHLENGTH];
+} HOTASX56Properties;
+
+typedef struct JoyStickProperties {
+    char joyStickLocation[MAX_JOYSTICKFILEPATHLENGTH];
+} JoyStickProperties;
+
+typedef struct PWM1012Properties {
+    int mode;
+    struct {
+        double    sineFrequency;
+        int       deadBand;
+        int       constantPulseWidth;
+        double    rampFrequency __attribute__ ((aligned(8))) ;
+        double    phase[3] __attribute__ ((aligned(8))) ;
+    } channelProp[MAX_PWM1012_CHANNELS];
+} PWM1012Properties;
+
+typedef struct PWM1112Properties {
+    struct {
+        int debounceCount;
+        int fifoCount;
+    } channelProp[MAX_PWM1112_CHANNELS];
+} PWM1112Properties;
+
+typedef struct SENTChannelProperties {
+        int nibbles;        // Number of data nibbles
+        float tickLength;   // Tick length in use
+        int pausePulse;
+        int lowTicks;    // Number of ticks signal is low between falling edge and following positive edge
+        int frameLength; //Message frame length in terms of ticks (only active when the pause flag is enabled)
+        int polarity ;   //Signal Polarity: Normal – 0, Reversed – 1.
+        int legacyCRC;
+} SENTChannelProperties;
+
+typedef struct SENTProperties {
+    SENTChannelProperties outChannel[MAX_CPSENT_CHANNELS];
+    SENTChannelProperties inChannel[MAX_CPSENT_CHANNELS];
+} SENTProperties;
+
+typedef struct NAI79C3SF6ChannelProperties{
+    double vRef __attribute__ ((aligned(8))) ; // reference loss threshold voltage
+    double vSig __attribute__ ((aligned(8))) ; // signal loss threshold voltage
+    unsigned short type; // rotation/speed
+    double maxRPS __attribute__ ((aligned(8))) ; // maximum rotations per second
+    unsigned short mode; // resolver/synchro
+    unsigned int preload; // preload value for encoder register (E7 Encoder module)
+    double pulsePerRev;  __attribute__ ((aligned(8)))  // pulses per revolution   (E7 Encoder module)
+    int zIndexPhase; // phase to use to reset the counter when Z indexing is on (E7 Encoder module)
+    double dacOffset  __attribute__ ((aligned(8)))  ; // DAC offset voltage (E7 Encoder module)
+    int diff; // 0 = single-ended mode, 1 = differential mode (E7 Encoder module)
+    int highVolt; // 0 = normal, 1 = high voltage (>15V) (E7 Encoder module)
+    int terminated; // 0 = no, 1 = yes (E7 Encoder module)
+
+} NAI79C3SF6ChannelProperties;
+typedef struct NAI79C3SF6ModuleProperties{
+    NAI79C3SF6ChannelProperties chans[MAX_NAI79C3SF6_CHANNELS_PER_MODULE];
+    unsigned short model;
+    unsigned short module;
+    double amplitude __attribute__ ((aligned(8))) ; // W2 module reference voltage amplitude
+    double frequency __attribute__ ((aligned(8))) ; // W2 module reference voltage frequency
+} NAI79C3SF6ModuleProperties;
+
+typedef struct NAI79C3SF6Properties {
+    NAI79C3SF6ModuleProperties mod[MAX_NAI79C3SF6_MODULES];
+} NAI79C3SF6Properties;
+
+typedef struct NAI79C3E7Properties {
+    NAI79C3SF6ModuleProperties mod;
+} NAI79C3E7Properties;
+
+
+typedef struct CPMFIOProperties {
+    unsigned char ad0VoltRange;
+    unsigned char ad1VoltRange;
+    unsigned char da0VoltRange;
+    unsigned char da1VoltRange;
+    unsigned char da2VoltRange;
+    unsigned char da3VoltRange;
+
+    unsigned char adRawUnit;
+    unsigned char daRawUnit;
+    unsigned short physicalInstance;
+
+    int da0diff;
+    int da1diff;
+    int da2diff;
+    int da3diff;
+} CPMFIOProperties;
+
+typedef struct IOSerialBoardDef {
+    char devName[32];
+    char firstPortNumber;
+    char outputBehavior;
+    IOSerialChannelDef channelProperties[MAX_SERIALCHANNELS];
+} IOSerialBoardDef;
+
+typedef struct SerialBinaryMessage {
+    unsigned short channelNumber;
+    unsigned short messageLength;
+    unsigned short messageId;
+} SerialBinaryMessage;
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Definition of a specific hardware IO board.
+ */
+typedef struct IOBoardDef {
+    int boardId;        /**< The board ID. i.e. one of the BoardID enum. */
+    int boardNumber;    /**< The instance number of the board. */
+#if 0                /* NOIOTYPE*/
+    int ioType;         /**< The type of IO this board supports. i.e. one of the BoardType enum. */   
+#endif
+    int nChannels;      /**< The number of hardware channels on this board. I.e. if it is a digital board, 
+                          the number of bits. If it is an analog board, the number of analog channels.*/
+    int nAis;
+    int nAos;
+    int nDigitals;
+    int nCounters;
+    int hasCalibration;
+    int type;           /**< io direction i.e IN or OUT.*/
+
+    int nVLinks;
+    int nAllocVLinks;
+    int nEntries;       /**< How many entries in allocated array below.*/
+    int nAllocEntries;  /**< How many have I allocated.*/
+    unsigned char  analogVoltRange;
+    unsigned char  rawUnit;
+    unsigned char  aoFilter;
+    unsigned char  aoResolution;  /**< resolution in bit for the AO device. Only used for Pickering resistor board.*/
+    unsigned char  aoIsExternalClock;
+    unsigned char  aoIsExternalSync;
+    double         clockRate __attribute__ ((aligned(8))) ;
+    unsigned char  differentialMode;
+    unsigned char  resolverType[MAX_RESOLVERCHANNELS_INPUT];
+    double         resolverMaxRPS[MAX_RESOLVERCHANNELS_INPUT] __attribute__ ((aligned(8))) ; /**< For input channels only.*/
+    unsigned char  resolverOscillatorEnable;
+    int            resolverOscillatorFrequency;
+    double         resolverOscillatorAmplitude __attribute__ ((aligned(8))) ;
+    unsigned char  rvdtType[MAX_NAI64DL1_CHANNELS]; // This board has 16 channels to 12/8 for hte NAI
+    double         rvdtMaxSPS[MAX_RVDTCHANNELS_INPUT]; /**< For input channels only.*/
+    unsigned char  rvdtOscillatorEnable;
+    int            rvdtOscillatorFrequency;
+    double         rvdtOscillatorAmplitude __attribute__ ((aligned(8))) ;
+    float          rvdtTransformRatio[MAX_NAI64DL1_CHANNELS];
+    int            hostPort;
+    int            canNetSpeed[MAX_CANNETS];
+    int            eb5100LoadFirmware;
+    int            ecatCycleTime;
+    struct  {
+        char           hostName[MAX_HOSTNAME];
+        char           ecatDevice[MAX_ECATDEVICENAMELENGTH];
+    } S;
+    union {
+        IOSerialBoardDef  serialDef;
+        IOARINC429ChannelDef *arincChannels;
+        IOAFDXVirtualLink *virtualLinks;
+        IONETMessage      *netMessages;
+        IOCIGIMessage     *cigiMessages;
+        IOFDXMessage      *fdxMessages;
+        IOFlexRayMessage  *flexrayMessages;
+        IOMemoryRegion    *memoryRegions;
+        IODDC1553Message  *ddc1553Messages;
+        IOArionObject     *arionObjects;
+        IORtadbMessage    *rtadbMessages;
+        IOHITV370Property *hitv370Properties;
+    } IOProp;
+    union {
+        //FlexRayController flexControllers[2];  /*<<  Controller 1 & 2 on a flexray board */
+        PWM1012Properties pwm1012Properties;
+        CPMFIOProperties cpmfioProperties;
+        NAI79C3SF6Properties nai79c3sf6Properties;
+        NAI79C3E7Properties nai79c3e7Properties;
+        HOTASX56Properties hotasx56Properties;
+        JoyStickProperties joyStickProperties;
+    } Prop;
+} IOBoardDef;
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Utility object that defines the name of an RTDB item.
+ */
+typedef  char ItemName[MAX_TAGLEN];
+
+
+extern StringVariableValue  *pStringValues;
+extern int                  *pStringLength;
+extern unsigned char        *pDefaultValueTable;
+
+#define MAXCSCRIPT_INPUTSTRLEN    256
+#define MAXCSCRIPT_OUTPUTSTRLEN   256
+#define MAXCSCRIPT_OUTPUTSTRINGS  1024    
+/** 
+ * Bit usage for the ScriptStdIO flags.
+ */
+enum ScriptStdIO_Flags {
+    ScriptStdIO_inputReady = 1 
+};
+
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Definition of for Script programs standard Input and output functions.<BR>
+ * This is mapped in shared memory at the end of the RTDB.
+ */
+typedef struct ScriptStdIO {
+    unsigned int flags;      /**< Set by configuration server when the input string has been received
+                                  and is ready for the Script to process. */
+    char inputString[MAXCSCRIPT_INPUTSTRLEN];     /**< The NULL terminated input string. */
+    char outputString[MAXCSCRIPT_OUTPUTSTRINGS][MAXCSCRIPT_OUTPUTSTRLEN];   /**< The Null terminated ouput string. This string is sent over the network
+                                        to all Script output listeners . This is a FIFO */
+    unsigned int outIdxPut;
+} ScriptStdIO;
+
+/**
+ * \ingroup CCURSIMTest
+ * The type of source program we can store in the CCURSIM and we can associate with a test.
+ */
+enum SourceProgramType {
+    SOURCE_SCRIPT=1,       /**< User defined script.*/
+    SOURCE_RTW=2,          /**< A RTW MATLAB model. */
+    SOURCE_USERPROGRAM=3,  /**< A User program . */
+    SOURCE_SIMPACK=4,       /**< A SIMPACK model . */
+    SOURCE_FMU=5,           /**< A FMU model . */
+    SOURCE_ADAMS=6,         /**< A Adams model . */
+    SOURCE_CARMAKER=7,      /**< A CarMaker model . */
+    SOURCE_PYTHON=8         /**< A Python model . */
+};
+#define SOURCE_ASYNC   0x80
+#define SOURCE_PGMMASK 0x7f
+
+/** 
+ * Data logger commands
+ */
+#define DLOGGER_PAUSE           1
+#define DLOGGER_CIRCULARSTOP    2
+#define DLOGGER_RESUME          4 
+#define DLOGGER_NEWITEM         8 
+
+/*
+ * Lock behaviour for the data logger when using circular logger.
+ */
+#define CIRCLOGGER_NORMAL    0   /**< Lock the circular logger file set.*/
+#define CIRCLOGGER_TAKELOCK  1   /**< Override lock if the lock is on for the current file set */
+#define CIRCLOGGER_NEXTFILE  2   /**< Go to next file in sequence if the current one is locked.*/
+
+/* To share values between sched and cfgsrv*/
+#define IPC_REFRESH        7698
+
+/* To sync ASAM captrue task to SimWB */
+#define IPC_ASAM           7699
+/* Sem to sync async task */
+#define IPC_SYNCASYNC      7700
+
+// For the shared regions that use SHMGET
+#define SIMWB_IPSSHM_START 7995
+#define DLLOGGERBUF_IPC   (SIMWB_IPSSHM_START)
+#define ASYNCIOQ_IPC      (SIMWB_IPSSHM_START +1)
+#define RTDB_IPC          (SIMWB_IPSSHM_START +2)
+
+enum SchedType {
+    SCHED_DEFAULT,
+    SCHED_NOCONFIGURE,
+    SCHED_USERFBSDEF,
+    SCHED_SOFTTIMER,
+    SCHED_SPINNING,
+    SCHED_SOFTRT,
+    SCHED_SIMULATION,
+    SCHED_5565INTR,
+    SCHED_SCGTINTR
+};
+enum ROSTYPE {
+    ROS_SUBSCRIBER,
+    ROS_PUBLISHER
+};
+
+typedef enum someipDirection{
+    SOMEIPIN,
+    SOMEIPOUT
+}someipDirection;
+
+typedef enum someipTransportLayerProtocol{
+    SOMEIPUDP,
+    SOMEIPTCP
+}someipTransportLayerProtocol;
+
+typedef enum someipArraySizeSemantics{
+    SOMEIPFIXED_SIZE,
+    SOMEIPVARIABLE_SIZE
+}someipArraySizeSemantics;
+
+typedef enum someipDataCategory{
+    SOMEIPVALUE,
+    SOMEIPSTRING,
+    SOMEIPARRAY,
+    SOMEIPSTRUCTURE
+}someipDataCategory;
+
+
+
+/* Prototypes */
+#ifdef __cplusplus
+extern "C" {
+#endif
+char       *ccurRTDB_hardwareConfigToString(HardwareConfig *p) ;
+char       *ccurRTDB_euConversionToString(EUConversion *p) ;
+int        ccurRTDB_hardwareAddressToString(HardwareConfig *p,char *str) ;
+
+int        ccurRTDB_stringToPointType(const char *pointType) ;
+const char *ccurRTDB_pointTypeToString(int pointType ) ;
+const char *ccurRTDB_ioDirectionToString(int ioDir ) ;
+int        ccurRTDB_stringToIODirection(const char *ioDir ) ;
+const char *ccurRTDB_rosTypeToString(int ioDir ) ;
+int        ccurRTDB_stringToROSType(const char *ioDir ) ;
+
+int        ccurRTDB_stringToCVTType(const char *cvtType) ;
+const char *ccurRTDB_cvtTypeToString(int cvtType) ;
+
+int        ccurRTDB_stringToRawType(const char *cvtType) ;
+const char *ccurRTDB_rawTypeToString(int cvtType) ;
+
+char       *ccurRTDB_itemValueDefToString(char **str,ItemValueDef *value) ;
+char       *ccurRTDB_itemValueToString(char **str,int cvtType,ItemValue *value,char hex) ;
+int        ccurRTDB_stringToItemValue(const char *sValue,int type ,ItemValue *value) ;
+void       ccurRTDB_freeItemValue(ItemValue *value,int cvtType) ;
+
+char      *ccurRTDB_dimensionsToString(char *s,int *dimensions) ;
+void      ccurRTDB_stringToDimensions(const char *s,int *dimensions) ;
+
+void      ccurRTDB_stringToOrder(const char *s,short *order) ;
+char      *ccurRTDB_orderToString(char *s,short *order) ;
+
+const char *ccurIO_boardTypeToString(int type) ;
+int        ccurIO_stringToBoardType(const char *t) ;
+
+const char *ccurIO_parityToString(int type) ;
+const char *ccurIO_speedToString(int type) ;
+int        ccurIO_stringToParity(const char *t) ;
+int        ccurIO_stringToSerialType(const char *t) ;
+const char *ccurIO_serialTypeToString(int type) ;
+int        ccurIO_stringToSpeed(const char *t) ;
+int        ccurIO_getBoardNumberOfChannels(int boardId,int boardNum,int *nChannels) ;
+
+unsigned long long ccurIO_stringToMacAddress(const char *s) ;
+unsigned int       ccurIO_stringToIP(const char *s) ;
+const char         *ccurIO_macAddressToString(unsigned long long mac ) ;
+const char         *ccurIO_ipToString(unsigned int ip ) ;
+int                ccurIO_stringToAFDXPortType(const char *s) ;
+int                ccurIO_stringToAFDXTXType(const char *s) ;
+const char         *ccurIO_afdxPortTypeToString(int pt ) ;
+const char         *ccurIO_afdxTXTypeToString(int  pt ) ;
+int                ccurIO_stringToAFDXNetConfig(const char *s) ;
+const char         *ccurIO_afdxNetConfigToString(int nc) ;
+const char         *ccurIO_afdxVLTypeToString(int pt ) ;
+int                ccurIO_stringToAFDXVLType(const char *s) ;
+const char         *ccurIO_NAI79C3SF6ModeTypeToString(int nc) ;
+int                ccurIO_stringToNAI79C3SF6ModeType(const char *mode) ;
+const char         *ccurIO_NAI79C3SF6ModelTypeToString(int nc) ;
+int                ccurIO_stringToNAI79C3SF6ModelType(const char *model) ;
+const char         *ccurIO_NAI79C3E7CounterModeTypeToString(int nc) ;
+const char         *ccurIO_NAI79C3E7IndexModeTypeToString(int nc);
+int                ccurIO_NAI79C3SF6NumChannelsForModel(int m);
+const char         *ccurIO_resolverTypeToString(int           nc) ;
+const char         *ccurIO_rvdtTypeToString(int nc) ;
+int                ccurIO_stringToResolverType(const char *s ) ;
+int                ccurIO_stringToNAI79C3ModeType(const char *s ) ;
+int                ccurIO_stringToNAI79C3ModelType(const char *s ) ;
+int                ccurIO_stringToNAI79C3E7CounterModeType(const char *s );
+int                ccurIO_stringToNAI79C3E7IndexModeType(const char *s );
+int                ccurIO_stringToRVDTType(const char *s ) ;
+int                ccurIO_stringToVoltRange(const char *s);
+const char         *ccurIO_analogVoltRangeToString(int volt);
+const char         *ccurIO_protocolToString(int proto ) ;
+int                ccurIO_stringToProtocol(const char *proto ) ;
+int                ccurRTDB_stringToUnitClass(const char *uclass);
+
+int                ccurIO_stringToAnalogRawUnit(const char *unit) ;
+const char         *ccurIO_analogRawUnitToString(int unit) ;
+
+const char         *ccurIO_joystickCtrlTypeToString(int pt ) ;
+unsigned char      ccurIO_stringToJoyStickCtrlType(const char *s) ;
+
+const char         *ccurIO_logiwheelCtrlTypeToString(int pt ) ;
+unsigned char      ccurIO_stringToLogiWheelCtrlType(const char *s) ;
+
+const char         *ccurIO_hotasx56CtrlTypeToString(int pt ) ;
+unsigned char      ccurIO_stringToHotasCtrlType(const char *s) ;
+
+const char         *ccurIO_FANPODCtrlTypeToString(int pt ) ;
+unsigned char      ccurIO_stringToFANPODCtrlType(const char *s) ;
+
+int                ccurIO_stringToTaskClass(const char *t) ;
+const char         *ccurIO_taskClassToString(int class_) ;
+
+int                ccurIO_stringToSchedulingPolicy(const char *t) ;
+const char         *ccurIO_schedulingPolicyToString(int policy_) ;
+
+int               ccurIO_stringToFlexRayType(const char *s) ;
+const char        *ccurIO_flexrayTypeToString(int pt ) ;
+
+const char        *ccurIO_hardwareTypeToString(int type) ;
+int                ccurIO_stringToHardwareType(const char *t ) ;
+
+const char        *ccurIO_1553ControllerToString(int t) ;
+int                ccurIO_stringTo1553Controller(const char *t) ;
+const char        *ccurIO_1553MessageToString(int t) ;
+int                ccurIO_stringTo1553Message(const char *t) ;
+int                ccurIO_getCalibrationData(const char *fileName,CalibrationEntry *calibrationEntries,int maxChannels) ;
+
+const char        *ccurIO_UEIDevTypeToString(int t) ;
+int                ccurIO_stringToUEIDevType(const char *t) ;
+
+const char        *ccurIO_SOMEIPTransportLayerProtocolToString(int tp);
+int                ccurIO_stringToSOMEIPTransportLayerProtocol(const char *protocol);
+const char        *ccurIO_SOMEIPDirectionToString(int tp);
+int                ccurIO_stringToSOMEIPDirection(const char *protocol);
+const char        *ccurIO_SOMEIPArraySizeSemanticsToString(int tp);
+int                ccurIO_stringToSOMEIPArraySizeSemantics(const char *protocol);
+const char        *ccurIO_SOMEIPDataCategoryToString(int tp);
+int                ccurIO_stringToSOMEIPDataCategory(const char *protocol);
+
+
+
+
+const char *ccurIO_boardIdToString(int type) ;
+int  ccurIO_stringToBoardId(const char *t) ;
+
+char *ccurNet_URLDecode(const char *s,int *length) ;
+char *ccurNet_URLEncode(const char *s,int length) ;
+int ccurNet_matchIP(const char *ip,const char *regexp) ;
+//unsigned char *ccurRTDB_getDefaultStringAddress(RTDBItemMeta *p,int *len) ;
+unsigned char *ccurRTDB_getStringAddress(ItemValue *value,int *len) ;
+//int ccurRTDB_getDefaultValueP(RTDBItemMeta *p,ItemValue *defVal);
+const char *ccurRTDB_SimWBErrorToString(int error) ;
+
+int ccurIOUser_stringToBoardId(const char *t) ;
+const char *ccurIOUser_boardIdToString(int type) ;
+int ccurIOUser_stringToHardwareAddress(int boardId,const char *line,void *IOAddress) ;
+int ccurIOUser_hardwareAddressToString(int boardId,const void *IOAddress,char *str) ;
+typedef int (*UserHardwareAddressToString)(int boardId,const void *hardwareAddress,char *str) ;
+typedef int (*UserStringToHardwareAddress)(int boardId,const char *str,void *hardwareAddress) ;
+int ccurIO_stringToNIAIType(const char *type) ;
+const char *ccurIO_niAITypeToString(int type) ;
+
+char *ccur_fgets(ccur_fgetsLine *buf, FILE *fp) ;
+int ccur_trimLine(char *line) ;
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#if defined __aarch64__
+///* Swap bytes in 32 bit value.  */
+/*#define __bswap_constant_32(x) 
+     ((((x) & 0xff000000u) >> 24) | (((x) & 0x00ff0000u) >>  8) |	      
+      (((x) & 0x0000ff00u) <<  8) | (((x) & 0x000000ffu) << 24)) */
+
+///* Swap bytes in 64 bit value.  */
+/*# define __bswap_constant_64(x) \
+     ((((x) & 0xff00000000000000ull) >> 56)				      \
+      | (((x) & 0x00ff000000000000ull) >> 40)				      \
+      | (((x) & 0x0000ff0000000000ull) >> 24)				      \
+      | (((x) & 0x000000ff00000000ull) >> 8)				      \
+      | (((x) & 0x00000000ff000000ull) << 8)				      \
+      | (((x) & 0x0000000000ff0000ull) << 24)				      \
+      | (((x) & 0x000000000000ff00ull) << 40)				      \
+      | (((x) & 0x00000000000000ffull) << 56))
+*/
+#  define __bswap_float(x) \
+         (__extension__								\
+          ({ union { __extension__ float __f;                   		\
+             unsigned int __l; } __w, __r;                             		\
+           {                                                                  	\
+             __w.__f = (x);                                                  	\
+             __r.__l = __bswap_constant_32 (__w.__l);                           \
+           }                                                                  	\
+         __r.__f; }))
+
+#  if __WORDSIZE == 64
+    #  define __bswap_double(x) \
+         (__extension__                                                       	\
+          ({ union { __extension__ double __d;                   		\
+             unsigned long int __ll; } __w, __r;                             	\
+           {                                                                  	\
+             __w.__d = (x);                                                  	\
+             __r.__ll = __bswap_constant_64 (__w.__ll);                        	\
+           }                                                                  	\
+         __r.__d; }))
+#  else
+    #  define __bswap_double(x) \
+         (__extension__                                                         \
+          ({ union { __extension__ double __d;                   		\
+             unsigned int __l[2]; } __w, __r;                             	\
+           {                                                                  	\
+             __w.__d = (x);                                                  	\
+             __r.__l[0] = __bswap_constant_32 (__w.__l[1]);                     \
+             __r.__l[1] = __bswap_constant_32 (__w.__l[0]);                     \
+           }                                                                  	\
+         __r.__d; }))
+#  endif // WORDSIZE
+# else
+#  define __bswap_float(x) \
+   (__extension__                               \
+     ({ unsigned int   __x = (x);   \
+      float __v;\
+     __asm__ ("bswap %0" : "=r" (__v) : "0" (__x));   \
+     __v; }))
+
+# if __WORDSIZE == 64
+    #  define __bswap_double(x) \
+         (__extension__                               \
+          ({ double __v;\
+             union {double __d;unsigned long __ll; } __u;\
+           __u.__d = (x);\
+           __asm__ ("bswap %q0" : "=r" (__v) : "0" (__u.__ll));            \
+         __v; }))
+# else
+    #  define __bswap_double(x) \
+         (__extension__                                                           \
+          ({ union { __extension__ double __d;                   \
+             unsigned int __l[2]; } __w, __r;                             \
+           {                                                                  \
+             __w.__d = (x);                                                  \
+             __r.__l[0] = __bswap_32 (__w.__l[1]);                            \
+             __r.__l[1] = __bswap_32 (__w.__l[0]);                            \
+           }                                                                  \
+         __r.__d; }))
+# endif // WORDSIZE
+
+# endif // #if defined __x86_64__ || defined __i386__
+#endif
+#define  ATOMIC_INC(counter)\
+      __asm__ __volatile__(\
+            "lock ;"  "incl %0"\
+            :"=m" (counter)\
+            :"m" (counter));
+
+#define ATOMIC_DEC(counter)\
+      __asm__ __volatile__(\
+           "lock ; "  "decl %0"\
+           :"=m" (counter)\
+           :"m" (counter));
+
+
+
+
