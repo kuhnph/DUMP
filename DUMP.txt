@@ -1,9 +1,451 @@
-grep -Rni "typedef.*ItemValue\|struct.*ItemValue" /usr/local/ccursim 2>/dev/null | head -50
 
-grep -Rni "ccurRTDB_setCVTValue(" /usr/local/ccursim 2>/dev/null | head -50
+#ifndef _RTDBUTILS_H
+#define _RTDBUTILS_H
 
-grep -Rni "getCVT" /usr/local/ccursim --include="*.h" 2>/dev/null
+#include <limits.h>
+#include <pthread.h>
+#include "simrtdb.h"
+#include "asyncio_afdx.h"
+#include "asyncio_can.h"
+#include "asyncio_sent.h"
+#include "asyncio_lin.h"
+#include "asyncio_arinc429.h"
+#include "asyncio_net.h"
+#include "asyncio_cigi.h"
+#include "asyncio_fdx.h"
+#include "asyncio_udp.h"
+#include "asyncio_ao16wave.h"
+#ifndef PATH_MAX
+// For some Simulink C code linux linux/limits.h does not get pulled in
+    #define PATH_MAX 4096
+#endif
 
-grep -Rni "getCVTValueDouble" /usr/local/ccursim --include="*.h" 2>/dev/null
 
-grep -Rni "ItemValue" /usr/local/ccursim --include="*.h" 2>/dev/null | head -50
+enum TestRunningState {
+    TEST_STOPPED        = 0,
+    TEST_INITIALIZING   = 10,
+    TEST_INITCOMPLETE   = 20,
+    TEST_RUNNING        = 30,
+    TEST_INITSCRIPT     = 4,
+    TEST_IOSHUTDOWN     = 5,
+    TEST_POSTPROCESS    = 6
+};
+/**
+ * \ingroup ccurRTDBUtils
+ * \ingroup RTDBAccess
+ * Meta information about the real-time database.<BR>
+ * This is mapped into its own shared memory segment.
+ */
+typedef struct DBBoard {
+    short boardId;  /**< Board Id.*/
+    short boardNum; /**< Board instance. */
+    short dbIndex;  /**< index into RTDBMetaInfoShared that point for DB name for this board instance.*/
+} DBBoard;
+
+#define HOSTIS64BIT        1
+#define HAS32BITAPILICENSE 2
+typedef struct RTDBMetaInfoShared {
+    char simwb_build[64];  /**< SimWB string build version identifier. */
+    int  hashTableSize;      /**< The size of the hash table necessary to access the RTDB points.
+                              It should be at least twice the maximum number of RTDB items used in order
+                              to limit collisions in the has table and obtain good performance */
+    int  maxNumRTDBItems;   /* Determines the size of named item hashtable */
+    int  maxCVTSize;        /* The size of the CVT and alternate tables. */
+    int  nextItemIndex;
+
+    int  numRTDBItemsDefined;    /**< Total number of RTDB items defined in the real-time database */
+    int  numCVTEntries;
+    int  numHardwareConfigsDefined;
+    int  spareA[3];
+    int  maxNumStringVariables;  /**< Maximum # of string variables we can store in the RTDB */
+    int  RTDBLoaded;             /**< Wheter a Data base has been loaded in memory. */
+    int  frameLength;            /**< Frame length in micro seconds the FBS has been programmed to run at */
+    unsigned int frameCount;    /**< Current frame count when CCURSIM is running. */ 
+    int  running;                /**< Whether the CCURSIM simulator is running. */
+    int  dLoggerRunning;         /**< Wheter the data logger is running.*/
+    int  circularDLoggerRunning; /**< Wheter the circular data logger is running.*/
+    char dbFileName[MAX_RTDBLOAD][MAX_DBNAME];  /**< db name of loaded RTDB */
+    int  cvtDBOffset[MAX_RTDBLOAD];    /**< Offset for the RTDB in memory. */
+    DBBoard dbBoard[MAX_SIMWBBOARDS];  /**<  db association between board and RTDB name that is loaded */ 
+    int  nRTDBs;                  /** < Number of RTDB loaded */
+    char dbDescription[MAX_DBDESCRIPTION]; /**< description of the currently load database. */
+    char testId[MAX_TESTID];    /**< Test id for currently running test if any.*/
+    char sessionId[MAX_SESSIONID];  /**< Session id for currently running test if any.*/
+    char initCondName[MAX_INITCONDNAME]; /**< Name of the initial conditions set used during this run.*/
+    unsigned int dbCheckSum;    /**< RTDB check sum to detect when a new DB has been loaded.*/
+    unsigned int nextAvailCVTOffset;
+    int  cvtOffsetLock;
+    int  circLoggerLockBehavior ; /**< How the circular data logger is to handle the lock. One of CIRLOGGER_XXX*/
+    int  dataLoggerDirectIO;    
+    int  dataLoggerEnabled;    
+    int  schedStats;            /**< Whether to collect scheduling statistics. */
+    char loggedUserName[32];    /**< User that starts the test. */
+    int  boardLock  ;
+    int  rtdbLock  ;
+    int  rtdbBigLock  ;
+    pid_t cfgsrvPid;
+    char selectedProject[MAX_PROJECTNAME]  ;
+    char snapshotNameTemplate[PATH_MAX];
+    char snapshotNameMask[MAX_TAGLEN];
+    int  snapshotFormat;
+    int  snapshotMask;
+    int  takeSnapshot;
+    int  flags;
+    unsigned long long tsTestStarted __attribute__ ((aligned(8))) ;
+    char sessionUserParm[MAX_SESSIONUSERPARM]; /**<  user parameter specified fot the running session */
+} RTDBMetaInfoShared;
+
+#define CVT_ALLOCATEPOSITION -1000
+#define MAX_DLOGGERCOMMANDS  120
+typedef struct DLoggerCommand {
+    int command;
+    int newHashIndex;
+    char oldName[MAX_TAGLEN];
+} DLoggerCommand;
+
+typedef struct DLoggerNewItem {
+    int  pointIndex;
+    char name[MAX_TAGLEN];
+} DLoggerNewItem;
+
+typedef struct DLoggerCommands {
+    DLoggerCommand dlCommands[MAX_DLOGGERCOMMANDS];
+    int putIdx;
+    int getIdx;
+} DLoggerCommands;
+
+#define MAX_FORMIMPORTELEMS 10
+typedef struct FormImportElem {
+    char formName[MAX_FORMNAME];
+    char inputsOnly;
+} FormImportElem;
+
+typedef struct FormImportQ {
+    FormImportElem formImportElems[MAX_FORMIMPORTELEMS];
+    int putIdx;
+    int getIdx;
+} FormImportQ;
+
+#define MAX_FORMCAPTUREELEMS 10
+typedef struct FormCaptureElem {
+    char formName[MAX_FORMNAME];
+    char outFileName[PATH_MAX];
+    char testId[MAX_TESTID];
+    char sessionId[MAX_TESTID];
+    char nameTemplate[128];
+    char captureType;
+    double period __attribute__ ((aligned(8))) ;
+    int   runCount;
+} FormCaptureElem;
+
+typedef struct FormCaptureQ {
+    FormCaptureElem formCaptureElems[MAX_FORMCAPTUREELEMS];
+    int putIdx;
+    int getIdx;
+} FormCaptureQ;
+
+
+typedef struct AFDXResidentTable {
+    int                 afdxMessagesReady;
+    AFDXResidentMessage msg[MAX_AFDXMESSAGES];
+} AFDXResidentTable;
+
+typedef struct NETResidentTable {
+    double              netioMinRate __attribute__ ((aligned(8))) ; //in ms, this is the rate at which the netasyncio output thread is running
+    double              netStreamMinRate __attribute__ ((aligned(8))) ; //in ms, this is the rate at which the netasyncio output thread is running
+    int                 netioMessagesReady;
+    int                 netStreamMessagesReady;
+    NETResidentMessage netioMsg[MAX_NETMESSAGES];
+    NETResidentMessage netStreamMsg[MAX_NETMESSAGES];
+} NETResidentTable;
+
+typedef struct UDPResidentTable {
+    double              minRate __attribute__ ((aligned(8))) ; //in ms, this is the rate at which the asyncio output thread is running
+    int                 udpMessagesReady;
+    UDPResidentMessage msg[MAX_UDPMESSAGES];
+} UDPResidentTable;
+
+typedef struct CIGIResidentTable {
+    double              minRate __attribute__ ((aligned(8))) ; //in ms, this is the rate at which the asyncio output thread is running
+    int                 cigiMessagesReady;
+    CIGIResidentMessage msg[MAX_CIGISESSIONS];
+} CIGIResidentTable;
+
+typedef struct FDXResidentTable {
+    double              minRate __attribute__ ((aligned(8))) ; //in ms, this is the rate at which the netasyncio output thread is running
+    int                 fdxMessagesReady;
+    FDXResidentMessage  msg[MAX_FDXMESSAGES];
+} FDXResidentTable;
+
+typedef struct UnitDefinition {
+    unsigned char unitClass;
+    char name[MAX_EUNITSLEN];
+    double A __attribute__ ((aligned(8))) ;
+    double B __attribute__ ((aligned(8))) ;
+} UnitDefinition;
+
+typedef struct UnitResidentTable {
+    int nUnits;
+    UnitDefinition unitDefs[MAX_UNITDEFS];
+} UnitResidentTable;
+
+
+/**
+ * \ingroup RTDBAccess
+ * Hash table element. The hash table is an array of RTDBItemKey objects. 
+ */
+typedef struct RTDBItemKey {
+    char name[MAX_TAGLEN];  /**< This is the item key (i.e. its name). NULL terminated string. */ 
+    unsigned int userItemNum; /**< Index into the RTDBItem array that holds the RTDB Items. */
+    int          rtdbItemIndex;
+} RTDBItemKey;
+
+/* Prototypes */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define GUI_CALLABLE
+#define SCRIPT_CALLABLE
+int  ccurRTDB_loadDB(const char *file) ;
+int  ccurRTDB_initDB(int maxPoints,int maxCVTSize,int maxStringVariables);
+int  ccurRTDB_clearDB(void);
+void ccurRTDB_setDBCheckSum(unsigned cks ) ;
+unsigned int ccurRTDB_getDBCheckSum(void) ;
+
+void SCRIPT_CALLABLE ccurRTDB_resetCVTtoZero(void) ;
+int  SCRIPT_CALLABLE ccurRTDB_getCVTValue(const char *pointName,ItemValueDef *value) ;
+int  SCRIPT_CALLABLE ccurRTDB_getCVTValueP(const RTDBItem *p,ItemValueDef *value) ;
+int  SCRIPT_CALLABLE ccurRTDB_getCVTValuePMaxElements(const RTDBItem *p,ItemValueDef  *value,int max) ;
+double SCRIPT_CALLABLE ccurRTDB_getCVTValuePDouble(const RTDBItem *p) ;
+double GUI_CALLABLE ccurRTDB_getCVTValueDouble(const char *pointName) ;
+double SCRIPT_CALLABLE ccurRTDB_getAlternateValuePDouble(const RTDBItem *p) ;
+double GUI_CALLABLE ccurRTDB_getAlternateValueDouble(const char *pointName) ;
+double SCRIPT_CALLABLE ccurRTDB_getCurrentValuePDouble(const RTDBItem *p) ;
+double GUI_CALLABLE    ccurRTDB_getCurrentValueDouble(const char *pointName) ;
+void SCRIPT_CALLABLE ccurRTDB_setCVTValuePDouble(const RTDBItem *p,double varValue) ;
+void SCRIPT_CALLABLE    ccurRTDB_setCVTValueDouble(const char *pointName,double varValue) ;
+
+void SCRIPT_CALLABLE ccurRTDB_setAlternateValuePDouble(const RTDBItem *p,double varValue) ;
+void SCRIPT_CALLABLE ccurRTDB_setAlternateValueDouble(const char *pointName,double varValue) ;
+void SCRIPT_CALLABLE ccurRTDB_setCurrentValuePDouble(const RTDBItem *p,double varValue) ;
+void SCRIPT_CALLABLE    ccurRTDB_setCurrentValueDouble(const char *pointName,double varValue) ;
+double SCRIPT_CALLABLE ccurRTDB_getRawValuePDouble(const RTDBItem *p) ;
+double SCRIPT_CALLABLE ccurRTDB_getRawValueDouble(const char *pointName) ;
+int  SCRIPT_CALLABLE ccurRTDB_getAlternateValue(const char *pointName,ItemValueDef  *value) ;
+int  SCRIPT_CALLABLE ccurRTDB_getAlternateValueP(const RTDBItem *p,ItemValueDef  *value) ;
+int  ccurRTDB_itemsEqual(ItemValueDef  *value1,ItemValueDef *value2) ;
+
+int  SCRIPT_CALLABLE ccurRTDB_setCVTValue(const char *pointName,ItemValue *value) ;
+int  SCRIPT_CALLABLE ccurRTDB_setCVTValueP(const RTDBItem *p,ItemValue *value) ;
+int  SCRIPT_CALLABLE ccurRTDB_setAlternateValue(char *pointName,ItemValue *value) ;
+int  SCRIPT_CALLABLE ccurRTDB_setAlternateValueP(RTDBItem *p,ItemValue *value) ;
+int  SCRIPT_CALLABLE ccurRTDB_setPointValueP(RTDBItem *p,ItemValue *value) ;
+
+int  SCRIPT_CALLABLE ccurRTDB_setLoggingFlag(const char *pointName) ;
+int  SCRIPT_CALLABLE ccurRTDB_resetLoggingFlag(const char *pointName) ;
+int  SCRIPT_CALLABLE ccurRTDB_setLoggingFlagP(RTDBItem *pItem ) ;
+int  SCRIPT_CALLABLE ccurRTDB_resetLoggingFlagP(RTDBItem *pItem ) ;
+int  SCRIPT_CALLABLE ccurRTDB_setLoggingFlagAll(void) ;
+int  GUI_CALLABLE ccurRTDB_setLoggingEnable(const char *pointName,char enable) ;
+int  SCRIPT_CALLABLE ccurRTDB_setLoggingEnableP(RTDBItem *p,char enable) ;
+
+int  ccurRTDB_mapDB(void) ;
+int  ccurRTDB_getDBMetaInfo(RTDBMetaInfo *p) ;
+int  ccurRTDB_isDBLoaded(void) ;
+double  SCRIPT_CALLABLE ccurRTDB_getFrameRate(void) ;
+void ccurRTDB_setFrameLength(int frameLength) ;
+int  SCRIPT_CALLABLE ccurRTDB_getFrameLength(void) ;
+unsigned int  SCRIPT_CALLABLE ccurRTDB_getFrameCount(void) ;
+void ccurRTDB_setFrameCount(unsigned int frameCount) ;
+void ccurRTDB_incrementFrameCount(void) ;
+void ccurRTDB_setRunning(int running) ;
+void ccurRTDB_setStopped(void) ;
+int  SCRIPT_CALLABLE ccurRTDB_isRunning(void) ;
+unsigned long long SCRIPT_CALLABLE ccurRTDB_testGetStartTimeStamp(void) ;
+void ccurRTDB_setDBLoaded( int b) ;
+void ccurRTDB_setDBName(const char *dbName) ;
+void ccurRTDB_setDBOffset(const char *dbName,int offset) ;
+int  ccurRTDB_getDBOffset(const char *dbName) ;
+int  ccurRTDB_setBoardDB(int boardId,int boardNum,const char *dbName) ;
+const char *ccurRTDB_getBoardDB(int boardId,int boardNum) ;
+int  ccurRTDB_isDBNameLoaded(const char *dbName) ;
+void ccurRTDB_setDBDescription(const char *dbDescription) ;
+void SCRIPT_CALLABLE ccurRTDB_getDBName(char *dbName) ;
+void SCRIPT_CALLABLE ccurRTDB_getMultiDBName(char *dbName,int len) ;
+
+int  SCRIPT_CALLABLE ccurRTDB_getItemMeta(const char *pointName,RTDBItemMeta *meta) ;
+int  ccurRTDB_setItemMeta(const char *pointName,RTDBItemMeta *meta) ;
+int  ccurRTDB_getNumberOfItems(void) ;
+int  ccurRTDB_getMaxNumberOfItems(void) ;
+int  ccurRTDB_getMaxNumberOfStrings(void) ;
+int  SCRIPT_CALLABLE ccurRTDB_getItemList(RTDBItemPairPtr *list,int *n,int pointType,const char *pattern) ;
+int  ccurRTDB_getHardwareConfigList(HardwareConfig  ***list,int *n) ;
+int  SCRIPT_CALLABLE ccurRTDB_getItemAddress(const char *name,RTDBItem **p) ;
+unsigned char *ccurRTDB_getItemRTFlagsAddress(RTDBItem *p) ;
+unsigned char SCRIPT_CALLABLE ccurRTDB_getItemRTFlagsP(RTDBItem *p) ;
+void SCRIPT_CALLABLE *ccurRTDB_getItemCVTValueAddress(const char *name) ;
+void SCRIPT_CALLABLE *ccurRTDB_getItemAltValueAddress(const char *name) ;
+int  SCRIPT_CALLABLE ccurRTDB_regexItemAddress(const char *regex,RTDBItem **p, char *name) ;
+int  SCRIPT_CALLABLE ccurRTDB_globItemAddress(const char *glob,RTDBItem **p, char *name) ;
+const char  SCRIPT_CALLABLE *ccurRTDB_getItemName(const RTDBItem *p) ;
+const char  SCRIPT_CALLABLE *ccurRTDB_getItemEngUnits(const RTDBItem *p) ;
+const char  SCRIPT_CALLABLE *ccurRTDB_getItemDescription(const RTDBItem *p) ;
+char       *ccurRTDB_metaToString(RTDBItem *p) ;
+char       *ccurRTDB_metaPairToString(RTDBItemMetaPair *p) ;
+const char  SCRIPT_CALLABLE *ccurRTDB_getItemNameByHashIndex(int hashIndex) ;
+int  SCRIPT_CALLABLE ccurRTDB_getHardwareConfigAddress(const char *name,HardwareConfig **p) ;
+int  SCRIPT_CALLABLE ccurRTDB_getEUConversionAddress(const char *name,EUConversion **p) ;
+int  ccurRTDB_resolveIOMappings(const char *name,RTDBItem *pItem,char *errString) ;
+int  ccurRTDB_resolveEUConversion(const char *name,RTDBItem *pItem,char *errString) ;
+int  SCRIPT_CALLABLE ccurRTDB_getItemIndex(const char *name) ;
+RTDBItem SCRIPT_CALLABLE *ccurRTDB_itemIndexToAddress(int index) ;
+HardwareConfig SCRIPT_CALLABLE *ccurRTDB_hardwareConfigIndexToAddress(int index) ;
+int  SCRIPT_CALLABLE ccurRTDB_addItem(const char *key,RTDBItemMetaPair  *item) ;
+int  ccurRTDB_addStructDef(RTDBStructDef  *pStructDef) ;
+void ccurRTDB_sortStructDef();
+int  ccurRTDB_getStructDef(const char *name,RTDBStructDef  **pStructDef) ;
+int  ccurRTDB_addSpareItem(int hashIndex,int pointType,int cvtType) ;
+void ccurRTDB_resetSpareItemTable(void) ;
+int  GUI_CALLABLE ccurRTDB_takeSpareItem(const char *newName,int pointType,int cvtType) ;
+int  ccurRTDB_renameItem(const char *oldName,const char *newName) ;
+void ccurRTDB_newItemDLogger(int  newHashIndex,char *oldName ) ;
+int  ccurRTDB_addHardwareConfig(const char *key,HardwareConfig  *cfg) ;
+HardwareRecord *ccurRTDB_getItemHardwareRecord(RTDBItem *pItem) ;
+int  ccurRTDB_addEUConversion(const char *key,EUConversion  *euConv) ;
+int  SCRIPT_CALLABLE ccurRTDB_deleteItem(const char *key) ;
+void ccurRTDB_setCVTNextAvailOffset(void) ;
+int  SCRIPT_CALLABLE ccurRTDB_addUnit(int uClass,const char *name,double A,double B) ;
+UnitResidentTable SCRIPT_CALLABLE *ccurRTDB_getUnitTable(void) ;
+int SCRIPT_CALLABLE ccurRTDB_getUnitIndex(const char *name) ;
+int SCRIPT_CALLABLE ccurRTDB_getUnitDefinition(const RTDBItem *pItem,UnitDefinition *unitDef) ;
+int SCRIPT_CALLABLE ccurRTDB_getUnitDefinitionFromName(const char  *name,UnitDefinition *unitDef) ;
+
+volatile void *ccurRTDB_getCVTTableAddress(void) ;
+volatile void *ccurRTDB_getAlternateTableAddress(void) ;
+volatile void *ccurRTDB_getRawTableAddress(void) ;
+
+void ccurRTDB_cvtAccessLock(int lock) ;
+void ccurRTDB_incrCVTNextAvailOffset(size_t size) ;
+int  ccurRTDB_getCVTNextAvailOffset(void) ;
+int  ccurRTDB_getCVTSize(void) ;
+void ccurRTDB_copyDefaultValue(RTDBItem *p) ;
+void ccurRTDB_rtdbLock(int lock) ;
+void ccurRTDB_setCfgsrvPid(pid_t pid) ;
+void ccurRTDB_cfgsrvNotiFyRTDBChanged() ;
+
+int  SCRIPT_CALLABLE ccurRTDB_setStringValue(const char *pointName,StringVariableValue  *value,int length) ;
+int  SCRIPT_CALLABLE ccurRTDB_getStringValue(const char *pointName,StringVariableValue  *value,int *length) ;
+
+int  SCRIPT_CALLABLE ccurRTDB_getStringValueP(const RTDBItem *p,StringVariableValue  *value,int *length) ;
+int  SCRIPT_CALLABLE ccurRTDB_getStringValueLengthP(const RTDBItem *p) ;
+int  SCRIPT_CALLABLE ccurRTDB_setStringValueP(const RTDBItem *p,StringVariableValue  *value,int length) ;
+
+int  SCRIPT_CALLABLE ccurRTDB_setStringAltValue(const char *pointName,StringVariableValue  *value,int length) ;
+int  SCRIPT_CALLABLE ccurRTDB_setStringAltValueP(const RTDBItem *p,StringVariableValue  *value,int length) ;
+int  SCRIPT_CALLABLE ccurRTDB_getStringAltValue(const char *pointName,StringVariableValue  *value,int *length) ;
+int  SCRIPT_CALLABLE ccurRTDB_getStringAltValueP(const RTDBItem *p,StringVariableValue  *value,int *length) ;
+int  SCRIPT_CALLABLE ccurRTDB_getStringAltValueLengthP(const RTDBItem *p) ;
+
+int  ccurRTDB_setStringDefaultValueP(RTDBItem *p,StringVariableValue  *value,int length) ;
+int  SCRIPT_CALLABLE ccurRTDB_getStringDefaultValueP(const RTDBItem *p,StringVariableValue  *value,int *length) ;
+int  SCRIPT_CALLABLE ccurRTDB_setStringDefaultValue(const char *pointName,StringVariableValue  *value,int length) ;
+unsigned char *ccurRTDB_getDefaultStringAddress(RTDBItemMeta *p,int *len) ;                                                                                                                                                            
+int ccurRTDB_getDefaultValueP(RTDBItemMeta *p,ItemValue *defVal);
+
+
+int  SCRIPT_CALLABLE ccurRTDB_setAlternateFlag(const char *pointName,int enable) ;
+int  SCRIPT_CALLABLE ccurRTDB_setAlternateFlagP(RTDBItem *pItem ,int enable) ;
+int  SCRIPT_CALLABLE ccurRTDB_setOperatorFlag(const char *pointName,int enable) ;
+int  SCRIPT_CALLABLE ccurRTDB_setOperatorFlagP(RTDBItem *pItem  ,int enable) ;
+int  SCRIPT_CALLABLE ccurRTDB_setRTFlagP(RTDBItem *pItem  ,int enable,int fl) ;
+
+int  GUI_CALLABLE ccurRTDB_resetToDefault(void) ;
+int  ccurRTDB_setRTDBInitialConditionValues(void) ;
+int  ccurRTDB_setRTDBInitCondLogging(void) ;
+int  ccurRTDB_setRTDBShutDownValues(void) ;
+int  ccurRTDB_getCVTItemSize(const RTDBItem *p) ;
+int  ccurRTDB_getCVTSizeItem(int cvtType) ;
+
+void SCRIPT_CALLABLE ccurRTDB_getTestSession(char *testId,char *sessionId) ;
+void ccurRTDB_setTestSession(const char *testId,const char *sessionId) ;
+void ccurRTDB_setSessionUserParm(const char *userParm) ;
+void ccurRTDB_getSessionUserParm(char *userParm) ;
+
+void ccurRTDB_setTestInitCondition(const char *initCondName) ;
+void ccurRTDB_getTestInitCondition(char *initCondName) ;
+
+void ccurRTDB_setDLoggerRunning(int running) ;
+void ccurRTDB_setCLoggerRunning(int running) ;
+void ccurRTDB_setDataLoggerEnabled(int enabled) ;
+int  ccurRTDB_getDataLoggerEnabled(void) ;
+void GUI_CALLABLE ccurRTDB_resumeDLogger(void) ;
+void GUI_CALLABLE ccurRTDB_pauseDLogger(void) ;
+void GUI_CALLABLE ccurRTDB_stopCircularLogger(void) ;
+int  SCRIPT_CALLABLE ccurRTDB_isDLoggerRunning(void) ;
+int  SCRIPT_CALLABLE ccurRTDB_isCLoggerRunning(void) ;
+DLoggerCommands  *ccurRTDB_getDLoggerCommands(void) ;
+void ccurRTDB_resetDLoggerCommands(void) ;
+void ccurRTDB_setCircularLoggerLockBehavior(int behavior) ;
+int  ccurRTDB_getCircularLoggerLockBehavior(void) ;
+void ccurRTDB_setDataLoggerDirectIO(int directIO) ;
+int  ccurRTDB_getDataLoggerDirectIO(void) ;
+void SCRIPT_CALLABLE ccurRTDB_setLoggedUser(const char *userName) ;
+const char SCRIPT_CALLABLE *ccurRTDB_getLoggedUser(void) ;
+void SCRIPT_CALLABLE ccurRTDB_setSelectedProject(const char *project) ;
+const char SCRIPT_CALLABLE *ccurRTDB_getSelectedProject(void) ;
+
+void ccurRTDB_scriptInitStdIO(void) ;
+ScriptStdIO *ccurRTDB_getScriptStdIOAddress(void) ;
+
+
+int GUI_CALLABLE ccurRTDB_writeStdOut(char *str) ;
+
+int SCRIPT_CALLABLE ccurRTDB_asyncGetLastRXIntervalP(const RTDBItem *pItem ) ;
+int SCRIPT_CALLABLE ccurRTDB_asyncGetLastRXInterval(const char *pointName ) ;
+int SCRIPT_CALLABLE ccurRTDB_asyncGetTimeSinceLastRXP(const RTDBItem *pItem) ;
+int SCRIPT_CALLABLE ccurRTDB_asyncGetTimeSinceLastRX(const char *pointName ) ;
+unsigned long long SCRIPT_CALLABLE curRTDB_asyncGetRXTimeStampP(const RTDBItem *p ) ;
+
+int SCRIPT_CALLABLE ccurAsyncIO_asyncGetLastRXIntervalP(const RTDBItem *pItem ) ;
+int SCRIPT_CALLABLE ccurAsyncIO_asyncGetLastRXInterval(const char *pointName ) ;
+int SCRIPT_CALLABLE ccurAsyncIO_asyncGetTimeSinceLastRXP(const RTDBItem *pItem) ;
+int SCRIPT_CALLABLE ccurAsyncIO_asyncGetTimeSinceLastRX(const char *pointName ) ;
+unsigned long long SCRIPT_CALLABLE ccurAsyncIO_asyncGetRXTimeStampP(const RTDBItem *p ) ;
+void GUI_CALLABLE ccurRTDB_formImport(const char *formName,char inputsOnly) ;
+int  GUI_CALLABLE ccurRTDB_formCapture(const char *formName,const char *nameTemplate,int captureType,double period,int runCount) ;
+void  GUI_CALLABLE ccurRTDB_snapshot(void) ;
+int   ccurRTDB_takeSnapshot(void) ;
+char *ccurCapture_fileName(int type,const char *formName,const char *testId,const char *sessionId,const char *nameTemplate,int captureType) ;
+
+double SCRIPT_CALLABLE ccurRTDB_euPhysicalToRaw(RTDBItemMeta *meta,double euValue) ;
+double SCRIPT_CALLABLE ccurRTDB_euRawToPhysical(RTDBItemMeta *meta,double rawValue) ;
+EUConversion SCRIPT_CALLABLE *ccurRTDB_euConversionIndexToAddress(int index) ;
+//void ccurPriv_initSharedMutex(pthread_mutex_t *mutex) ;
+int  *ccurRTDB_getBoardMutex(void) ;
+
+void  ccurRTDB_setSchedulingStatsEnabled(int enabled) ;
+int  ccurRTDB_schedulingStatsEnabled(void) ;
+
+int  ccurRTDB_formGetElem(FormImportElem *e) ;
+int  ccurRTDB_formGetCaptureElem(FormCaptureElem *e) ;
+void ccurRTDB_getInternalPtrs(RTDBItem **p1,RTDBItemKey **p3) ;
+
+void  SCRIPT_CALLABLE ccurRTDB_setSnapshotConfig(const char *snapshotNameTemplate,int snapshotFormat,int snapshotMask,const char *snapshotNameMask) ;
+void  SCRIPT_CALLABLE ccurRTDB_getSnapshotConfig(char *snapshotNameTemplate,int *snapshotFormat,int *snapshotMask,char *snapshotNameMask) ;
+int   ccurRTDB_mapModelCVT(const char *pgmName,void *cvtTable,int cvtSize) ;
+void  ccurRTDB_modelSetDebug(int deb) ;
+int   ccurRTDB_modelDataExchangeInit(const char *modelName) ;
+void  ccurRTDB_modelCopyInputs(void) ;
+void ccurRTDB_lock (int *lock);
+void ccurRTDB_lockWait (int *lock,float sec);
+void ccurRTDB_unlock (int *lock);
+void ccurRTDB_set64BitHost(void) ;
+void ccurRTDB_set32BitAPI(void) ;
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
