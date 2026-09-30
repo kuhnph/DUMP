@@ -1,1 +1,9 @@
+One thing we need to implement right now are verifiers – which are basically tests that we run on telemetry outputs to make sure everything is behaving as expected. We are going to need to define and implement tests like these for autopilot and ACS, as well as things that feed into them like the IMU and filter algorithm.
 
+ 
+
+A while back, I built some verifiers to catch problems in IMU data, but the format of the IMU message changed when SW updated the drivers for the IMU, and it broke the verifiers. This driver update also broke SWIL, and I implemented a fix for that – I included a screenshot of that fix below. Basically, some parts of the status message that used to be 8 bits got split up into separate messages that are 1, 2, or 4 bits. I’ve documented this here:  ​xlsx icon Rename_HG9900_Raw_Fields.xlsx
+
+ 
+
+In the verifiers, we make processed parameters expecting inputs that are in the format of the old message (see https://cee-gitlab.sandia.gov/minatr/tm_analysis/ecube_tester_tm_analysis/-/blob/main/+Configs/+ECUBE/+STI/getProcessedParameterFactory.m?ref_type=heads#L56). I need you to either (1) define an intermediate step that makes the new message look like the old one or (2) update “MinAtrTmAnalysis.HG9900.HG9900RawMuxParameter” so that it can handle inputs from the new message.
