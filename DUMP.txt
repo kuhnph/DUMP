@@ -1,1 +1,657 @@
+%$Insert-OUO-Block
+classdef HG9900RawMuxParameter ...
+        < MinAtrTmAnalysis.Framework.Processed.ProcessedParameter
+    % Specify a ProcessedParameter to parse the HG9900 raw multiplexed
+    % telemetry data.
+    %
+    % The ProcessedParameter allows direct access to the parsed data for a
+    % specific tag in the accelerometer and gyro telemetry data. A
+    % SignalOperator is not needed for this ProcessedParameter. Subsequent
+    % processing of the data can be performed by adding SignalOperators as
+    % needed.
+    %
+    % The tag name is specified by the TagName input argument. Valid tag names
+    % are defined in the decodeHg9900RawMux function.
+    %
+    % The gyro number is specified via the GyroNumber input argument. This value
+    % is ignored when the DeviceMode is 'accel'.
+    %
+    % The HG9900 transmits multiplexed telemetry data in the raw data frames.
+    % The raw data tags and words for the accelerometer and the gyros are
+    % parsed to extract the individual channels.
+    %
+    % The RecordingName, VirtualChannelName, and PacketName must be specified to
+    % define the location of the raw data frame packet.
+    %
+    % The telemetry parameters that contain the message number, timestamp, tags,
+    % and words must be specified if the values are different than the default
+    % values. These can be set through the following arguments:
+    %
+    % ParamMsgNumber
+    % ParamTimestamp
+    % ParamAccelTag
+    % ParamAccelWord
+    % ParamGyroTagTemplate
+    % ParamGyroWordTemplate
+    % ParamGyroStatusTemplate
+    % ParamGyroThetaLsbTemplate
+    % ParamGyroThetaMsbTemplate
+    % ParamGyroChecksumTemplate
+    %
+    % The decoded data is cached in the resource manager in the resource
+    % specified by the ParsedResourceName argument. Caching can be disabled by
+    % setting an empty value.
 
+    %% Constructors
+    methods
+
+        function this = HG9900RawMuxParameter(options)
+            % Initializes a new instance of the HG9900RawMuxParameter class.
+
+            arguments
+                % The data source that should be used to load parameter data.
+                %
+                % The valid data sources are:
+                %
+                % ResourceManager:
+                % The specified resource manager will be used
+                % exclusively to locate and load parameters.
+                %
+                % Factory:
+                % The ProcessedParameterFactory input to the load function will
+                % be used to locate parameters. This option is useful when
+                % pre-processed parameters are needed for the signal operators.
+                %
+                % If the ParameterSpec for the data source in the ParameterList
+                % and the ParameterSpec that defines this object are the same,
+                % then the factory is ignored for that case because and infinite
+                % loop would be created.
+                options.DataSource char ...
+                    {matlab.system.mustBeMember( ...
+                    options.DataSource,...
+                    {'ResourceManager', ...
+                    'Factory'})} = 'Factory';
+
+                % The device that should be processed by the verifier.
+                % The choices are 'accel', 'gyro', or 'all'
+                options.DeviceMode char ...
+                    {matlab.system.mustBeMember(...
+                    options.DeviceMode,...
+                    {'accel','gyro'})} = 'accel';
+
+                % The number of gyro channels available within the IMU.
+                options.GyroCount(1,1) double = 3;
+
+                % The number of the gyro to read for the parameter.
+                options.GyroNumber(1,1) double = 1;
+
+                % Name of the telemetry recording used to access the processed
+                % parameter.
+                options.RecordingName char {mustBeTextScalar} = '';
+
+                % Name of the CCSDS Virtual Channel used to access the processed
+                % parameter.
+                options.VirtualChannelName char {mustBeTextScalar} = '';
+
+                % Name of the CCSDS Space Packet used to access the processed
+                % parameter.
+                options.PacketName char {mustBeTextScalar} = '';
+
+                % Name of the telemetry parameter used to access the processed
+                % parameter.
+                options.ParameterName char {mustBeTextScalar} = '';
+
+                % A list of ParameterSpec objects that define the underlying
+                % parameter to use for calculations.
+                %
+                % This value is used as the default pointer to a parameter for
+                % the applied SignalOperators. For SISO operations, typically
+                % those are defined a chain of operations on a single parameter.
+                % Similarly for MISO operations, there is a set of input
+                % parameters that start a processing chain.
+                options.ParameterList(:, 1) ParameterSpec ...
+                    = ParameterSpec.empty;
+
+                % The parameter name of the message number.
+                options.ParamMsgNumber char ...
+                    {mustBeTextScalar} = ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Msg_Number'];
+
+                % The parameter name of the time stamp.
+                options.ParamTimestamp char ...
+                    {mustBeTextScalar} = ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Time_Of_Validity'];
+
+                % The parameter name of the accelerometer tag.
+                options.ParamAccelTag char ...
+                    {mustBeTextScalar} = ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Raptor_Counts--accel_mux_tag'];
+
+                % The parameter name of the accelerometer word.
+                options.ParamAccelWord char ...
+                    {mustBeTextScalar} = ...
+                    ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Raptor_Counts--accel_mux_word'];
+
+                % The sprintf template for the parameter name of the gyrometer
+                % tag.
+                options.ParamGyroTagTemplate char ...
+                    {mustBeTextScalar} = ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Raptor_Counts--gyro%d--mux_tag'];
+
+                % The sprintf template for the parameter name of the gyrometer
+                % word.
+                options.ParamGyroWordTemplate ...
+                    char {mustBeTextScalar} = ...
+                    ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Raptor_Counts--gyro%d--mux_word'];
+
+                % The sprintf template for the parameter name of the gyrometer
+                % status.
+                options.ParamGyroStatusTemplate ...
+                    char {mustBeTextScalar} = ...
+                    ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Raptor_Counts--gyro%d--status'];
+
+                % The sprintf template for the parameter name of the gyrometer
+                % theta lsb.
+                options.ParamGyroThetaLsbTemplate ...
+                    char {mustBeTextScalar} = ...
+                    ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Raptor_Counts--gyro%d--lsb'];
+
+                % The sprintf template for the parameter name of the gyrometer
+                % theta msb.
+                options.ParamGyroThetaMsbTemplate ...
+                    char {mustBeTextScalar} = ...
+                    ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Raptor_Counts--gyro%d--msb'];
+
+                % The sprintf template for the parameter name of the gyrometer
+                % theta msb.
+                options.ParamGyroChecksumTemplate ...
+                    char {mustBeTextScalar} = ...
+                    ['/NGC/IMU/HG9900/' ...
+                    'Raw_Data_Frame--Raptor_Counts--gyro%d--checksum'];
+
+                % The name of the parsed data resource.
+                %   The verifier will store parsed data to the resource manager
+                %   for potential future use by other verifiers.
+                options.ParsedResourceName char ...
+                    {mustBeTextScalar} = 'HG9900_RAWMUX_DECODE';
+
+                % The list of signal operators that will be used to generate the
+                % output.
+                options.SignalOperators(:, 1) SignalOperator ...
+                    = SignalOperator.empty;
+
+                % Name of the tag to load from the decoded data.
+                options.TagName char {mustBeTextScalar} = '';
+            end
+
+            import MinAtrTmAnalysis.Framework.Data.ParameterSpec
+            import MinAtrTmAnalysis.Framework.Processed.Operator.SignalOperator
+
+            if isempty(options.TagName)
+                error('The TagName is empty.');
+            end
+
+            this@MinAtrTmAnalysis.Framework.Processed.ProcessedParameter(...
+                'DataSource', options.DataSource, ...
+                'RecordingName', options.RecordingName, ...
+                'VirtualChannelName', options.VirtualChannelName, ...
+                'PacketName', options.PacketName, ...
+                'ParameterName', options.ParameterName, ...
+                'ParameterList', options.ParameterList, ...
+                'DataSource', options.DataSource, ...
+                'SignalOperators', options.SignalOperators...
+                );
+
+            this.DeviceMode                 = options.DeviceMode;
+            this.GyroCount                  = options.GyroCount;
+            this.GyroNumber                 = options.GyroNumber;
+            this.ParamMsgNumber             = options.ParamMsgNumber;
+            this.ParamTimestamp             = options.ParamTimestamp;
+            this.ParamAccelTag              = options.ParamAccelTag;
+            this.ParamAccelWord             = options.ParamAccelWord;
+            this.ParamGyroTagTemplate       = options.ParamGyroTagTemplate;
+            this.ParamGyroWordTemplate      = options.ParamGyroWordTemplate;
+            this.ParamGyroStatusTemplate    = options.ParamGyroStatusTemplate;
+            this.ParamGyroThetaLsbTemplate  = options.ParamGyroThetaLsbTemplate;
+            this.ParamGyroThetaMsbTemplate  = options.ParamGyroThetaMsbTemplate;
+            this.ParamGyroChecksumTemplate  = options.ParamGyroChecksumTemplate;
+            this.ParsedResourceName         = options.ParsedResourceName;
+            this.TagName                    = options.TagName;
+        end
+    end
+
+
+    %% Public Properties
+    properties
+    end % Public Properties
+
+    %% Read-only Properites
+    properties (SetAccess = private)
+        % Gets the device that should be processed by the verifier.
+        %   The choices are 'accel', 'gyro', or 'all'
+        DeviceMode char ...
+            {matlab.system.mustBeMember(...
+            DeviceMode,...
+            {'accel','gyro'})} = 'accel';
+
+        % Gets the number of gyro channels available within the IMU.
+        GyroCount(1,1) double = 3;
+
+        % Gets the number of the gyro to read for the parameter.
+        GyroNumber(1,1) double = 1;
+
+        % Gets the parameter name of the message number.
+        ParamMsgNumber char ...
+            {mustBeTextScalar} = ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Msg_Number'];
+
+        % Gets the parameter name of the time stamp.
+        ParamTimestamp char ...
+            {mustBeTextScalar} = ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Time_Of_Validity'];
+
+        % Gets the parameter name of the accelerometer tag.
+        ParamAccelTag char ...
+            {mustBeTextScalar} = ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Raptor_Counts--accel_mux_tag'];
+
+        % Gets the parameter name of the accelerometer word.
+        ParamAccelWord char ...
+            {mustBeTextScalar} = ...
+            ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Raptor_Counts--accel_mux_word'];
+
+        % Gets the sprintf template for the parameter name of the gyrometer
+        % tag.
+        ParamGyroTagTemplate char ...
+            {mustBeTextScalar} = ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Raptor_Counts--gyro%d--mux_tag'];
+
+        % Gets the sprintf template for the parameter name of the gyrometer
+        % word.
+        ParamGyroWordTemplate ...
+            char {mustBeTextScalar} = ...
+            ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Raptor_Counts--gyro%d--mux_word'];
+
+        % Gets the sprintf template for the parameter name of the gyrometer
+        % status.
+        ParamGyroStatusTemplate ...
+            char {mustBeTextScalar} = ...
+            ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Raptor_Counts--gyro%d--status'];
+
+        % Gets the sprintf template for the parameter name of the gyrometer
+        % theta lsb.
+        ParamGyroThetaLsbTemplate ...
+            char {mustBeTextScalar} = ...
+            ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Raptor_Counts--gyro%d--lsb'];
+
+        % Gets the sprintf template for the parameter name of the gyrometer
+        % theta msb.
+        ParamGyroThetaMsbTemplate ...
+            char {mustBeTextScalar} = ...
+            ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Raptor_Counts--gyro%d--msb'];
+
+        % Gets the sprintf template for the parameter name of the gyrometer
+        % theta msb.
+        ParamGyroChecksumTemplate ...
+            char {mustBeTextScalar} = ...
+            ['/NGC/IMU/HG9900/' ...
+            'Raw_Data_Frame--Raptor_Counts--gyro%d--checksum'];
+
+        % Gets the name of the parsed data resource.
+        %   The verifier will store parsed data to the resource manager
+        %   for potential future use by other verifiers.
+        ParsedResourceName char ...
+            {mustBeTextScalar} = 'HG9900_RAWMUX_DECODE';
+
+        % Gets the name of the tag to load from the decoded data.
+        TagName char {mustBeTextScalar} = '';
+    end
+
+    %% Public Methods
+    methods
+
+        function load(this, run, factory, options)
+            % function load(this, run, factory)
+            %
+            % Loads the data and processes the signal operators.
+            %
+            % ARGUMENTS
+            % this (object, implicit):
+            % instance of this class
+            %
+            % run (TmAnalysis.Framework.Data.ResourceManager):
+            % The main resource manager where recordings and other resources
+            % are stored.
+            %
+            % factory (ProcessedParameterFactory)
+            % The ProcessedParameterFactory to use for loading parameters
+            % when the source data is requested to already be processed.
+
+            arguments
+                % Instance of the class object.
+                this
+
+                % The main resource manager where recordings and other resources
+                % are stored.
+                run(1,1) TmAnalysis.Framework.Data.ResourceManager
+
+                % The ProcessedParameterFactory to use for loading parameters
+                % when the source data is requested to already be processed.
+                factory  = [];
+
+                % A value indicating whether non-existant parameters should be
+                % allowed to proceed without an error.
+                %
+                % If false, then an error will be thrown if any parameter in the
+                % ParameterList cannot be found.
+                %
+                % If true, then processing will continue without throwing an
+                % error for any parameter that cannot be found. Subsequent
+                % processing could fail and throw an error.
+                options.IsMissingParamAllowed(1,1) logical ...
+                    {mustBeNumericOrLogical} = this.IsMissingParamAllowed;
+            end
+
+            import MinAtrTmAnalysis.Framework.Processed.ParamData
+            import MinAtrTmAnalysis.Framework.Processed.ProcessedParameterFactory
+
+            operators = this.SignalOperators;
+            nOperators = length(operators);
+
+            %% Check if cached data is available
+            % The data parsing can take some time and may be used in other
+            % locations, such as ProcessedParameters. It is desirable to cache
+            % the decoded data for potential reuse.
+            mux = run.getResource(this.ParsedResourceName);
+
+            hasParsed = ~isempty(mux) ...
+                && isstruct(mux) ...
+                && isfield(mux, 'accel') ...
+                && isfield(mux, 'gyro');
+
+            if ~hasParsed
+                % Load and decode the data
+                mux = this.decodeData(run, factory);
+
+                if ~isempty(this.ParsedResourceName)
+                    % Store the decoded data to the resource manager
+                    if run.hasResource(this.ParsedResourceName)
+                        run.replaceResource(this.ParsedResourceName, mux);
+                    else
+                        run.addResource(this.ParsedResourceName, mux);
+                    end
+                end
+            end
+
+            %% Get the data for the requested tag
+            switch lower(this.DeviceMode)
+                case 'accel'
+                    s = mux.accel;
+                case 'gyro'
+                    s = mux.gyro(this.GyroNumber);
+                otherwise
+                    error( ...
+                        'The DeviceMode "%s" is not recognized.', ...
+                        this.DeviceMode);
+            end
+
+            hasTag = isfield(s, this.TagName);
+
+            if ~hasTag
+                error('The TagName "%s" was not found.', this.TagName);
+            end
+
+            p = s.(this.TagName);
+
+            %% Create ParamData for operators
+            paramName = this.ParameterName;
+            rawData = p.value;
+            euData = p.value;
+            euLabel = p.unit;
+            absRecTime = p.AbsoluteReceivedTime;
+            relRecTime = p.AbsoluteReceivedTime;
+            absStpTime = p.time;
+            relStpTime = p.time;
+
+            % Create the parameter data
+            paramsData = ParamData( ...
+                'Name', paramName, ...
+                'RawData', rawData, ...
+                'EuData', euData, ...
+                'AbsoluteReceivedTime', absRecTime, ...
+                'RelativeReceivedTime', relRecTime, ...
+                'AbsoluteStampedTime', absStpTime, ...
+                'RelativeStampedTime', relStpTime, ...
+                'EngineeringUnitsLabel', euLabel ...
+                );
+
+
+            %% Check if any operators are defined
+            % At this point there should be at least 1 parameter loaded.
+            % If there were no operators defined, then the assumption is made
+            % that just the data from the base parameter was expected.
+
+            if isempty(operators)
+
+                paramData = paramsData(1);
+
+                this.setRawData(paramData.getRawData);
+                this.setEuData(paramData.getEuData);
+
+                this.setEngineeringUnitsLabel(...
+                    paramData.getEngineeringUnitsLabel);
+
+                this.setXUnitName(paramData.XUnitName);
+
+                this.setAbsoluteReceivedTime(...
+                    paramData.getAbsoluteReceivedTime);
+
+                this.setRelativeReceivedTime(...
+                    paramData.getRelativeReceivedTime);
+
+                this.setAbsoluteStampedTime(...
+                    paramData.getAbsoluteStampedTime);
+
+                this.setRelativeStampedTime(...
+                    paramData.getRelativeStampedTime);
+
+                this.IsLoaded = true;
+                return;
+            end
+
+            %% Execute all operators
+            % The loaded ParamData is passed to the operate method.
+            % The operator could potentially be disabled.
+
+            for idxOp = 1:nOperators
+                op = operators(idxOp);
+
+                if op.IsEnabled
+                    result = op.operate(paramsData, run);
+                else
+                    result = paramsData;
+                end
+
+                % Reset the input to the output from the previous operator
+                paramsData = result;
+            end
+
+            %% Store the Result
+
+            paramData = result(1);
+
+            this.setRawData(paramData.getRawData);
+            this.setEuData(paramData.getEuData);
+
+            this.setEngineeringUnitsLabel( ...
+                paramData.getEngineeringUnitsLabel);
+
+            this.setXUnitName(paramData.XUnitName);
+
+            this.setAbsoluteReceivedTime( ...
+                paramData.getAbsoluteReceivedTime);
+
+            this.setRelativeReceivedTime( ...
+                paramData.getRelativeReceivedTime);
+
+            this.setAbsoluteStampedTime( ...
+                paramData.getAbsoluteStampedTime);
+
+            this.setRelativeStampedTime( ...
+                paramData.getRelativeStampedTime);
+
+            this.IsLoaded = true;
+        end
+
+    end % Public Methods
+
+    %% Private Methods
+    methods (Access = private)
+        function [mux] = decodeData(this, run, factory)
+            % function [result] = decodeData(this, run)
+
+            arguments
+                this
+                run(1,1) TmAnalysis.Framework.Data.ResourceManager
+
+                % The ProcessedParameterFactory to use for loading parameters
+                % when the source data is requested to already be processed.
+                factory  = [];
+            end
+
+            import MinAtrTmAnalysis.HG9900.decodeHg9900RawMux
+
+            %% Generate Parameter List
+            % Read all parameters
+
+            [paramList, structNames] = getHg9900ParameterList(...
+                'RecordingName', this.RecordingName, ...
+                'VirtualChannelName', this.VirtualChannelName, ...
+                'PacketName', this.PacketName, ...
+                'ParamPrefix', '', ...
+                'GyroCount', this.GyroCount, ...
+                'ParamMsgNumber', this.ParamMsgNumber, ...
+                'ParamTimestamp', this.ParamTimestamp, ...
+                'ParamAccelTag', this.ParamAccelTag, ...
+                'ParamAccelWord', this.ParamAccelWord, ...
+                'ParamGyroTagTemplate', this.ParamGyroTagTemplate, ...
+                'ParamGyroWordTemplate', this.ParamGyroWordTemplate, ...
+                'ParamGyroStatusTemplate', this.ParamGyroStatusTemplate, ...
+                'ParamGyroThetaLsbTemplate', this.ParamGyroThetaLsbTemplate, ...
+                'ParamGyroThetaMsbTemplate', this.ParamGyroThetaMsbTemplate, ...
+                'ParamGyroChecksumTemplate', this.ParamGyroChecksumTemplate ...
+                );
+
+            %% Validate the factory input
+            useFactory = strcmpi(this.DataSource, 'factory');
+
+            if useFactory
+                if isempty(factory)
+                    error('The factory input is empty.');
+                end
+
+                classExpected = ['MinAtrTmAnalysis.Framework.Processed.' ...
+                    'ProcessedParameterFactory'];
+
+                if ~isa(factory, classExpected)
+                    error(...
+                        ['The factory input is a ' ...
+                        '"%s" class and a ' ...
+                        '"%s" class was expected.'], ...
+                        class(factory), classExpected);
+                end
+            end
+
+            %% Get the data for every parameter in the ParameterList
+
+            nParams = length(paramList);
+            paramCell = cell(nParams, 1);
+            %paramDataCell = cell(nParams, 1);
+
+            for idxParam = 1:nParams
+                % Get the parameter from the recording
+                recName = paramList(idxParam).RecordingName;
+                vcName = paramList(idxParam).VirtualChannelName;
+                pktName = paramList(idxParam).PacketName;
+                paramName = paramList(idxParam).ParameterName;
+
+                % Check to see if the specified parameter is the same as the
+                % ParamSpec for this object.
+                isSelf = strcmp(recName, this.RecordingName) ...
+                    && strcmp(vcName, this.VirtualChannelName) ...
+                    && strcmp(pktName, this.PacketName) ...
+                    && strcmp(paramName, this.ParameterName);
+
+                if useFactory && ~isSelf
+                    % The factory was specified for the data source and the
+                    % parameter requested is not itself. Therefore, we can just
+                    % ask the factory for the parameter. The factory will either
+                    % return a processed parameter if it exists or it will get
+                    % the parameter from a recording otherwise.
+
+                    p = factory.getParameter(paramList(idxParam));
+                else
+                    % The factory should not be used, so data is loaded directly
+                    % from a recording resource.
+
+                    rec = run.getResource(recName);
+
+                    if isempty(rec)
+                        error( ...
+                            'The recording "%s" was not located.', ...
+                            recName);
+                    end
+
+                    hasPacket = false;
+
+                    try
+                        % All packets do not necessarily have the
+                        % isPacketDefined method
+
+                        pkt = rec.getPacket(vcName, pktName);
+                        hasPacket = true;
+                    catch
+                        % There was a problem attempting to get the packet
+                    end
+
+                    if ~hasPacket
+                        % The packet was not located
+                        error( ...
+                            ['The virtual channel and packet VC:"%s", ' ...
+                            'Packet:"%s" was not located.'], ...
+                            vcName, ...
+                            pktName);
+                    end
+
+                    p = pkt.tryGetParameter(paramName);
+                end
+
+                if isempty(p)
+                    error( ...
+                        'The parameter "%s" was not located.', ...
+                        paramName);
+                end
+
+                paramCell{idxParam} = p;
+            end
+
+            %% Generate Struct for Parser
+
+            s = makeHg9900RawStruct(paramCell, structNames);
+
+            %% Parse
+            mux = decodeHg9900RawMux(s);
+        end
+    end
+
+end
