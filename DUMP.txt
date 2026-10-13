@@ -1,14 +1,40 @@
-oldStatus.gyro_status = ...
-    muxOld.gyro(1).gyro_status.value;
+K>> mux_old.gyro(1).status_raw
 
-oldStatus.readout = ...
-    muxOld.gyro(1).bit_readout_flg.value;
+ans = 
 
-oldStatus.current = ...
-    muxOld.gyro(1).bit_curr_ctrl_flg.value;
+  struct with fields:
 
-oldStatus.dither = ...
-    muxOld.gyro(1).bit_dither_flg.value;
+    AbsoluteReceivedTime: [6x1 double]
+                    time: [6x1 double]
+                   value: [6x1 uint8]
+                      id: NaN
+                    unit: 'counts'
+                 comment: 'Gyro raw status byte.'
 
-oldStatus.plc = ...
-    muxOld.gyro(1).bit_plc_flg.value;
+K>> fieldnames(mux_old.gyro(1).status_raw)
+
+ans =
+
+  6x1 cell array
+
+    {'AbsoluteReceivedTime'}
+    {'time'                }
+    {'value'               }
+    {'id'                  }
+    {'unit'                }
+    {'comment'             }
+
+K>> mux_old.gyro(1).status_raw
+
+ans = 
+
+  struct with fields:
+
+    AbsoluteReceivedTime: [6x1 double]
+                    time: [6x1 double]
+                   value: [6x1 uint8]
+                      id: NaN
+                    unit: 'counts'
+                 comment: 'Gyro raw status byte.'
+
+K>> 
