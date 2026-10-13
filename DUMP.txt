@@ -1,1 +1,61 @@
-
+GB\...NGC...IMU...HG9900...Space_Packet--Raw_Data\			
+Old Message	Bits	New Message	Bits
+/NGC/Common/Space_Packet--Version_Number		/NGC/Common/Space_Packet--Version_Number	
+/NGC/Common/Space_Packet--Packet_Type		/NGC/Common/Space_Packet--Packet_Type	
+/NGC/Common/Space_Packet--Secondary_Header_Flag		/NGC/Common/Space_Packet--Secondary_Header_Flag	
+/NGC/Common/Space_Packet--AppID		/NGC/Common/Space_Packet--AppID	
+/NGC/Common/Space_Packet--Sequence_Flags		/NGC/Common/Space_Packet--Sequence_Flags	
+/NGC/Common/Space_Packet--Packet_Sequence_Count		/NGC/Common/Space_Packet--Packet_Sequence_Count	
+/NGC/Common/Space_Packet--Packet_Data_Length		/NGC/Common/Space_Packet--Packet_Data_Length	
+/NGC/IMU/HG9900/Raw_Data_Frame--MessageSendTime		/NGC/IMU/HG9900/MessageSendTime_Full	
+		/NGC/IMU/HG9900/MessageSendTime-Coarse	
+		/NGC/IMU/HG9900/MessageSendTime-Main	
+		/NGC/IMU/HG9900/MessageSendTime-Fine	
+/NGC/IMU/HG9900/Raw_Data_Frame--MeasurementTime		/NGC/IMU/HG9900/Raw_Data--Time_Of_Validity	
+/NGC/IMU/HG9900/Raw_Data_Frame--Msg_Number	24	/NGC/IMU/HG9900/Raw_Data--Message_Number	16
+/NGC/IMU/HG9900/Raw_Data_Frame--Status	8	/NGC/IMU/HG9900/Raw_Data--Reserved	8
+		/NGC/IMU/HG9900/Raw_Data--Flags	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_ie_status	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--IE_Status--Type	4
+		/NGC/IMU/HG9900/Raw_Data--Counts--Accel--IE_Status--Mode	4
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_x_pos	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Pos_R	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_x_neg	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Neg_R	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_y_pos	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Pos_S	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_y_neg	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Neg_S	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_z_pos	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Pos_T	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_z_neg	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Neg_T	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_mux_tag	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Mux_Tag	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_mux_word	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Mux_Data	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_checksum	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Checksum	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--status	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Status	2
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Readout_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Current_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Dither_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--PLC_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Status_ID_Counter	2
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--mux_tag	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Mux_Tag	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--lsb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Theta_LSB	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--msb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Theta_MSB	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--mux_word	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Mux_Byte	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--checksum	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Checksum	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--status	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Status	2
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Readout_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Current_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Dither_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--PLC_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Status_ID_Counter	2
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--mux_tag	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Mux_Tag	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--lsb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Theta_LSB	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--msb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Theta_MSB	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--mux_word	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Mux_Byte	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--checksum	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Checksum	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--status	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Status	2
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Readout_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Current_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Dither_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--PLC_BIT_Status	1
+		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Status_ID_Counter	2
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--mux_tag	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Mux_Tag	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--lsb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Theta_LSB	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--msb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Theta_MSB	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--mux_word	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Mux_Byte	8
+/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--checksum	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Checksum	8
