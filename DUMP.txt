@@ -1,61 +1,204 @@
-GB\...NGC...IMU...HG9900...Space_Packet--Raw_Data\			
-Old Message	Bits	New Message	Bits
-/NGC/Common/Space_Packet--Version_Number		/NGC/Common/Space_Packet--Version_Number	
-/NGC/Common/Space_Packet--Packet_Type		/NGC/Common/Space_Packet--Packet_Type	
-/NGC/Common/Space_Packet--Secondary_Header_Flag		/NGC/Common/Space_Packet--Secondary_Header_Flag	
-/NGC/Common/Space_Packet--AppID		/NGC/Common/Space_Packet--AppID	
-/NGC/Common/Space_Packet--Sequence_Flags		/NGC/Common/Space_Packet--Sequence_Flags	
-/NGC/Common/Space_Packet--Packet_Sequence_Count		/NGC/Common/Space_Packet--Packet_Sequence_Count	
-/NGC/Common/Space_Packet--Packet_Data_Length		/NGC/Common/Space_Packet--Packet_Data_Length	
-/NGC/IMU/HG9900/Raw_Data_Frame--MessageSendTime		/NGC/IMU/HG9900/MessageSendTime_Full	
-		/NGC/IMU/HG9900/MessageSendTime-Coarse	
-		/NGC/IMU/HG9900/MessageSendTime-Main	
-		/NGC/IMU/HG9900/MessageSendTime-Fine	
-/NGC/IMU/HG9900/Raw_Data_Frame--MeasurementTime		/NGC/IMU/HG9900/Raw_Data--Time_Of_Validity	
-/NGC/IMU/HG9900/Raw_Data_Frame--Msg_Number	24	/NGC/IMU/HG9900/Raw_Data--Message_Number	16
-/NGC/IMU/HG9900/Raw_Data_Frame--Status	8	/NGC/IMU/HG9900/Raw_Data--Reserved	8
-		/NGC/IMU/HG9900/Raw_Data--Flags	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_ie_status	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--IE_Status--Type	4
-		/NGC/IMU/HG9900/Raw_Data--Counts--Accel--IE_Status--Mode	4
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_x_pos	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Pos_R	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_x_neg	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Neg_R	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_y_pos	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Pos_S	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_y_neg	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Neg_S	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_z_pos	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Pos_T	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_z_neg	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Neg_T	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_mux_tag	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Mux_Tag	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_mux_word	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Mux_Data	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--accel_checksum	8	/NGC/IMU/HG9900/Raw_Data--Counts--Accel--Checksum	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--status	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Status	2
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Readout_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Current_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Dither_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--PLC_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Status--Status_ID_Counter	2
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--mux_tag	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Mux_Tag	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--lsb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Theta_LSB	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--msb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Theta_MSB	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--mux_word	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Mux_Byte	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro1--checksum	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_U--Checksum	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--status	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Status	2
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Readout_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Current_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Dither_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--PLC_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Status--Status_ID_Counter	2
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--mux_tag	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Mux_Tag	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--lsb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Theta_LSB	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--msb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Theta_MSB	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--mux_word	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Mux_Byte	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro2--checksum	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_V--Checksum	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--status	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Status	2
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Readout_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Current_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Dither_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--PLC_BIT_Status	1
-		/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Status--Status_ID_Counter	2
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--mux_tag	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Mux_Tag	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--lsb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Theta_LSB	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--msb	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Theta_MSB	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--mux_word	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Mux_Byte	8
-/NGC/IMU/HG9900/Raw_Data_Frame--Raptor_Counts--gyro3--checksum	8	/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_W--Checksum	8
+%% test_decodeHg9900RawMux.m
+%
+% Synthetic OLD-format input to decodeHg9900RawMux.
+% This bypasses:
+%   getHg9900ParameterList
+%   telemetry loading
+%   makeHg9900RawStruct
+%
+% and directly exercises:
+%   decodeHg9900RawMux(s)
+
+clear;
+clc;
+
+%% Number of synthetic raw-data frames
+N = 8;
+
+%% Common data
+% One entry per synthetic HG9900 raw-data frame.
+s.AbsoluteReceivedTime = (0:N-1)' * 0.01;
+
+s.HG9900_Raw_Data_Frame_Msg_Number = ...
+    uint32((1:N)');
+
+s.HG9900_Raw_Data_Frame_Timestamp = ...
+    (0:N-1)' * 0.01;
+
+
+%% ================================================================
+%  ACCELEROMETER MUX
+%  ================================================================
+
+% Keep this simple initially.
+%
+% Eight frames with mux tags 0...7 and arbitrary mux bytes.
+% We can make these more meaningful after confirming the decoder runs.
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_tag = ...
+    uint8((0:N-1)');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_word = ...
+    uint8([ ...
+        hex2dec('10')
+        hex2dec('20')
+        hex2dec('30')
+        hex2dec('40')
+        hex2dec('50')
+        hex2dec('60')
+        hex2dec('70')
+        hex2dec('80')
+    ]);
+
+
+%% ================================================================
+%  GYRO STATUS
+%  ================================================================
+%
+% OLD packed gyro status byte:
+%
+%   bits:   7 6 | 5 | 4 | 3 | 2 | 1 0
+%           ----- --- --- --- --- -----
+%           Status RO  Cur Dit PLC Counter
+%
+% Use:
+%
+%   Status  = 2  -> binary 10
+%   Readout = 1
+%   Current = 0
+%   Dither  = 1
+%   PLC     = 0
+%
+% Counter cycles:
+%
+%   0, 1, 2, 3, 0, 1, 2, 3
+%
+% Therefore the upper six bits are:
+%
+%       10 1 0 1 0
+%
+% giving:
+%
+% counter 0 -> 10101000 = 0xA8
+% counter 1 -> 10101001 = 0xA9
+% counter 2 -> 10101010 = 0xAA
+% counter 3 -> 10101011 = 0xAB
+
+statusBytes = uint8([ ...
+    hex2dec('A8')
+    hex2dec('A9')
+    hex2dec('AA')
+    hex2dec('AB')
+    hex2dec('A8')
+    hex2dec('A9')
+    hex2dec('AA')
+    hex2dec('AB')
+]);
+
+
+%% ================================================================
+%  GYRO 1
+%  ================================================================
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status = ...
+    statusBytes;
+
+% Use the same mux tag across four consecutive frames so that the
+% status counter can identify byte 0, 1, 2, and 3.
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_mux_tag = ...
+    uint8([1 1 1 1 1 1 1 1]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_mux_word = ...
+    uint8([ ...
+        hex2dec('11')
+        hex2dec('22')
+        hex2dec('33')
+        hex2dec('44')
+        hex2dec('55')
+        hex2dec('66')
+        hex2dec('77')
+        hex2dec('88')
+    ]);
+
+% Arbitrary theta bytes for now
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_lsb = ...
+    uint8([1 2 3 4 5 6 7 8]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_msb = ...
+    uint8([10 20 30 40 50 60 70 80]');
+
+% Placeholder checksum.
+% This may cause checksum-validity outputs to indicate failure.
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_checksum = ...
+    zeros(N,1,'uint8');
+
+
+%% ================================================================
+%  GYRO 2
+%  ================================================================
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status = ...
+    statusBytes;
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_mux_tag = ...
+    uint8([1 1 1 1 1 1 1 1]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_mux_word = ...
+    uint8([ ...
+        hex2dec('12')
+        hex2dec('23')
+        hex2dec('34')
+        hex2dec('45')
+        hex2dec('56')
+        hex2dec('67')
+        hex2dec('78')
+        hex2dec('89')
+    ]);
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_lsb = ...
+    uint8([11 12 13 14 15 16 17 18]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_msb = ...
+    uint8([21 22 23 24 25 26 27 28]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_checksum = ...
+    zeros(N,1,'uint8');
+
+
+%% ================================================================
+%  GYRO 3
+%  ================================================================
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status = ...
+    statusBytes;
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_mux_tag = ...
+    uint8([1 1 1 1 1 1 1 1]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_mux_word = ...
+    uint8([ ...
+        hex2dec('13')
+        hex2dec('24')
+        hex2dec('35')
+        hex2dec('46')
+        hex2dec('57')
+        hex2dec('68')
+        hex2dec('79')
+        hex2dec('8A')
+    ]);
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_lsb = ...
+    uint8([31 32 33 34 35 36 37 38]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_msb = ...
+    uint8([41 42 43 44 45 46 47 48]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_checksum = ...
+    zeros(N,1,'uint8');
+
+
+%% ================================================================
+%  RUN OLD DECODER
+%  ================================================================
+
+mux = MinAtrTmAnalysis.HG9900.decodeHg9900RawMux(s);
