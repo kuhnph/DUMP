@@ -1,440 +1,342 @@
-%$Insert-OUO-Block
-function [parameterList, structNames] = getHg9900ParameterList(options)
-% function [parameterList, structNames] = getHg9900ParameterList(options)
+function testHg9900ParameterList()
+% testHg9900ParameterList
 %
-% Gets the list of parameters to properly read the raw IMU data.
+% Verifies the raw HG9900 parameter mapping produced by
+% getHg9900ParameterList.
 %
-% NAME/VALUE ARGUMENTS
-% --------------------
-% RecordingName
-% VirtualChannelName
-% PacketName
-% ParamPrefix
-% GyroCount
-% ParamMsgNumber
-% ParamTimestamp
-% ParamAccelTag
-% ParamAccelWord
-% ParamGyroTagTemplate
-% ParamGyroWordTemplate
-% ParamGyroStatusStatusTemplate
-% ParamGyroReadoutBitStatusTemplate
-% ParamGyroCurrentBitStatusTemplate
-% ParamGyroDitherBitStatusTemplate
-% ParamGyroPlcBitStatusTemplate
-% ParamGyroStatusIdCounterTemplate
-% ParamGyroThetaLsbTemplate
-% ParamGyroThetaMsbTemplate
-% ParamGyroChecksumTemplate
+% Checks:
+%   - Common message/timestamp/accelerometer fields
+%   - Gyro U -> gyro1
+%   - Gyro V -> gyro2
+%   - Gyro W -> gyro3
+%   - mux tag
+%   - mux word
+%   - split status fields
+%   - theta LSB/MSB
+%   - checksum
 
 
-arguments
-    % Name of the TM recording.
-    options.RecordingName char {mustBeTextScalar} = '';
+%% ================================================================
+%  GET ACTUAL MAPPING
+%  ================================================================
 
-    % Name of the CCSDS Virtual Channel.
-    options.VirtualChannelName char ...
-        {mustBeTextScalar} = 'Navigation';
-
-    % Name of the CCSDS Space Packet.
-    options.PacketName char ...
-        {mustBeTextScalar} = ...
-        ['...MinAtr...IMU...HG9900...Space_Packet' ...
-         '--HG9900_Raw_Data'];
-
-    % A prefix added to the ParameterName when loading from the packet.
-    options.ParamPrefix char ...
-        {mustBeTextScalar} = '';
-
-    % The number of gyrometer channels available within the IMU.
-    options.GyroCount(1,1) double = 3;
-
-    % The parameter name of the message number.
-    options.ParamMsgNumber char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Msg_Number'];
-
-    % The parameter name of the time stamp.
-    options.ParamTimestamp char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Time_Of_Validity'];
-
-    % The parameter name of the accelerometer tag.
-    options.ParamAccelTag char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--accel_mux_tag'];
-
-    % The parameter name of the accelerometer word.
-    options.ParamAccelWord char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--accel_mux_word'];
+[parameterList, structNames] = getHg9900ParameterList();
 
 
-    %% ============================================================
-    %  Gyro mux fields
-    %  ============================================================
+%% Extract ParameterName from each ParameterSpec object
 
-    % The sprintf template for the parameter name of the gyrometer tag.
-    options.ParamGyroTagTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--mux_tag'];
+actualParamNames = strings(numel(parameterList), 1);
 
-    % The sprintf template for the parameter name of the gyrometer word.
-    options.ParamGyroWordTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--mux_word'];
-
-
-    %% ============================================================
-    %  Split gyro status fields
-    %  ============================================================
-
-    % Gyrometer STATUS field.
-    options.ParamGyroStatusStatusTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--status--status'];
-
-    % Gyrometer readout BIT status.
-    options.ParamGyroReadoutBitStatusTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--status--readout_bit_status'];
-
-    % Gyrometer current BIT status.
-    options.ParamGyroCurrentBitStatusTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--status--current_bit_status'];
-
-    % Gyrometer dither BIT status.
-    options.ParamGyroDitherBitStatusTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--status--dither_bit_status'];
-
-    % Gyrometer PLC BIT status.
-    options.ParamGyroPlcBitStatusTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--status--plc_bit_status'];
-
-    % Gyrometer status ID counter.
-    options.ParamGyroStatusIdCounterTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--status--status_id_counter'];
-
-
-    %% ============================================================
-    %  Theta / checksum fields
-    %  ============================================================
-
-    % The sprintf template for the parameter name of the gyrometer
-    % theta LSB.
-    options.ParamGyroThetaLsbTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--lsb'];
-
-    % The sprintf template for the parameter name of the gyrometer
-    % theta MSB.
-    options.ParamGyroThetaMsbTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--msb'];
-
-    % The sprintf template for the parameter name of the gyrometer
-    % checksum.
-    options.ParamGyroChecksumTemplate char ...
-        {mustBeTextScalar} = ...
-        ['/MinAtr/IMU/HG9900/' ...
-         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--checksum'];
+for idx = 1:numel(parameterList)
+    actualParamNames(idx) = string(parameterList(idx).ParameterName);
 end
 
-
-import MinAtrTmAnalysis.Framework.Data.ParameterSpec
-
-
-%% ================================================================
-%  Common / accelerometer parameters
-%  ================================================================
-
-accelNames = {
-    options.ParamMsgNumber;
-    options.ParamTimestamp;
-    options.ParamAccelTag;
-    options.ParamAccelWord;
-};
-
-accelStructNames = {
-    'HG9900_Raw_Data_Frame_Msg_Number';
-    'HG9900_Raw_Data_Frame_Timestamp';
-    'HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_tag';
-    'HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_word';
-};
+actualStructNames = string(structNames(:));
 
 
 %% ================================================================
-%  Gyro parameter names
+%  EXPECTED EXTERNAL PARAMETER NAMES
 %  ================================================================
 
-% External telemetry axes:
-%
-%   U -> gyro1
-%   V -> gyro2
-%   W -> gyro3
-%
-gyroAxes = ["U", "V", "W"];
-gyroIndices = 1:options.GyroCount;
+base = "/MinAtr/IMU/HG9900/";
+
+rawBase = ...
+    base + "HG9900_Raw_Data_Frame--Raptor_Counts--";
+
+gyroAxes = ["U"; "V"; "W"];
 
 
-%% ================================================================
-%  Gyro mux tag
-%  ================================================================
+expectedParamNames = [
 
-gyroTagNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, options.ParamGyroTagTemplate), ...
-    gyroAxes));
+    % ------------------------------------------------------------
+    % Common fields
+    % ------------------------------------------------------------
 
-gyroStructTagNames = cellstr(compose( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_mux_tag', ...
-    gyroIndices));
+    base + "HG9900_Raw_Data_Frame--Msg_Number";
 
+    base + "HG9900_Raw_Data_Frame--Time_Of_Validity";
 
-%% ================================================================
-%  Gyro mux word / byte
-%  ================================================================
-%
-% Preserve mux_word internally for decoder compatibility.
+    rawBase + "accel_mux_tag";
 
-gyroWordNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, options.ParamGyroWordTemplate), ...
-    gyroAxes));
-
-gyroStructWordNames = cellstr(compose( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_mux_word', ...
-    gyroIndices));
+    rawBase + "accel_mux_word";
 
 
-%% ================================================================
-%  Gyro STATUS
-%  ================================================================
-%
-% This is now the new split 2-bit Status field.
-%
-% Do NOT map this to:
-%
-%   gyro%d_status
-%
-% because that historically represented the complete packed
-% 8-bit status byte.
+    % ------------------------------------------------------------
+    % Gyro mux tag
+    % ------------------------------------------------------------
 
-gyroStatusNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroStatusStatusTemplate), ...
-    gyroAxes));
-
-gyroStructStatusNames = cellstr(compose( ...
-    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
-     'gyro%d_status_status'], ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + "--mux_tag";
 
 
-%% ================================================================
-%  Gyro readout BIT status
-%  ================================================================
+    % ------------------------------------------------------------
+    % Gyro mux word
+    % ------------------------------------------------------------
 
-gyroReadoutBitStatusNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroReadoutBitStatusTemplate), ...
-    gyroAxes));
-
-gyroStructReadoutBitStatusNames = cellstr(compose( ...
-    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
-     'gyro%d_status_readout_bit_status'], ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + "--mux_word";
 
 
-%% ================================================================
-%  Gyro current BIT status
-%  ================================================================
+    % ------------------------------------------------------------
+    % Gyro STATUS field
+    % ------------------------------------------------------------
 
-gyroCurrentBitStatusNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroCurrentBitStatusTemplate), ...
-    gyroAxes));
-
-gyroStructCurrentBitStatusNames = cellstr(compose( ...
-    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
-     'gyro%d_status_current_bit_status'], ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + "--status--status";
 
 
-%% ================================================================
-%  Gyro dither BIT status
-%  ================================================================
+    % ------------------------------------------------------------
+    % Gyro readout BIT status
+    % ------------------------------------------------------------
 
-gyroDitherBitStatusNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroDitherBitStatusTemplate), ...
-    gyroAxes));
-
-gyroStructDitherBitStatusNames = cellstr(compose( ...
-    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
-     'gyro%d_status_dither_bit_status'], ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + ...
+        "--status--readout_bit_status";
 
 
-%% ================================================================
-%  Gyro PLC BIT status
-%  ================================================================
+    % ------------------------------------------------------------
+    % Gyro current BIT status
+    % ------------------------------------------------------------
 
-gyroPlcBitStatusNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroPlcBitStatusTemplate), ...
-    gyroAxes));
-
-gyroStructPlcBitStatusNames = cellstr(compose( ...
-    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
-     'gyro%d_status_plc_bit_status'], ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + ...
+        "--status--current_bit_status";
 
 
-%% ================================================================
-%  Gyro status ID counter
-%  ================================================================
+    % ------------------------------------------------------------
+    % Gyro dither BIT status
+    % ------------------------------------------------------------
 
-gyroStatusIdCounterNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroStatusIdCounterTemplate), ...
-    gyroAxes));
-
-gyroStructStatusIdCounterNames = cellstr(compose( ...
-    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
-     'gyro%d_status_id_counter'], ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + ...
+        "--status--dither_bit_status";
 
 
-%% ================================================================
-%  Gyro theta LSB
-%  ================================================================
-%
-% Preserve the old internal lsb name for decoder compatibility.
+    % ------------------------------------------------------------
+    % Gyro PLC BIT status
+    % ------------------------------------------------------------
 
-gyroThetaLsbNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroThetaLsbTemplate), ...
-    gyroAxes));
-
-gyroStructThetaLsbNames = cellstr(compose( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_lsb', ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + ...
+        "--status--plc_bit_status";
 
 
-%% ================================================================
-%  Gyro theta MSB
-%  ================================================================
+    % ------------------------------------------------------------
+    % Gyro Status ID Counter
+    % ------------------------------------------------------------
 
-gyroThetaMsbNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroThetaMsbTemplate), ...
-    gyroAxes));
-
-gyroStructThetaMsbNames = cellstr(compose( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_msb', ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + ...
+        "--status--status_id_counter";
 
 
-%% ================================================================
-%  Gyro checksum
-%  ================================================================
-%
-% Preserve the existing internal checksum name for now.
-% Checksum behavior itself will be handled later.
+    % ------------------------------------------------------------
+    % Gyro theta LSB
+    % ------------------------------------------------------------
 
-gyroChecksumNames = cellstr(compose( ...
-    strcat(options.ParamPrefix, ...
-           options.ParamGyroChecksumTemplate), ...
-    gyroAxes));
-
-gyroStructChecksumNames = cellstr(compose( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_checksum', ...
-    gyroIndices));
+    rawBase + "gyro" + gyroAxes + "--lsb";
 
 
-%% ================================================================
-%  Complete raw parameter list
-%  ================================================================
+    % ------------------------------------------------------------
+    % Gyro theta MSB
+    % ------------------------------------------------------------
 
-paramNames = [
-    accelNames(:);
+    rawBase + "gyro" + gyroAxes + "--msb";
 
-    gyroTagNames(:);
-    gyroWordNames(:);
 
-    gyroStatusNames(:);
-    gyroReadoutBitStatusNames(:);
-    gyroCurrentBitStatusNames(:);
-    gyroDitherBitStatusNames(:);
-    gyroPlcBitStatusNames(:);
-    gyroStatusIdCounterNames(:);
+    % ------------------------------------------------------------
+    % Gyro checksum
+    % ------------------------------------------------------------
 
-    gyroThetaLsbNames(:);
-    gyroThetaMsbNames(:);
-    gyroChecksumNames(:);
+    rawBase + "gyro" + gyroAxes + "--checksum";
 ];
 
 
 %% ================================================================
-%  Corresponding internal struct field names
+%  EXPECTED INTERNAL STRUCT NAMES
 %  ================================================================
 
-structNames = [
-    accelStructNames(:);
+structBase = ...
+    "HG9900_Raw_Data_Frame_Raptor_Counts_";
 
-    gyroStructTagNames(:);
-    gyroStructWordNames(:);
+gyroIndices = ["1"; "2"; "3"];
 
-    gyroStructStatusNames(:);
-    gyroStructReadoutBitStatusNames(:);
-    gyroStructCurrentBitStatusNames(:);
-    gyroStructDitherBitStatusNames(:);
-    gyroStructPlcBitStatusNames(:);
-    gyroStructStatusIdCounterNames(:);
 
-    gyroStructThetaLsbNames(:);
-    gyroStructThetaMsbNames(:);
-    gyroStructChecksumNames(:);
+expectedStructNames = [
+
+    % ------------------------------------------------------------
+    % Common fields
+    % ------------------------------------------------------------
+
+    "HG9900_Raw_Data_Frame_Msg_Number";
+
+    "HG9900_Raw_Data_Frame_Timestamp";
+
+    structBase + "accel_mux_tag";
+
+    structBase + "accel_mux_word";
+
+
+    % ------------------------------------------------------------
+    % Gyro mux tag
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + "_mux_tag";
+
+
+    % ------------------------------------------------------------
+    % Gyro mux word
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + "_mux_word";
+
+
+    % ------------------------------------------------------------
+    % Gyro STATUS field
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + ...
+        "_status_status";
+
+
+    % ------------------------------------------------------------
+    % Gyro readout BIT status
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + ...
+        "_status_readout_bit_status";
+
+
+    % ------------------------------------------------------------
+    % Gyro current BIT status
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + ...
+        "_status_current_bit_status";
+
+
+    % ------------------------------------------------------------
+    % Gyro dither BIT status
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + ...
+        "_status_dither_bit_status";
+
+
+    % ------------------------------------------------------------
+    % Gyro PLC BIT status
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + ...
+        "_status_plc_bit_status";
+
+
+    % ------------------------------------------------------------
+    % Gyro Status ID Counter
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + ...
+        "_status_id_counter";
+
+
+    % ------------------------------------------------------------
+    % Gyro theta LSB
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + "_lsb";
+
+
+    % ------------------------------------------------------------
+    % Gyro theta MSB
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + "_msb";
+
+
+    % ------------------------------------------------------------
+    % Gyro checksum
+    % ------------------------------------------------------------
+
+    structBase + "gyro" + gyroIndices + "_checksum";
 ];
 
 
 %% ================================================================
-%  Build ParameterSpec list
+%  BASIC SIZE CHECKS
 %  ================================================================
 
-nParams = length(paramNames);
-psCell = cell(nParams, 1);
+assert( ...
+    numel(actualParamNames) == numel(actualStructNames), ...
+    ['Parameter list and struct-name list have different sizes. ' ...
+     'Parameters: %d, Struct names: %d'], ...
+    numel(actualParamNames), ...
+    numel(actualStructNames));
 
-for idx = 1:nParams
 
-    paramName = paramNames{idx};
+assert( ...
+    numel(actualParamNames) == numel(expectedParamNames), ...
+    ['Unexpected number of HG9900 parameters. ' ...
+     'Expected: %d, Actual: %d'], ...
+    numel(expectedParamNames), ...
+    numel(actualParamNames));
 
-    ps = ParameterSpec( ...
-        'RecordingName', options.RecordingName, ...
-        'VirtualChannelName', options.VirtualChannelName, ...
-        'PacketName', options.PacketName, ...
-        'ParameterName', paramName);
 
-    psCell{idx} = ps;
+%% ================================================================
+%  COMPARE EACH MAPPING
+%  ================================================================
+
+paramMatch = actualParamNames == expectedParamNames;
+structMatch = actualStructNames == expectedStructNames;
+
+mappingMatch = paramMatch & structMatch;
+
+
+%% Display complete mapping
+
+results = table( ...
+    expectedParamNames, ...
+    actualParamNames, ...
+    expectedStructNames, ...
+    actualStructNames, ...
+    mappingMatch, ...
+    'VariableNames', { ...
+        'ExpectedParameter', ...
+        'ActualParameter', ...
+        'ExpectedStruct', ...
+        'ActualStruct', ...
+        'Pass'});
+
+disp(results);
+
+
+%% ================================================================
+%  REPORT FAILURES
+%  ================================================================
+
+if ~all(mappingMatch)
+
+    fprintf('\n');
+    fprintf('============================================================\n');
+    fprintf('FAILED HG9900 MAPPINGS\n');
+    fprintf('============================================================\n');
+
+    failedRows = results(~mappingMatch, :);
+
+    disp(failedRows);
+
+    error( ...
+        'HG9900 parameter mapping test failed for %d mapping(s).', ...
+        sum(~mappingMatch));
 end
 
-parameterList = [psCell{:}]';
+
+%% ================================================================
+%  SUCCESS
+%  ================================================================
+
+fprintf('\n');
+fprintf('============================================================\n');
+fprintf('STEP 1 HG9900 PARAMETER MAPPING PASSED\n');
+fprintf('============================================================\n');
+fprintf('Verified %d mappings.\n', numel(mappingMatch));
+fprintf('\n');
+
+fprintf('Gyro axis mapping:\n');
+fprintf('  Gyro U -> gyro1\n');
+fprintf('  Gyro V -> gyro2\n');
+fprintf('  Gyro W -> gyro3\n');
+fprintf('\n');
 
 end
