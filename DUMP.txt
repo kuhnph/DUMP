@@ -210,4 +210,191 @@ oldStatus.current = mux_old.gyro(1).bit_curr_ctrl_flg.value;
 oldStatus.dither = mux_old.gyro(1).bit_dither_flg.value;
 oldStatus.plc = mux_old.gyro(1).bit_plc_flg.value;
 
-fprintf('done');
+%% ================================================================
+%  BUILD EQUIVALENT NEW-FORMAT INPUT
+%  ================================================================
+%
+% The OLD input stores status information in one packed byte:
+%
+%   gyroN_status = [status | flags | counter]
+%
+% The NEW input provides those pieces independently:
+%
+%   gyroN_status_status
+%   gyroN_status_readout_bit_status
+%   gyroN_status_current_bit_status
+%   gyroN_status_dither_bit_status
+%   gyroN_status_plc_bit_status
+%   gyroN_status_id_counter
+%
+% The logical information is kept exactly the same as the old mock.
+
+s_new = s;
+
+% Remove the old packed status fields so the new decoder is tested
+% using only the new interface.
+s_new = rmfield(s_new, { ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status', ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status', ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status' ...
+    });
+
+
+%% Status values represented by the old A8/A9/AA/AB sequence
+
+statusStatus = uint8(2 * ones(N,1));
+
+readoutBitStatus = uint8(1 * ones(N,1));
+
+currentBitStatus = uint8(0 * ones(N,1));
+
+ditherBitStatus = uint8(1 * ones(N,1));
+
+plcBitStatus = uint8(0 * ones(N,1));
+
+statusIdCounter = uint8([ ...
+    0
+    1
+    2
+    3
+    0
+    1
+    2
+    3
+]);
+
+
+%% ================================================================
+%  GYRO 1 NEW STATUS FIELDS
+%  ================================================================
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_status = ...
+    statusStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_readout_bit_status = ...
+    readoutBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_current_bit_status = ...
+    currentBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_dither_bit_status = ...
+    ditherBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_plc_bit_status = ...
+    plcBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_id_counter = ...
+    statusIdCounter;
+
+
+%% ================================================================
+%  GYRO 2 NEW STATUS FIELDS
+%  ================================================================
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_status = ...
+    statusStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_readout_bit_status = ...
+    readoutBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_current_bit_status = ...
+    currentBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_dither_bit_status = ...
+    ditherBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_plc_bit_status = ...
+    plcBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_id_counter = ...
+    statusIdCounter;
+
+
+%% ================================================================
+%  GYRO 3 NEW STATUS FIELDS
+%  ================================================================
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_status = ...
+    statusStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_readout_bit_status = ...
+    readoutBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_current_bit_status = ...
+    currentBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_dither_bit_status = ...
+    ditherBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_plc_bit_status = ...
+    plcBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_id_counter = ...
+    statusIdCounter;
+
+
+%% ================================================================
+%  RUN NEW DECODER
+%  ================================================================
+
+mux_new = MinAtrTmAnalysis.HG9900.decodeHg9900RawMux(s_new);
+
+
+%% ================================================================
+%  VERIFY STATUS OUTPUTS
+%  ================================================================
+
+statusFields = { ...
+    'gyro_status', ...
+    'bit_readout_flg', ...
+    'bit_curr_ctrl_flg', ...
+    'bit_dither_flg', ...
+    'bit_plc_flg' ...
+    };
+
+for g = 1:3
+
+    fprintf('\nChecking gyro %d status outputs...\n', g);
+
+    for idx = 1:numel(statusFields)
+
+        fieldName = statusFields{idx};
+
+        oldValue = mux_old.gyro(g).(fieldName).value;
+        newValue = mux_new.gyro(g).(fieldName).value;
+
+        assert(isequaln(oldValue, newValue), ...
+            'Status mismatch: gyro %d, field %s', ...
+            g, fieldName);
+
+        fprintf('  PASS: %s\n', fieldName);
+
+    end
+end
+
+
+%% ================================================================
+%  VERIFY COMPLETE PROCESSED OUTPUT
+%  ================================================================
+%
+% Because the new decoder should change only where the status/counter
+% information comes from, the final decoded mux structure should be
+% identical to the legacy decoder output for equivalent input data.
+
+fprintf('\nChecking complete legacy/new decoder output...\n');
+
+assert(isequaln(mux_old, mux_new), ...
+    ['Legacy and new decoded mux structures do not match. ' ...
+     'Inspect mux_old and mux_new to locate the differing field.']);
+
+fprintf('  PASS: complete decoded mux structures match.\n');
+
+
+%% ================================================================
+%  TEST COMPLETE
+%  ================================================================
+
+fprintf('\n========================================\n');
+fprintf('Step 4 verification PASSED\n');
+fprintf('New decoder matches legacy decoder.\n');
+fprintf('========================================\n');
