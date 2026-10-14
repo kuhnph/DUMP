@@ -1,21 +1,41 @@
-gyroMuxWord = s.(sprintf( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_mux_word', g));
+% Remove data that does not pass checksum
+% If disabled, then the valid flag will be true and no data will be removed
+absRxTimeMux(~isValid) = [];
+timestampMux(~isValid) = [];
+msgNumMux(~isValid) = [];
+gyroMuxTag(~isValid) = [];
+gyroMuxWord(~isValid) = [];
 
-% New split status fields
-gyroStatusStatus = s.(sprintf( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_status_status', g));
+% Remove invalid samples from the new split status fields
+gyroStatusStatus(~isValid) = [];
+gyroStatusReadoutBit(~isValid) = [];
+gyroStatusCurrentBit(~isValid) = [];
+gyroStatusDitherBit(~isValid) = [];
+gyroStatusPlcBit(~isValid) = [];
+gyroStatusIdCounter(~isValid) = [];
 
-gyroStatusReadoutBit = s.(sprintf( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_status_readout_bit_status', g));
 
-gyroStatusCurrentBit = s.(sprintf( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_status_current_bit_status', g));
+% Reconstruct legacy raw status byte for status_raw output
+% Bits 7:6 = status
+% Bit 5    = readout BIT status
+% Bit 4    = current BIT status
+% Bit 3    = dither BIT status
+% Bit 2    = PLC BIT status
+% Bits 1:0 = status ID counter
+gyroStatusByte = ...
+    bitor(bitshift(uint8(gyroStatusStatus), 6), ...
+    bitor(bitshift(uint8(gyroStatusReadoutBit), 5), ...
+    bitor(bitshift(uint8(gyroStatusCurrentBit), 4), ...
+    bitor(bitshift(uint8(gyroStatusDitherBit), 3), ...
+    bitor(bitshift(uint8(gyroStatusPlcBit), 2), ...
+          uint8(gyroStatusIdCounter))))));
 
-gyroStatusDitherBit = s.(sprintf( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_status_dither_bit_status', g));
 
-gyroStatusPlcBit = s.(sprintf( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_status_plc_bit_status', g));
-
-gyroStatusIdCounter = s.(sprintf( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_status_id_counter', g));
+% Store the status
+gyroTagName = 'status_raw';
+mux.gyro(g).(gyroTagName).AbsoluteReceivedTime = absRxTimeMux;
+mux.gyro(g).(gyroTagName).time = timestampMux;
+mux.gyro(g).(gyroTagName).value = uint8(gyroStatusByte);
+mux.gyro(g).(gyroTagName).id = NaN;
+mux.gyro(g).(gyroTagName).unit = 'counts';
+mux.gyro(g).(gyroTagName).comment = 'Gyro raw status byte.';
