@@ -1,12 +1,28 @@
+
+gyroAxes = ["U","V","W"];
+% gyro{N}_mux_tag
+gyroTagNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroTagTemplate), ...
+    gyroAxes);
+
+gyroStructTagNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_mux_tag', ...
+    1:options.GyroCount);
+
+% gyro{N}_mux_word
+gyroWordNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroWordTemplate), ...
+    gyroAxes);
+
+gyroStructWordNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_mux_word', ...
+    1:options.GyroCount);
+
+% gyro{N}_status
 % Gyro status field
 gyroStatusNames = compose( ...
     strcat(options.ParamPrefix, options.ParamGyroStatusTemplate), ...
     gyroAxes);
-
-gyroStructStatusNames = compose( ...
-    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_status_status', ...
-    1:options.GyroCount);
-
 
 % Gyro readout BIT status
 gyroReadoutBitStatusNames = compose( ...
@@ -66,3 +82,69 @@ gyroStructStatusIdCounterNames = compose( ...
     ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
     'gyro%d_status_id_counter'], ...
     1:options.GyroCount);
+%%END Gyro Status%%
+
+gyroStructStatusNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_status', ...
+    1:options.GyroCount);
+
+% gyro{N}_lsb
+gyroThetaLsbNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroThetaLsbTemplate), ...
+    gyroAxes);
+
+gyroStructThetaLsbNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_lsb', ...
+    1:options.GyroCount);
+
+% gyro{N}_msb
+gyroThetaMsbNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroThetaMsbTemplate), ...
+    gyroAxes);
+
+gyroStructThetaMsbNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_msb', ...
+    1:options.GyroCount);
+
+% gyro{N}_checksum
+gyroChecksumNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroChecksumTemplate), ...
+    gyroAxes);
+
+gyroStructChecksumNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_checksum', ...
+    1:options.GyroCount);
+
+paramNames = [
+    accelNames(:);
+    gyroTagNames(:);
+    gyroWordNames(:);
+    
+    gyroStatusNames(:);
+    gyroReadoutBitStatusNames(:)
+    gyroCurrentBitStatusNames(:)
+    gyroDitherBitStatusNames(:)
+    gyroPlcBitStatusNames(:)
+    gyroStatusIdCounterNames(:)
+
+    gyroThetaLsbNames(:);
+    gyroThetaMsbNames(:);
+    gyroChecksumNames(:);
+    ];
+
+structNames = [
+    accelStructNames(:);
+    gyroStructTagNames(:);
+    gyroStructWordNames(:);
+
+    gyroStructStatusNames(:)
+    gyroStructReadoutBitStatusNames(:)
+    gyroStructCurrentBitStatusNames(:)
+    gyroStructDitherBitStatusNames(:)
+    gyroStructPlcBitStatusNames(:)
+    gyroStructStatusIdCounterNames(:)
+
+    gyroStructThetaLsbNames(:);
+    gyroStructThetaMsbNames(:);
+    gyroStructChecksumNames(:);
+    ];
