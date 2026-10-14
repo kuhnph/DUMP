@@ -1,342 +1,73 @@
-function testHg9900ParameterList()
-% testHg9900ParameterList
-%
-% Verifies the raw HG9900 parameter mapping produced by
-% getHg9900ParameterList.
-%
-% Checks:
-%   - Common message/timestamp/accelerometer fields
-%   - Gyro U -> gyro1
-%   - Gyro V -> gyro2
-%   - Gyro W -> gyro3
-%   - mux tag
-%   - mux word
-%   - split status fields
-%   - theta LSB/MSB
-%   - checksum
-
-
-%% ================================================================
-%  GET ACTUAL MAPPING
-%  ================================================================
-
-[parameterList, structNames] = getHg9900ParameterList();
-
-
-%% Extract ParameterName from each ParameterSpec object
-
-actualParamNames = strings(numel(parameterList), 1);
-
-for idx = 1:numel(parameterList)
-    actualParamNames(idx) = string(parameterList(idx).ParameterName);
-end
-
-actualStructNames = string(structNames(:));
-
-
-%% ================================================================
-%  EXPECTED EXTERNAL PARAMETER NAMES
-%  ================================================================
-
-base = "/MinAtr/IMU/HG9900/";
-
-rawBase = ...
-    base + "HG9900_Raw_Data_Frame--Raptor_Counts--";
-
-gyroAxes = ["U"; "V"; "W"];
-
-
-expectedParamNames = [
-
-    % ------------------------------------------------------------
-    % Common fields
-    % ------------------------------------------------------------
-
-    base + "HG9900_Raw_Data_Frame--Msg_Number";
-
-    base + "HG9900_Raw_Data_Frame--Time_Of_Validity";
-
-    rawBase + "accel_mux_tag";
-
-    rawBase + "accel_mux_word";
-
-
-    % ------------------------------------------------------------
-    % Gyro mux tag
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + "--mux_tag";
-
-
-    % ------------------------------------------------------------
-    % Gyro mux word
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + "--mux_word";
-
-
-    % ------------------------------------------------------------
-    % Gyro STATUS field
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + "--status--status";
-
-
-    % ------------------------------------------------------------
-    % Gyro readout BIT status
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + ...
-        "--status--readout_bit_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro current BIT status
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + ...
-        "--status--current_bit_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro dither BIT status
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + ...
-        "--status--dither_bit_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro PLC BIT status
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + ...
-        "--status--plc_bit_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro Status ID Counter
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + ...
-        "--status--status_id_counter";
-
-
-    % ------------------------------------------------------------
-    % Gyro theta LSB
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + "--lsb";
-
-
-    % ------------------------------------------------------------
-    % Gyro theta MSB
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + "--msb";
-
-
-    % ------------------------------------------------------------
-    % Gyro checksum
-    % ------------------------------------------------------------
-
-    rawBase + "gyro" + gyroAxes + "--checksum";
-];
-
-
-%% ================================================================
-%  EXPECTED INTERNAL STRUCT NAMES
-%  ================================================================
-
-structBase = ...
-    "HG9900_Raw_Data_Frame_Raptor_Counts_";
-
-gyroIndices = ["1"; "2"; "3"];
-
-
-expectedStructNames = [
-
-    % ------------------------------------------------------------
-    % Common fields
-    % ------------------------------------------------------------
-
-    "HG9900_Raw_Data_Frame_Msg_Number";
-
-    "HG9900_Raw_Data_Frame_Timestamp";
-
-    structBase + "accel_mux_tag";
-
-    structBase + "accel_mux_word";
-
-
-    % ------------------------------------------------------------
-    % Gyro mux tag
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + "_mux_tag";
-
-
-    % ------------------------------------------------------------
-    % Gyro mux word
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + "_mux_word";
-
-
-    % ------------------------------------------------------------
-    % Gyro STATUS field
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + ...
-        "_status_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro readout BIT status
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + ...
-        "_status_readout_bit_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro current BIT status
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + ...
-        "_status_current_bit_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro dither BIT status
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + ...
-        "_status_dither_bit_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro PLC BIT status
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + ...
-        "_status_plc_bit_status";
-
-
-    % ------------------------------------------------------------
-    % Gyro Status ID Counter
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + ...
-        "_status_id_counter";
-
-
-    % ------------------------------------------------------------
-    % Gyro theta LSB
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + "_lsb";
-
-
-    % ------------------------------------------------------------
-    % Gyro theta MSB
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + "_msb";
-
-
-    % ------------------------------------------------------------
-    % Gyro checksum
-    % ------------------------------------------------------------
-
-    structBase + "gyro" + gyroIndices + "_checksum";
-];
-
-
-%% ================================================================
-%  BASIC SIZE CHECKS
-%  ================================================================
-
-assert( ...
-    numel(actualParamNames) == numel(actualStructNames), ...
-    ['Parameter list and struct-name list have different sizes. ' ...
-     'Parameters: %d, Struct names: %d'], ...
-    numel(actualParamNames), ...
-    numel(actualStructNames));
-
-
-assert( ...
-    numel(actualParamNames) == numel(expectedParamNames), ...
-    ['Unexpected number of HG9900 parameters. ' ...
-     'Expected: %d, Actual: %d'], ...
-    numel(expectedParamNames), ...
-    numel(actualParamNames));
-
-
-%% ================================================================
-%  COMPARE EACH MAPPING
-%  ================================================================
-
-paramMatch = actualParamNames == expectedParamNames;
-structMatch = actualStructNames == expectedStructNames;
-
-mappingMatch = paramMatch & structMatch;
-
-
-%% Display complete mapping
-
-results = table( ...
-    expectedParamNames, ...
-    actualParamNames, ...
-    expectedStructNames, ...
-    actualStructNames, ...
-    mappingMatch, ...
-    'VariableNames', { ...
-        'ExpectedParameter', ...
-        'ActualParameter', ...
-        'ExpectedStruct', ...
-        'ActualStruct', ...
-        'Pass'});
-
-disp(results);
-
-
-%% ================================================================
-%  REPORT FAILURES
-%  ================================================================
-
-if ~all(mappingMatch)
-
-    fprintf('\n');
-    fprintf('============================================================\n');
-    fprintf('FAILED HG9900 MAPPINGS\n');
-    fprintf('============================================================\n');
-
-    failedRows = results(~mappingMatch, :);
-
-    disp(failedRows);
-
-    error( ...
-        'HG9900 parameter mapping test failed for %d mapping(s).', ...
-        sum(~mappingMatch));
-end
-
-
-%% ================================================================
-%  SUCCESS
-%  ================================================================
-
-fprintf('\n');
-fprintf('============================================================\n');
-fprintf('STEP 1 HG9900 PARAMETER MAPPING PASSED\n');
-fprintf('============================================================\n');
-fprintf('Verified %d mappings.\n', numel(mappingMatch));
-fprintf('\n');
-
-fprintf('Gyro axis mapping:\n');
-fprintf('  Gyro U -> gyro1\n');
-fprintf('  Gyro V -> gyro2\n');
-fprintf('  Gyro W -> gyro3\n');
-fprintf('\n');
-
-end
+>> MinAtrTmAnalysis.HG9900.testHg9900ParameterList
+                                          ExpectedParameter                                                                                 ActualParameter                                                                      ExpectedStruct                                                            ActualStruct                                 Pass 
+    _____________________________________________________________________________________________    _____________________________________________________________________________________________    _____________________________________________________________________    _____________________________________________________________________    _____
+
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Msg_Number"                                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Msg_Number"                                           "HG9900_Raw_Data_Frame_Msg_Number"                                       "HG9900_Raw_Data_Frame_Msg_Number"                                       true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Time_Of_Validity"                                     "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Time_Of_Validity"                                     "HG9900_Raw_Data_Frame_Timestamp"                                        "HG9900_Raw_Data_Frame_Timestamp"                                        true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--accel_mux_tag"                         "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--accel_mux_tag"                         "HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_tag"                      "HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_tag"                      true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--accel_mux_word"                        "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--accel_mux_word"                        "HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_word"                     "HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_word"                     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--mux_tag"                       "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--mux_tag"                       "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_mux_tag"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_mux_tag"                      true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--mux_tag"                       "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--mux_tag"                       "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_mux_tag"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_mux_tag"                      true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--mux_tag"                       "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--mux_tag"                       "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_mux_tag"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_mux_tag"                      true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--mux_word"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--mux_word"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_mux_word"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_mux_word"                     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--mux_word"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--mux_word"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_mux_word"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_mux_word"                     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--mux_word"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--mux_word"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_mux_word"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_mux_word"                     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--status"                "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--status"                "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_status"                "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_status"                true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--status"                "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--status"                "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_status"                "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_status"                true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--status"                "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--status"                "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_status"                "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_status"                true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--readout_bit_status"    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--readout_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_readout_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_readout_bit_status"    true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--readout_bit_status"    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--readout_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_readout_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_readout_bit_status"    true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--readout_bit_status"    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--readout_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_readout_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_readout_bit_status"    true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--current_bit_status"    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--current_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_current_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_current_bit_status"    true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--current_bit_status"    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--current_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_current_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_current_bit_status"    true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--current_bit_status"    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--current_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_current_bit_status"    "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_current_bit_status"    true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--dither_bit_status"     "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--dither_bit_status"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_dither_bit_status"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_dither_bit_status"     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--dither_bit_status"     "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--dither_bit_status"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_dither_bit_status"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_dither_bit_status"     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--dither_bit_status"     "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--dither_bit_status"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_dither_bit_status"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_dither_bit_status"     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--plc_bit_status"        "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--plc_bit_status"        "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_plc_bit_status"        "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_plc_bit_status"        true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--plc_bit_status"        "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--plc_bit_status"        "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_plc_bit_status"        "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_plc_bit_status"        true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--plc_bit_status"        "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--plc_bit_status"        "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_plc_bit_status"        "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_plc_bit_status"        true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--status_id_counter"     "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--status--status_id_counter"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_id_counter"            "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_id_counter"            true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--status_id_counter"     "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--status--status_id_counter"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_id_counter"            "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_id_counter"            true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--status_id_counter"     "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--status--status_id_counter"     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_id_counter"            "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_id_counter"            true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--lsb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--lsb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_lsb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_lsb"                          true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--lsb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--lsb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_lsb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_lsb"                          true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--lsb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--lsb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_lsb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_lsb"                          true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--msb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--msb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_msb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_msb"                          true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--msb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--msb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_msb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_msb"                          true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--msb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--msb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_msb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_msb"                          true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--checksum"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--checksum"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_checksum"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_checksum"                     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--checksum"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--checksum"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_checksum"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_checksum"                     true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--checksum"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--checksum"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_checksum"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_checksum"                     true 
+
+
+============================================================
+STEP 1 HG9900 PARAMETER MAPPING PASSED
+============================================================
+Verified 37 mappings.
+
+Gyro axis mapping:
+  Gyro U -> gyro1
+  Gyro V -> gyro2
+  Gyro W -> gyro3
+
+>>                 true   true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--msb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--msb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_msb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_msb"                          true   true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--msb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--msb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_msb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_msb"                          true   true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--msb"                           "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--msb"                           "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_msb"                          "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_msb"                          true   true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--checksum"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_U--checksum"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_checksum"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_checksum"                     true   true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--checksum"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_V--checksum"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_checksum"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_checksum"                     true   true 
+    "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--checksum"                      "/MinAtr/IMU/HG9900/HG9900_Raw_Data_Frame--Raptor_Counts--gyro_W--checksum"                      "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_checksum"                     "HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_checksum"                     true   true 
+
+
+============================================================
+STEP 1 HG9900 PARAMETER MAPPING PASSED
+============================================================
+Verified 37 mappings.
+
+Gyro axis mapping:
+  Gyro U -> gyro1
+  Gyro V -> gyro2
+  Gyro W -> gyro3
+
+>> 
