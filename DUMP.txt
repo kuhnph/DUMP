@@ -1,3 +1,27 @@
+%$Insert-OUO-Block
+function [parameterList, structNames] = getHg9900ParameterList(options)
+% function [parameterList, structNames] = getHg9900ParameterList(options)
+%
+% Gets the list of parameters to properly read the raw IMU data.
+%
+% NAME/VALUE ARGUMENTS
+% --------------------
+% RecordingName
+% VirtualChannelName
+% PacketName
+% ParamPrefix
+% GyroCount
+% ParamMsgNumber
+% ParamTimestamp
+% ParamAccelTag
+% ParamAccelWord
+% ParamGyroTagTemplate
+% ParamGyroWordTemplate
+% ParamGyroStatusTemplate
+% ParamGyroThetaLsbTemplate
+% ParamGyroThetaMsbTemplate
+% ParamGyroChecksumTemplate
+
 arguments
     % Name of the TM recording.
     options.RecordingName char {mustBeTextScalar} = '';
@@ -105,4 +129,242 @@ arguments
     options.ParamGyroChecksumTemplate char ...
         {mustBeTextScalar} = ['/MinAtr/IMU/HG9900/' ...
         'HG9900_Raw_Data_Frame--Raptor_Counts--gyro%s--checksum'];
+end
+
+import MinAtrTmAnalysis.Framework.Data.ParameterSpec
+
+accelNames = {
+    options.ParamMsgNumber;
+    options.ParamTimestamp;
+    options.ParamAccelTag;
+    options.ParamAccelWord;
+    };
+
+accelStructNames = {
+    'HG9900_Raw_Data_Frame_Msg_Number';
+    'HG9900_Raw_Data_Frame_Timestamp';
+    'HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_tag';
+    'HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_word';
+    };
+
+%% Gyro parameter names
+
+gyroAxes = ["U", "V", "W"];
+gyroIndices = 1:options.GyroCount;
+
+
+%% Gyro mux tag
+% External:
+%   Gyro_U--Mux_Tag
+%   Gyro_V--Mux_Tag
+%   Gyro_W--Mux_Tag
+%
+% Internal:
+%   gyro1_mux_tag
+%   gyro2_mux_tag
+%   gyro3_mux_tag
+
+gyroTagNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroTagTemplate), ...
+    gyroAxes);
+
+gyroStructTagNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_mux_tag', ...
+    gyroIndices);
+
+
+%% Gyro mux word / byte
+% External:
+%   Gyro_U--Mux_Byte
+%   Gyro_V--Mux_Byte
+%   Gyro_W--Mux_Byte
+%
+% Internal names remain mux_word so the existing decoder interface
+% does not need to change unnecessarily.
+
+gyroWordNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroWordTemplate), ...
+    gyroAxes);
+
+gyroStructWordNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_mux_word', ...
+    gyroIndices);
+
+
+%% Gyro status
+% New 2-bit Status field.
+%
+% Do NOT map this to gyro%d_status because that name historically
+% represented the complete packed 8-bit status byte.
+
+gyroStatusNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroStatusTemplate), ...
+    gyroAxes);
+
+gyroStructStatusNames = compose( ...
+    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
+     'gyro%d_status_status'], ...
+    gyroIndices);
+
+
+%% Gyro readout BIT status
+
+gyroReadoutBitStatusNames = compose( ...
+    strcat(options.ParamPrefix, ...
+    options.ParamGyroReadoutBitStatusTemplate), ...
+    gyroAxes);
+
+gyroStructReadoutBitStatusNames = compose( ...
+    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
+     'gyro%d_status_readout_bit_status'], ...
+    gyroIndices);
+
+
+%% Gyro current BIT status
+
+gyroCurrentBitStatusNames = compose( ...
+    strcat(options.ParamPrefix, ...
+    options.ParamGyroCurrentBitStatusTemplate), ...
+    gyroAxes);
+
+gyroStructCurrentBitStatusNames = compose( ...
+    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
+     'gyro%d_status_current_bit_status'], ...
+    gyroIndices);
+
+
+%% Gyro dither BIT status
+
+gyroDitherBitStatusNames = compose( ...
+    strcat(options.ParamPrefix, ...
+    options.ParamGyroDitherBitStatusTemplate), ...
+    gyroAxes);
+
+gyroStructDitherBitStatusNames = compose( ...
+    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
+     'gyro%d_status_dither_bit_status'], ...
+    gyroIndices);
+
+
+%% Gyro PLC BIT status
+
+gyroPlcBitStatusNames = compose( ...
+    strcat(options.ParamPrefix, ...
+    options.ParamGyroPlcBitStatusTemplate), ...
+    gyroAxes);
+
+gyroStructPlcBitStatusNames = compose( ...
+    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
+     'gyro%d_status_plc_bit_status'], ...
+    gyroIndices);
+
+
+%% Gyro status ID counter
+
+gyroStatusIdCounterNames = compose( ...
+    strcat(options.ParamPrefix, ...
+    options.ParamGyroStatusIdCounterTemplate), ...
+    gyroAxes);
+
+gyroStructStatusIdCounterNames = compose( ...
+    ['HG9900_Raw_Data_Frame_Raptor_Counts_' ...
+     'gyro%d_status_id_counter'], ...
+    gyroIndices);
+
+
+%% Gyro theta LSB
+% External name changed to Theta_LSB, but preserve the old internal
+% lsb name for decoder compatibility.
+
+gyroThetaLsbNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroThetaLsbTemplate), ...
+    gyroAxes);
+
+gyroStructThetaLsbNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_lsb', ...
+    gyroIndices);
+
+
+%% Gyro theta MSB
+
+gyroThetaMsbNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroThetaMsbTemplate), ...
+    gyroAxes);
+
+gyroStructThetaMsbNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_msb', ...
+    gyroIndices);
+
+
+%% Gyro checksum
+% Keep the existing internal checksum name for now.
+% Checksum behavior itself will be handled later in Step 5.
+
+gyroChecksumNames = compose( ...
+    strcat(options.ParamPrefix, options.ParamGyroChecksumTemplate), ...
+    gyroAxes);
+
+gyroStructChecksumNames = compose( ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro%d_checksum', ...
+    gyroIndices);
+
+
+%% Complete raw parameter list
+
+paramNames = [
+    accelNames(:);
+
+    gyroTagNames(:);
+    gyroWordNames(:);
+
+    gyroStatusNames(:);
+    gyroReadoutBitStatusNames(:);
+    gyroCurrentBitStatusNames(:);
+    gyroDitherBitStatusNames(:);
+    gyroPlcBitStatusNames(:);
+    gyroStatusIdCounterNames(:);
+
+    gyroThetaLsbNames(:);
+    gyroThetaMsbNames(:);
+    gyroChecksumNames(:);
+    ];
+
+
+%% Corresponding internal struct field names
+
+structNames = [
+    accelStructNames(:);
+
+    gyroStructTagNames(:);
+    gyroStructWordNames(:);
+
+    gyroStructStatusNames(:);
+    gyroStructReadoutBitStatusNames(:);
+    gyroStructCurrentBitStatusNames(:);
+    gyroStructDitherBitStatusNames(:);
+    gyroStructPlcBitStatusNames(:);
+    gyroStructStatusIdCounterNames(:);
+
+    gyroStructThetaLsbNames(:);
+    gyroStructThetaMsbNames(:);
+    gyroStructChecksumNames(:);
+    ];
+
+nParams = length(paramNames);
+psCell = cell(nParams, 1);
+
+for idx = 1:nParams
+    paramName = paramNames{idx};
+
+    ps = ParameterSpec(...
+        'RecordingName', options.RecordingName, ...
+        'VirtualChannelName', options.VirtualChannelName, ...
+        'PacketName', options.PacketName, ...
+        'ParameterName', paramName);
+
+    psCell{idx} = ps;
+end
+
+parameterList = [psCell{:}]';
+
 end
