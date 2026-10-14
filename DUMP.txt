@@ -1,40 +1,18 @@
-K>> mux_old.gyro(1).status_raw
+% New split status fields
+options.ParamGyroStatusTemplate = ...
+    '/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_%s--Status--Status';
 
-ans = 
+options.ParamGyroReadoutBitStatusTemplate = ...
+    '/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_%s--Status--Readout_BIT_Status';
 
-  struct with fields:
+options.ParamGyroCurrentBitStatusTemplate = ...
+    '/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_%s--Status--Current_BIT_Status';
 
-    AbsoluteReceivedTime: [6x1 double]
-                    time: [6x1 double]
-                   value: [6x1 uint8]
-                      id: NaN
-                    unit: 'counts'
-                 comment: 'Gyro raw status byte.'
+options.ParamGyroDitherBitStatusTemplate = ...
+    '/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_%s--Status--Dither_BIT_Status';
 
-K>> fieldnames(mux_old.gyro(1).status_raw)
+options.ParamGyroPlcBitStatusTemplate = ...
+    '/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_%s--Status--PLC_BIT_Status';
 
-ans =
-
-  6x1 cell array
-
-    {'AbsoluteReceivedTime'}
-    {'time'                }
-    {'value'               }
-    {'id'                  }
-    {'unit'                }
-    {'comment'             }
-
-K>> mux_old.gyro(1).status_raw
-
-ans = 
-
-  struct with fields:
-
-    AbsoluteReceivedTime: [6x1 double]
-                    time: [6x1 double]
-                   value: [6x1 uint8]
-                      id: NaN
-                    unit: 'counts'
-                 comment: 'Gyro raw status byte.'
-
-K>> 
+options.ParamGyroStatusIdCounterTemplate = ...
+    '/NGC/IMU/HG9900/Raw_Data--Counts--Gyro_%s--Status--Status_ID_Counter';
