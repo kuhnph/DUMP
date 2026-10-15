@@ -1,16 +1,403 @@
-gyroStatusByte = ...
-      bitshift(uint8(gyroStatusStatus),     6) ...
-    + bitshift(uint8(gyroStatusReadoutBit), 5) ...
-    + bitshift(uint8(gyroStatusCurrentBit), 4) ...
-    + bitshift(uint8(gyroStatusDitherBit),  3) ...
-    + bitshift(uint8(gyroStatusPlcBit),     2) ...
-    + uint8(gyroStatusIdCounter);
 
-gyroRawSum = uint16(...
-      gyroStatusByte ...
-    + gyroMuxTag ...
-    + gyroThetaLsb ...
-    + gyroThetaMsb ...
-    + gyroMuxWord);
 
-gyroSum = uint8(bitand(gyroRawSum, uint16(0xFF)));
+%% test_decodeHg9900RawMux.m
+%
+% Synthetic OLD-format input to decodeHg9900RawMux.
+% This bypasses:
+%   getHg9900ParameterList
+%   telemetry loading
+%   makeHg9900RawStruct
+%
+% and directly exercises:
+%   decodeHg9900RawMux(s)
+
+clear;
+clc;
+
+%% Number of synthetic raw-data frames
+N = 8;
+
+%% Common data
+% One entry per synthetic HG9900 raw-data frame.
+s.AbsoluteReceivedTime = (0:N-1)' * 0.01;
+
+s.HG9900_Raw_Data_Frame_Msg_Number = ...
+    uint32((1:N)');
+
+s.HG9900_Raw_Data_Frame_Timestamp = ...
+    (0:N-1)' * 0.01;
+
+
+%% ================================================================
+%  ACCELEROMETER MUX
+%  ================================================================
+
+% Keep this simple initially.
+%
+% Eight frames with mux tags 0...7 and arbitrary mux bytes.
+% We can make these more meaningful after confirming the decoder runs.
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_tag = ...
+    uint8((0:N-1)');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_accel_mux_word = ...
+    uint8([ ...
+        hex2dec('10')
+        hex2dec('20')
+        hex2dec('30')
+        hex2dec('40')
+        hex2dec('50')
+        hex2dec('60')
+        hex2dec('70')
+        hex2dec('80')
+    ]);
+
+
+%% ================================================================
+%  GYRO STATUS
+%  ================================================================
+%
+% OLD packed gyro status byte:
+%
+%   bits:   7 6 | 5 | 4 | 3 | 2 | 1 0
+%           ----- --- --- --- --- -----
+%           Status RO  Cur Dit PLC Counter
+%
+% Use:
+%
+%   Status  = 2  -> binary 10
+%   Readout = 1
+%   Current = 0
+%   Dither  = 1
+%   PLC     = 0
+%
+% Counter cycles:
+%
+%   0, 1, 2, 3, 0, 1, 2, 3
+%
+% Therefore the upper six bits are:
+%
+%       10 1 0 1 0
+%
+% giving:
+%
+% counter 0 -> 10101000 = 0xA8
+% counter 1 -> 10101001 = 0xA9
+% counter 2 -> 10101010 = 0xAA
+% counter 3 -> 10101011 = 0xAB
+
+statusBytes = uint8([ ...
+    hex2dec('A8')
+    hex2dec('A9')
+    hex2dec('AA')
+    hex2dec('AB')
+    hex2dec('A8')
+    hex2dec('A9')
+    hex2dec('AA')
+    hex2dec('AB')
+]);
+
+
+%% ================================================================
+%  GYRO 1
+%  ================================================================
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status = ...
+    statusBytes;
+
+% Use the same mux tag across four consecutive frames so that the
+% status counter can identify byte 0, 1, 2, and 3.
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_mux_tag = ...
+    uint8([1 1 1 1 1 1 1 1]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_mux_word = ...
+    uint8([ ...
+        hex2dec('11')
+        hex2dec('22')
+        hex2dec('33')
+        hex2dec('44')
+        hex2dec('55')
+        hex2dec('66')
+        hex2dec('77')
+        hex2dec('88')
+    ]);
+
+% Arbitrary theta bytes for now
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_lsb = ...
+    uint8([1 2 3 4 5 6 7 8]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_msb = ...
+    uint8([10 20 30 40 50 60 70 80]');
+
+% Placeholder checksum.
+% This may cause checksum-validity outputs to indicate failure.
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_checksum = ...
+    zeros(N,1,'uint8');
+
+
+%% ================================================================
+%  GYRO 2
+%  ================================================================
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status = ...
+    statusBytes;
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_mux_tag = ...
+    uint8([1 1 1 1 1 1 1 1]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_mux_word = ...
+    uint8([ ...
+        hex2dec('12')
+        hex2dec('23')
+        hex2dec('34')
+        hex2dec('45')
+        hex2dec('56')
+        hex2dec('67')
+        hex2dec('78')
+        hex2dec('89')
+    ]);
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_lsb = ...
+    uint8([11 12 13 14 15 16 17 18]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_msb = ...
+    uint8([21 22 23 24 25 26 27 28]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_checksum = ...
+    zeros(N,1,'uint8');
+
+
+%% ================================================================
+%  GYRO 3
+%  ================================================================
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status = ...
+    statusBytes;
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_mux_tag = ...
+    uint8([1 1 1 1 1 1 1 1]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_mux_word = ...
+    uint8([ ...
+        hex2dec('13')
+        hex2dec('24')
+        hex2dec('35')
+        hex2dec('46')
+        hex2dec('57')
+        hex2dec('68')
+        hex2dec('79')
+        hex2dec('8A')
+    ]);
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_lsb = ...
+    uint8([31 32 33 34 35 36 37 38]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_msb = ...
+    uint8([41 42 43 44 45 46 47 48]');
+
+s.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_checksum = ...
+    zeros(N,1,'uint8');
+
+
+%% ================================================================
+%  RUN OLD DECODER
+%  ================================================================
+
+mux_old = MinAtrTmAnalysis.HG9900.decodeHg9900RawMux_LEGACY(s,"IsChecksumEnabled",true);
+oldStatus.gyro_status = mux_old.gyro(1).gyro_status.value;
+oldStatus.readout = mux_old.gyro(1).bit_readout_flg.value;
+oldStatus.current = mux_old.gyro(1).bit_curr_ctrl_flg.value;
+oldStatus.dither = mux_old.gyro(1).bit_dither_flg.value;
+oldStatus.plc = mux_old.gyro(1).bit_plc_flg.value;
+
+%% ================================================================
+%  BUILD EQUIVALENT NEW-FORMAT INPUT
+%  ================================================================
+%
+% The OLD input stores status information in one packed byte:
+%
+%   gyroN_status = [status | flags | counter]
+%
+% The NEW input provides those pieces independently:
+%
+%   gyroN_status_status
+%   gyroN_status_readout_bit_status
+%   gyroN_status_current_bit_status
+%   gyroN_status_dither_bit_status
+%   gyroN_status_plc_bit_status
+%   gyroN_status_id_counter
+%
+% The logical information is kept exactly the same as the old mock.
+
+s_new = s;
+
+% Remove the old packed status fields so the new decoder is tested
+% using only the new interface.
+s_new = rmfield(s_new, { ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status', ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status', ...
+    'HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status' ...
+    });
+
+
+%% Status values represented by the old A8/A9/AA/AB sequence
+
+statusStatus = uint8(2 * ones(N,1));
+
+readoutBitStatus = uint8(1 * ones(N,1));
+
+currentBitStatus = uint8(0 * ones(N,1));
+
+ditherBitStatus = uint8(1 * ones(N,1));
+
+plcBitStatus = uint8(0 * ones(N,1));
+
+statusIdCounter = uint8([ ...
+    0
+    1
+    2
+    3
+    0
+    1
+    2
+    3
+]);
+
+
+%% ================================================================
+%  GYRO 1 NEW STATUS FIELDS
+%  ================================================================
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_status = ...
+    statusStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_readout_bit = ...
+    readoutBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_current_bit = ...
+    currentBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_dither_bit = ...
+    ditherBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_plc_bit = ...
+    plcBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro1_status_id_counter = ...
+    statusIdCounter;
+
+
+%% ================================================================
+%  GYRO 2 NEW STATUS FIELDS
+%  ================================================================
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_status = ...
+    statusStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_readout_bit = ...
+    readoutBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_current_bit = ...
+    currentBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_dither_bit = ...
+    ditherBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_plc_bit = ...
+    plcBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro2_status_id_counter = ...
+    statusIdCounter;
+
+
+%% ================================================================
+%  GYRO 3 NEW STATUS FIELDS
+%  ================================================================
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_status = ...
+    statusStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_readout_bit = ...
+    readoutBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_current_bit = ...
+    currentBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_dither_bit = ...
+    ditherBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_plc_bit = ...
+    plcBitStatus;
+
+s_new.HG9900_Raw_Data_Frame_Raptor_Counts_gyro3_status_id_counter = ...
+    statusIdCounter;
+
+
+%% ================================================================
+%  RUN NEW DECODER
+%  ================================================================
+
+mux_new = MinAtrTmAnalysis.HG9900.decodeHg9900RawMux(s_new,"IsChecksumEnabled",true);
+
+
+%% ================================================================
+%  VERIFY STATUS OUTPUTS
+%  ================================================================
+
+statusFields = { ...
+    'gyro_status', ...
+    'bit_readout_flg', ...
+    'bit_curr_ctrl_flg', ...
+    'bit_dither_flg', ...
+    'bit_plc_flg' ...
+    };
+
+for g = 1:3
+
+    fprintf('\nChecking gyro %d status outputs...\n', g);
+
+    for idx = 1:numel(statusFields)
+
+        fieldName = statusFields{idx};
+
+        oldValue = mux_old.gyro(g).(fieldName).value;
+        newValue = mux_new.gyro(g).(fieldName).value;
+
+        assert(isequaln(oldValue, newValue), ...
+            'Status mismatch: gyro %d, field %s', ...
+            g, fieldName);
+
+        fprintf('  PASS: %s\n', fieldName);
+
+    end
+end
+
+
+%% ================================================================
+%  VERIFY COMPLETE PROCESSED OUTPUT
+%  ================================================================
+%
+% Because the new decoder should change only where the status/counter
+% information comes from, the final decoded mux structure should be
+% identical to the legacy decoder output for equivalent input data.
+
+fprintf('\nChecking complete legacy/new decoder output...\n');
+
+for g = 1:3
+    fprintf('\nGyro %d field comparison\n',g);
+    oldFields = fieldnames(mux_old.gyro(g));
+    newFields = fieldnames(mux_new.gyro(g));
+
+    fprintf('Only in OLD:\n');
+    disp(setdiff(oldFields, newFields));
+
+    fprintf("Only in NEW:\n");
+    disp(setdiff(newFields,oldFields))
+end
+
+
+%% ================================================================
+%  TEST COMPLETE
+%  ================================================================
+
+fprintf('\nDONE\n');
